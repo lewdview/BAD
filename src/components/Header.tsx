@@ -97,6 +97,17 @@ export const Header: React.FC<HeaderProps> = ({
                 </a>
               </li>
               <li>
+                <a 
+                  href="#admin" 
+                  className={activeTab === 'admin' ? 'active' : ''} 
+                  onClick={() => setActiveTab('admin')}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <Hammer size={14} /> Admin
+                  </span>
+                </a>
+              </li>
+              <li>
                 <button 
                   className={`btn ${isPOS ? 'btn-primary' : 'btn-secondary'}`}
                   style={{ padding: '6px 12px', fontSize: '12px' }}

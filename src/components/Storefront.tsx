@@ -15,6 +15,8 @@ interface StorefrontProps {
   setCart: React.Dispatch<React.SetStateAction<CartItem[]>>;
   onLaunchBuilder: () => void;
   isPOS: boolean;
+  orders: any[];
+  setOrders: React.Dispatch<React.SetStateAction<any[]>>;
 }
 
 const PREMADE_PRODUCTS = [
@@ -48,7 +50,9 @@ export const Storefront: React.FC<StorefrontProps> = ({
   cart,
   setCart,
   onLaunchBuilder,
-  isPOS
+  isPOS,
+  orders: _orders,
+  setOrders
 }) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -109,7 +113,23 @@ export const Storefront: React.FC<StorefrontProps> = ({
     
     // Simulate gateway auth
     setTimeout(() => {
-      setOrderNumber(`BAD-${Math.floor(100000 + Math.random() * 900000)}`);
+      const generatedOrderNumber = `BAD-${Math.floor(100000 + Math.random() * 900000)}`;
+      setOrderNumber(generatedOrderNumber);
+      
+      const newOrder = {
+        orderNumber: generatedOrderNumber,
+        customerName: form.name || 'Anonymous Customer',
+        customerEmail: form.email || 'guest@buildadil.do',
+        customerAddress: form.address || 'In-Store Pickup',
+        customerCity: form.city || 'BAD Flagship Store',
+        customerZip: form.zip || 'N/A',
+        items: [...cart],
+        subtotal: subtotal,
+        date: new Date().toISOString(),
+        status: 'Pending Mold'
+      };
+
+      setOrders((prev) => [newOrder, ...prev]);
       setCheckoutStep('success');
       setCart([]); // Clear cart
     }, 2000);

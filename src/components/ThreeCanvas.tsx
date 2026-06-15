@@ -73,7 +73,7 @@ const ScaleReferenceDevice: React.FC = () => {
   );
 };
 
-const CustomToyMesh: React.FC<{ params: BuilderParams }> = ({ params }) => {
+export const CustomToyMesh: React.FC<{ params: BuilderParams }> = ({ params }) => {
   const meshRef = useRef<THREE.Mesh>(null);
   const outerMaterialRef = useRef<THREE.ShaderMaterial>(null);
   const innerMaterialRef = useRef<THREE.ShaderMaterial>(null);
