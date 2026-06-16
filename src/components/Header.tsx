@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ShoppingBag, EyeOff, Eye, Users, Hammer, Smartphone } from 'lucide-react';
+import { ShoppingBag, EyeOff, Eye, Users, Hammer, Smartphone, TrendingUp } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: string;
@@ -104,6 +104,17 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                     <Hammer size={14} /> Admin
+                  </span>
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="#pitch" 
+                  className={activeTab === 'pitch' ? 'active' : ''} 
+                  onClick={() => setActiveTab('pitch')}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <TrendingUp size={14} /> Pitch
                   </span>
                 </a>
               </li>

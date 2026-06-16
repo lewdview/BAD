@@ -5,6 +5,7 @@ import { BuilderControls } from './components/BuilderControls';
 import { Storefront } from './components/Storefront';
 import { SocialFeed } from './components/SocialFeed';
 import { AdminDashboard } from './components/AdminDashboard';
+import { PitchDeck } from './components/PitchDeck';
 import { Smartphone, Leaf } from 'lucide-react';
 
 interface CartItem {
@@ -381,6 +382,10 @@ function App() {
                 orders={orders}
                 setOrders={setOrders}
               />
+            )}
+
+            {activeTab === 'pitch' && (
+              <PitchDeck />
             )}
           </>
         )}
