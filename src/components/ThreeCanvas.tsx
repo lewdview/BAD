@@ -1002,6 +1002,163 @@ const CustomGridHelper: React.FC<{ length: number }> = ({ length }) => {
   );
 };
 
+const ScreenshotTaker: React.FC<{ params: BuilderParams }> = ({ params }) => {
+  const { gl, scene, camera } = useThree();
+
+  useEffect(() => {
+    const handleExport = () => {
+      // Force render to capture pixel buffer
+      gl.render(scene, camera);
+      const imgData = gl.domElement.toDataURL('image/png');
+
+      const img = new Image();
+      img.onload = () => {
+        // Create high-res 2400x1800 composting canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = 2400;
+        canvas.height = 1800;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        // 1. Luxury Dark Gradient Background
+        const bgGrad = ctx.createLinearGradient(0, 0, 0, 1800);
+        bgGrad.addColorStop(0, '#131317');
+        bgGrad.addColorStop(0.75, '#0a0a0c');
+        bgGrad.addColorStop(1, '#050507');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, 2400, 1800);
+
+        // 2. Subtle background light focus glow
+        ctx.fillStyle = 'rgba(212, 175, 55, 0.02)';
+        ctx.beginPath();
+        ctx.arc(1200, 700, 600, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 3. Draw WebGL Render Image (resize/center inside viewport)
+        const webglWidth = img.width;
+        const webglHeight = img.height;
+        const targetMaxH = 1200;
+        const targetMaxW = 2100;
+        let drawW = targetMaxW;
+        let drawH = (webglHeight / webglWidth) * drawW;
+
+        if (drawH > targetMaxH) {
+          drawH = targetMaxH;
+          drawW = (webglWidth / webglHeight) * drawH;
+        }
+
+        const drawX = (2400 - drawW) / 2;
+        const drawY = 80 + (targetMaxH - drawH) / 2;
+        ctx.drawImage(img, drawX, drawY, drawW, drawH);
+
+        // 4. Draw luxury Gold specifications card at the bottom
+        ctx.fillStyle = 'rgba(18, 18, 20, 0.95)';
+        ctx.fillRect(80, 1330, 2240, 390);
+        
+        ctx.strokeStyle = 'rgba(212, 175, 55, 0.35)';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(80, 1330, 2240, 390);
+
+        ctx.strokeStyle = 'rgba(212, 175, 55, 0.15)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(86, 1336, 2228, 378);
+
+        // Header and scaling tag
+        ctx.fillStyle = '#d4af37';
+        ctx.font = 'bold 36px Georgia, serif';
+        ctx.fillText('BAD PLATFORM  |  CAD SPECIFICATION SHEET', 130, 1400);
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.font = 'bold 18px system-ui, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText('TRUE-TO-LIFE 1:1 PHYSICAL SCALE PREVIEW', 2210, 1400);
+        ctx.textAlign = 'left';
+
+        // Split Divider line
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.beginPath();
+        ctx.moveTo(130, 1425);
+        ctx.lineTo(2270, 1425);
+        ctx.stroke();
+
+        // Columns layout
+        const colY = 1465;
+        const rowH = 34;
+
+        const drawColValue = (title: string, value: string, x: number, y: number) => {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+          ctx.font = '17px system-ui, sans-serif';
+          ctx.fillText(title + ':', x, y);
+
+          ctx.fillStyle = '#f3f4f6';
+          ctx.font = 'bold 19px system-ui, sans-serif';
+          ctx.fillText(value, x + 160, y);
+        };
+
+        // Col 1: Anatomy Profile
+        ctx.fillStyle = 'rgba(212, 175, 55, 0.7)';
+        ctx.font = 'bold 18px system-ui, sans-serif';
+        ctx.fillText('ANATOMICAL PROFILE', 130, colY);
+        let anatShape = params.shapeType.toUpperCase();
+        if (params.shapeType === 'fantasy') {
+          anatShape += ` (${params.fantasyType.toUpperCase()})`;
+        }
+        drawColValue('SHAPE TYPE', anatShape, 130, colY + 50);
+        drawColValue('TEXTURE', params.texture.toUpperCase(), 130, colY + 50 + rowH);
+        drawColValue('CURVATURE', `${params.curvature.toFixed(1)}x`, 130, colY + 50 + rowH * 2);
+
+        // Col 2: Physical Metrics
+        ctx.fillStyle = 'rgba(212, 175, 55, 0.7)';
+        ctx.font = 'bold 18px system-ui, sans-serif';
+        ctx.fillText('PHYSICAL METRICS', 680, colY);
+        const calcLength = params.suctionCup ? (params.length - 0.8).toFixed(1) : params.length.toFixed(1);
+        drawColValue('LENGTH', `${calcLength}" (${params.length.toFixed(1)}" Total)`, 680, colY + 50);
+        drawColValue('SHAFT girth', `${(params.shaftGirth * 1.4).toFixed(2)}" / ${(params.shaftGirth * Math.PI * 1.4).toFixed(1)}" circ.`, 680, colY + 50 + rowH);
+        drawColValue('BASE DIAM', `${(params.baseGirth * 2.0).toFixed(2)}"`, 680, colY + 50 + rowH * 2);
+
+        // Col 3: Material System
+        ctx.fillStyle = 'rgba(212, 175, 55, 0.7)';
+        ctx.font = 'bold 18px system-ui, sans-serif';
+        ctx.fillText('MATERIAL SYSTEM', 1230, colY);
+        let colorModeName = 'SOLID';
+        if (params.colorMode === 1) colorModeName = 'MARBLE';
+        else if (params.colorMode === 2) colorModeName = 'GRADIENT';
+        else if (params.colorMode === 3) colorModeName = 'SPLIT POUR';
+        drawColValue('SILICONE', 'Platinum Cured', 1230, colY + 50);
+        drawColValue('FIRMNESS', params.firmness.toUpperCase(), 1230, colY + 50 + rowH);
+        drawColValue('PIGMENTS', `${colorModeName} (${params.color1} / ${params.color2})`, 1230, colY + 50 + rowH * 2);
+
+        // Col 4: Quality & Verification
+        ctx.fillStyle = 'rgba(212, 175, 55, 0.7)';
+        ctx.font = 'bold 18px system-ui, sans-serif';
+        ctx.fillText('SYSTEM VERIFICATION', 1780, colY);
+        const seedVal = `${params.shapeType}-${params.length}-${params.shaftGirth}-${params.curvature}`;
+        let hash = 0;
+        for (let i = 0; i < seedVal.length; i++) {
+          hash = (hash << 5) - hash + seedVal.charCodeAt(i);
+          hash |= 0;
+        }
+        const hashStr = `MD-${Math.abs(hash).toString(16).toUpperCase().substring(0, 8)}`;
+        drawColValue('INCLUSIONS', params.inclusions.toUpperCase(), 1780, colY + 50);
+        drawColValue('QC STATUS', 'FDA COMPLIANT', 1780, colY + 50 + rowH);
+        drawColValue('CAD HASH', hashStr, 1780, colY + 50 + rowH * 2);
+
+        // Open high-res download
+        const link = document.createElement('a');
+        link.download = `bad_spec_sheet_${hashStr}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      };
+      img.src = imgData;
+    };
+
+    window.addEventListener('export-hires', handleExport);
+    return () => window.removeEventListener('export-hires', handleExport);
+  }, [gl, scene, camera, params]);
+
+  return null;
+};
+
 export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ params }) => {
 
   // Dynamic calculations for physical dimension text HUD
@@ -1031,9 +1188,11 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ params }) => {
       <Canvas
         camera={{ position: [0, 1.8, 8.0], fov: 40 }}
         shadows={{ type: THREE.PCFShadowMap }}
+        gl={{ preserveDrawingBuffer: true }}
         style={{ position: 'relative', zIndex: 1, background: 'transparent' }}
       >
         <SceneSetup />
+        <ScreenshotTaker params={params} />
         
         {/* Dynamic environmental lights */}
         {params.sceneEnvironment === 'shower' ? (

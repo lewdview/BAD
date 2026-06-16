@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Sliders, Palette, ShieldCheck, Heart, Share2, ShoppingCart, Layers, Ruler, Eye } from 'lucide-react';
+import { Sparkles, Sliders, Palette, ShieldCheck, Heart, Share2, ShoppingCart, Layers, Ruler, Eye, Camera } from 'lucide-react';
 import { generateToySTL } from '../utils/stlGenerator';
 
 interface BuilderParams {
@@ -1264,6 +1264,15 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
             title="Export STL Schematic for Home 3D Printing"
           >
             <Layers size={18} /> Export STL
+          </button>
+          <button 
+            type="button"
+            className="btn btn-secondary" 
+            style={{ padding: '12px', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', fontWeight: 600, borderColor: 'var(--accent-gold)' }}
+            onClick={() => window.dispatchEvent(new CustomEvent('export-hires'))}
+            title="Export Hi-Res Render Spec Sheet Card"
+          >
+            <Camera size={18} color="var(--accent-gold)" /> Hi-Res Render
           </button>
           <button 
             type="button"

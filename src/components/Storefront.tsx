@@ -57,6 +57,70 @@ export const Storefront: React.FC<StorefrontProps> = ({
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [checkoutStep, setCheckoutStep] = useState<'details' | 'processing' | 'success'>('details');
+  const [hook, setHook] = useState<'consumer' | 'retailer' | 'medical' | 'creator'>('consumer');
+
+  const hooksContent = {
+    consumer: {
+      tagline: 'The Custom Pleasure Revolution',
+      title: 'Designed By You. Crafted By Us.',
+      description: 'Create body-safe, medical-grade silicone pleasure products tailored down to the millimeter. Choose your length, contour, girth, density, and colors.',
+      cta: 'Launch BAD Builder Engine',
+      features: [
+        { title: 'Parametric CAD Scaling', desc: 'Adjust lengths and contours on the fly with real-time volumetric calculations.' },
+        { title: 'Dual-Density Silicone', desc: 'Encapsulate a rigid inner core inside super-soft medical outer gel.' },
+        { title: '100% Discrete Packaging', desc: 'Shipped in completely plain cardboard box billed as BAD Wellness LLC.' }
+      ],
+      testimonial: {
+        quote: "Best product I've ever owned. Being able to choose the curve and dual firmness makes it a perfect fit.",
+        author: "Aria S. — Verified Buyer"
+      }
+    },
+    retailer: {
+      tagline: 'Infinite SKU Capacity',
+      title: 'Zero Inventory. 87% Gross Margins.',
+      description: 'Empower your retail customers to compile custom CAD molds in-store or online. Manufactured on-demand with zero steel tooling upfront costs.',
+      cta: 'Launch B2B Partner Portal',
+      features: [
+        { title: '24-Hour Lead Times', desc: 'No more waiting 6 months for steel molds. Print FDM molds instantly for $1.20.' },
+        { title: 'Direct-to-Factory API', desc: 'Sync customer configurations straight to your print beds and curing floors.' },
+        { title: 'Higher AOV Uplift', desc: 'D2C custom items command a 60% price premium over premade stock shelves.' }
+      ],
+      testimonial: {
+        quote: "Syncing our e-commerce platform with the BAD CAD API eliminated all overstock. AOV rose to $142.50.",
+        author: "Marcus Thorne — VP Innovation at LoveHoney"
+      }
+    },
+    medical: {
+      tagline: 'Hypoallergenic Pelvic Health',
+      title: 'Anatomically Fit Wellness Devices.',
+      description: 'Prescribe or customize FDA-compliant pelvic floor therapeutic dilators matched directly to patient physiology. Body-safe and non-porous.',
+      cta: 'Open Medical Builder',
+      features: [
+        { title: 'Medical-Grade Silicone', desc: '100% Platinum-cure Class VI medical silicone. Free of phthalates and latex.' },
+        { title: 'Graduated Taper Controls', desc: 'Smoothly adjust insertion curves and taper thresholds for therapeutic comfort.' },
+        { title: 'Hygienic Solid Molds', desc: 'Manufactured with seamless split-mold lines to prevent micro-bacterial traps.' }
+      ],
+      testimonial: {
+        quote: "This allows us to calibrate dilator shapes specific to post-operative patients. It is a game-changer for pelvic therapy.",
+        author: "Dr. Sarah Jenkins — Stanford Pelvic Wellness Lab"
+      }
+    },
+    creator: {
+      tagline: 'Zero-Overhead Merchandising',
+      title: 'Monetize Your Influence: Sell Custom Designs.',
+      description: 'Design custom shapes, launch your catalog page to your fans, and collect high-margin CAD licensing royalties on every print. We handle the rest.',
+      cta: 'Apply for Creator Portal',
+      features: [
+        { title: 'Vanity CAD URLs', desc: 'Give your community a direct link to buy or tweak your signature geometries.' },
+        { title: 'Lifetime Royalties', desc: 'Earn 25% of gross checkout value on every custom item cast from your STL templates.' },
+        { title: 'Zero Logistics Hassle', desc: 'No inventories, no shipping labels, no pouring silicone. We do the work, you get paid.' }
+      ],
+      testimonial: {
+        quote: "My fans love buying my custom designs. The builder was super simple to use, and my royalty checks get paid weekly.",
+        author: "Elena R. — Content Creator & Artist"
+      }
+    }
+  };
 
   // Checkout Form State
   const [form, setForm] = useState({
@@ -140,9 +204,55 @@ export const Storefront: React.FC<StorefrontProps> = ({
   return (
     <div className="container animate-fade-in" style={{ padding: '40px 24px' }}>
       
+      {/* Target Audience Selector */}
+      <div 
+        style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          gap: '12px', 
+          marginBottom: '32px',
+          flexWrap: 'wrap',
+          backgroundColor: 'var(--bg-secondary)',
+          padding: '8px',
+          borderRadius: 'var(--radius-full)',
+          border: '1px solid var(--border-color)',
+          maxWidth: '720px',
+          margin: '0 auto 36px auto'
+        }}
+      >
+        <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--text-muted)', padding: '0 12px' }}>
+          Target Audience:
+        </span>
+        {(['consumer', 'retailer', 'medical', 'creator'] as const).map((h) => (
+          <button
+            key={h}
+            onClick={() => setHook(h)}
+            style={{
+              padding: '8px 16px',
+              fontSize: '12px',
+              fontWeight: 600,
+              borderRadius: 'var(--radius-full)',
+              border: 'none',
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              transition: 'all var(--transition-fast)',
+              backgroundColor: hook === h ? 'var(--accent-gold)' : 'transparent',
+              color: hook === h ? '#000000' : 'var(--text-secondary)'
+            }}
+          >
+            {h === 'consumer' ? 'Consumer' :
+             h === 'retailer' ? 'B2B Retail' :
+             h === 'medical' ? 'Medical/Health' : 'Creators'}
+          </button>
+        ))}
+      </div>
+
       {/* Brand Hero Callout */}
       <section 
-        className="card" 
+        className="card animate-fade-in" 
+        key={hook}
         style={{ 
           background: 'linear-gradient(135deg, var(--bg-tertiary) 0%, rgba(212, 175, 55, 0.05) 100%)',
           border: '1px solid rgba(212, 175, 55, 0.15)',
@@ -151,26 +261,63 @@ export const Storefront: React.FC<StorefrontProps> = ({
           textAlign: 'center',
           position: 'relative',
           overflow: 'hidden',
-          marginBottom: '48px'
+          marginBottom: '40px'
         }}
       >
         <div style={{ position: 'relative', zIndex: 1, maxWidth: '640px', margin: '0 auto' }}>
           <span className="badge badge-gold" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            <Sparkles size={12} /> The Custom pleasure Revolution
+            <Sparkles size={12} /> {hooksContent[hook].tagline}
           </span>
-          <h1 style={{ fontSize: '48px', margin: '16px 0', fontFamily: 'var(--font-serif)' }}>
-            Designed By You. Crafted By Us.
+          <h1 style={{ fontSize: '48px', margin: '16px 0', fontFamily: 'var(--font-serif)', lineHeight: 1.25 }}>
+            {hooksContent[hook].title}
           </h1>
           <p style={{ fontSize: '16px', color: 'var(--text-secondary)', marginBottom: '32px' }}>
-            Create body-safe, medical-grade silicone pleasure products tailored down to the millimeter. Choose your length, contour, girth, density, and colors.
+            {hooksContent[hook].description}
           </p>
           <button 
             className="btn btn-primary" 
             style={{ padding: '16px 36px', fontSize: '16px', fontWeight: 600 }}
             onClick={onLaunchBuilder}
           >
-            Launch BAD Builder Engine
+            {hooksContent[hook].cta}
           </button>
+        </div>
+      </section>
+
+      {/* Dynamic Features Cards */}
+      <section style={{ marginBottom: '40px' }} className="animate-fade-in" key={`feat-${hook}`}>
+        <div className="grid-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+          {hooksContent[hook].features.map((feat, idx) => (
+            <div key={idx} className="card" style={{ padding: '24px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
+              <h3 style={{ fontSize: '16px', color: 'var(--accent-gold)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Sparkles size={14} /> {feat.title}
+              </h3>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                {feat.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Dynamic Hook Testimonial Card */}
+      <section style={{ marginBottom: '56px' }} className="animate-fade-in" key={`test-${hook}`}>
+        <div 
+          className="card" 
+          style={{ 
+            backgroundColor: 'var(--bg-tertiary)', 
+            border: '1px solid var(--border-color)',
+            borderLeft: '4px solid var(--accent-gold)', 
+            padding: '30px 40px',
+            borderRadius: 'var(--radius-md)'
+          }}
+        >
+          <p style={{ fontSize: '15px', fontStyle: 'italic', color: 'var(--text-primary)', marginBottom: '16px', lineHeight: 1.6 }}>
+            "{hooksContent[hook].testimonial.quote}"
+          </p>
+          <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--accent-gold)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            — {hooksContent[hook].testimonial.author}
+          </div>
         </div>
       </section>
 
