@@ -9,6 +9,7 @@ interface HeaderProps {
   setDiscretionMode: (mode: boolean) => void;
   isPOS: boolean;
   setIsPOS: (isPOS: boolean) => void;
+  demoMode: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -18,19 +19,27 @@ export const Header: React.FC<HeaderProps> = ({
   discretionMode,
   setDiscretionMode,
   isPOS,
-  setIsPOS
+  setIsPOS,
+  demoMode
 }) => {
 
-  // Synchronize document title and body class for discretion mode
+  // Synchronize document title and body class for discretion mode and demo mode
   useEffect(() => {
     if (discretionMode) {
       document.body.classList.add('discretion-mode');
+      document.body.classList.remove('demo-mode');
       document.title = "Healthy Living | Wellness & Organic Lifestyle Blog";
     } else {
       document.body.classList.remove('discretion-mode');
-      document.title = isPOS ? "BAD Floor | POS Terminal" : "BAD | buildadil.do";
+      if (demoMode) {
+        document.body.classList.add('demo-mode');
+        document.title = "BAD | Parametric Mold Studio";
+      } else {
+        document.body.classList.remove('demo-mode');
+        document.title = isPOS ? "BAD Floor | POS Terminal" : "BAD | buildadil.do";
+      }
     }
-  }, [discretionMode, isPOS]);
+  }, [discretionMode, isPOS, demoMode]);
 
   const toggleDiscretion = () => {
     setDiscretionMode(!discretionMode);
@@ -56,7 +65,7 @@ export const Header: React.FC<HeaderProps> = ({
           ) : (
             <>
               <span className="logo-main">BAD</span>
-              <span className="logo-sub">buildadil.do</span>
+              <span className="logo-sub">{demoMode ? "mold-studio (demo)" : "buildadil.do"}</span>
             </>
           )}
         </a>
@@ -67,7 +76,7 @@ export const Header: React.FC<HeaderProps> = ({
             <ul className="nav-links">
               <li>
                 <a 
-                  href="#storefront" 
+                  href={demoMode ? "#demo" : "#storefront"} 
                   className={activeTab === 'storefront' ? 'active' : ''} 
                   onClick={() => setActiveTab('storefront')}
                 >
@@ -76,18 +85,18 @@ export const Header: React.FC<HeaderProps> = ({
               </li>
               <li>
                 <a 
-                  href="#builder" 
+                  href={demoMode ? "#demo-builder" : "#builder"} 
                   className={activeTab === 'builder' ? 'active' : ''} 
                   onClick={() => setActiveTab('builder')}
                 >
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    <Hammer size={14} /> BAD Builder
+                    <Hammer size={14} /> {demoMode ? "Mold Studio" : "BAD Builder"}
                   </span>
                 </a>
               </li>
               <li>
                 <a 
-                  href="#social" 
+                  href={demoMode ? "#demo-social" : "#social"} 
                   className={activeTab === 'social' ? 'active' : ''} 
                   onClick={() => setActiveTab('social')}
                 >
@@ -98,7 +107,7 @@ export const Header: React.FC<HeaderProps> = ({
               </li>
               <li>
                 <a 
-                  href="#admin" 
+                  href={demoMode ? "#demo-admin" : "#admin"} 
                   className={activeTab === 'admin' ? 'active' : ''} 
                   onClick={() => setActiveTab('admin')}
                 >
@@ -109,7 +118,7 @@ export const Header: React.FC<HeaderProps> = ({
               </li>
               <li>
                 <a 
-                  href="#pitch" 
+                  href={demoMode ? "#demo-pitch" : "#pitch"} 
                   className={activeTab === 'pitch' ? 'active' : ''} 
                   onClick={() => setActiveTab('pitch')}
                 >
@@ -144,6 +153,36 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          {/* Brand Demo Toggle */}
+          {!discretionMode && (
+            <button 
+              className="btn" 
+              style={{ 
+                backgroundColor: demoMode ? 'var(--accent-gold)' : 'rgba(255,255,255,0.05)', 
+                color: demoMode ? '#000000' : 'var(--text-primary)',
+                border: '1px solid var(--border-color)',
+                padding: '8px 14px',
+                fontSize: '12px'
+              }}
+              onClick={() => {
+                const newDemoMode = !demoMode;
+                let newHash = '';
+                if (newDemoMode) {
+                  if (activeTab === 'builder') newHash = 'demo-builder';
+                  else if (activeTab === 'social') newHash = 'demo-social';
+                  else if (activeTab === 'admin') newHash = 'demo-admin';
+                  else if (activeTab === 'pitch') newHash = 'demo-pitch';
+                  else newHash = 'demo';
+                } else {
+                  newHash = activeTab;
+                }
+                window.location.hash = newHash;
+              }}
+            >
+              {demoMode ? "Switch to Adult Brand" : "Demo: Multi-Purpose Molds"}
+            </button>
+          )}
+
           {/* Panic / Discretion Button */}
           <button 
             className="btn" 

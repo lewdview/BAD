@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { ThreeCanvas } from './components/ThreeCanvas';
 import { BuilderControls } from './components/BuilderControls';
@@ -65,6 +65,30 @@ function App() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [discretionMode, setDiscretionMode] = useState<boolean>(false);
   const [isPOS, setIsPOS] = useState<boolean>(false);
+  const [demoMode, setDemoMode] = useState<boolean>(false);
+
+  // Synchronize hash routing and brand demoMode
+  useEffect(() => {
+    const handleHash = () => {
+      const hash = window.location.hash.substring(1);
+      if (hash.startsWith('demo')) {
+        setDemoMode(true);
+        if (hash === 'demo-builder') setActiveTab('builder');
+        else if (hash === 'demo-social') setActiveTab('social');
+        else if (hash === 'demo-admin') setActiveTab('admin');
+        else if (hash === 'demo-pitch') setActiveTab('pitch');
+        else setActiveTab('storefront');
+      } else {
+        setDemoMode(false);
+        if (['storefront', 'builder', 'social', 'admin', 'pitch'].includes(hash)) {
+          setActiveTab(hash);
+        }
+      }
+    };
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
 
   // Pre-populated B2B high-volume corporate manufacturing orders
   const [orders, setOrders] = useState<OrderItem[]>([
@@ -308,6 +332,7 @@ function App() {
         setDiscretionMode={setDiscretionMode}
         isPOS={isPOS}
         setIsPOS={setIsPOS}
+        demoMode={demoMode}
       />
 
       {/* Main Page Layout */}
@@ -355,13 +380,14 @@ function App() {
                 isPOS={isPOS}
                 orders={orders}
                 setOrders={setOrders}
+                demoMode={demoMode}
               />
             )}
 
             {activeTab === 'builder' && (
               <div className="builder-layout animate-fade-in">
                 {/* 3D WebGL Canvas Rendering */}
-                <ThreeCanvas params={builderParams} />
+                <ThreeCanvas params={builderParams} demoMode={demoMode} />
                 
                 {/* Parameter Control Panel Sidebar */}
                 <BuilderControls 
@@ -369,6 +395,7 @@ function App() {
                   setParams={setBuilderParams}
                   onAddToCart={handleAddToCart}
                   onShareToSocial={handleShareToSocial}
+                  demoMode={demoMode}
                 />
               </div>
             )}
@@ -404,11 +431,21 @@ function App() {
           }}
         >
           <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-            <span>© {new Date().getFullYear()} BAD Wellness LLC. All rights reserved.</span>
+            <span>© {new Date().getFullYear()} {demoMode ? "BAD Parametric Mold Studio" : "BAD Wellness LLC"}. All rights reserved.</span>
             <div style={{ display: 'flex', gap: '16px' }}>
-              <a href="#" onClick={(e) => e.preventDefault()} style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Privacy Policy</a>
-              <a href="#" onClick={(e) => e.preventDefault()} style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Terms of Service</a>
-              <a href="#" onClick={(e) => e.preventDefault()} style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Discreet Billing Policy</a>
+              {demoMode ? (
+                <>
+                  <a href="#" onClick={(e) => e.preventDefault()} style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Licensing Terms</a>
+                  <a href="#" onClick={(e) => e.preventDefault()} style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>CAD API Documentation</a>
+                  <a href="#" onClick={(e) => e.preventDefault()} style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Industrial Materials</a>
+                </>
+              ) : (
+                <>
+                  <a href="#" onClick={(e) => e.preventDefault()} style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Privacy Policy</a>
+                  <a href="#" onClick={(e) => e.preventDefault()} style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Terms of Service</a>
+                  <a href="#" onClick={(e) => e.preventDefault()} style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Discreet Billing Policy</a>
+                </>
+              )}
             </div>
           </div>
         </footer>

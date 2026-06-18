@@ -17,6 +17,7 @@ interface StorefrontProps {
   isPOS: boolean;
   orders: any[];
   setOrders: React.Dispatch<React.SetStateAction<any[]>>;
+  demoMode: boolean;
 }
 
 const PREMADE_PRODUCTS = [
@@ -46,13 +47,49 @@ const PREMADE_PRODUCTS = [
   }
 ];
 
+const DEMO_PREMADE_PRODUCTS = [
+  {
+    id: 'basic-candle',
+    name: 'Vanilla Spiral Candle',
+    description: 'A beautifully twisted paraffin-free soy wax candle with therapeutic essential oils.',
+    price: 24.00,
+    image: 'https://images.unsplash.com/photo-1603006905003-be475563bc59?auto=format&fit=crop&q=80&w=400',
+    rating: '4.8 (120 reviews)'
+  },
+  {
+    id: 'basic-soap',
+    name: 'Honeycomb Soap Bar',
+    description: 'All-natural organic glycerin soap bar cast from a custom CAD honeycomb geometry.',
+    price: 16.00,
+    image: 'https://images.unsplash.com/photo-1607006342446-b5eb29fa24ad?auto=format&fit=crop&q=80&w=400',
+    rating: '4.9 (95 reviews)'
+  },
+  {
+    id: 'basic-cups',
+    name: 'Silicone Muffin Baking Cups',
+    description: 'Heat-resistant, BPA-free, non-stick fluted silicone baking cups.',
+    price: 28.00,
+    image: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&q=80&w=400',
+    rating: '4.7 (74 reviews)'
+  },
+  {
+    id: 'basic-figurine',
+    name: 'Low-Poly Figurine Base',
+    description: 'Collectible high-density resin figurine base ready for custom painting.',
+    price: 45.00,
+    image: 'https://images.unsplash.com/photo-1566134052345-316279f7e52a?auto=format&fit=crop&q=80&w=400',
+    rating: '4.9 (42 reviews)'
+  }
+];
+
 export const Storefront: React.FC<StorefrontProps> = ({
   cart,
   setCart,
   onLaunchBuilder,
   isPOS,
   orders: _orders,
-  setOrders
+  setOrders,
+  demoMode
 }) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -122,6 +159,72 @@ export const Storefront: React.FC<StorefrontProps> = ({
     }
   };
 
+  const demoHooksContent = {
+    consumer: {
+      tagline: 'The Custom Craft Revolution',
+      title: 'Designed By You. Molded at Home.',
+      description: 'Create custom parametric molds for candles, soaps, and home items. Calibrate dimensions, shapes, and textures to output flawless casing blueprints.',
+      cta: 'Launch Custom Mold Studio',
+      features: [
+        { title: 'Parametric CAD Scaling', desc: 'Adjust shapes and flutes on the fly with real-time volumetric calculations.' },
+        { title: 'Food-Safe Silicone', desc: 'Produce heat-resistant, non-toxic molds perfect for baking and kitchen crafts.' },
+        { title: '100% Watertight STL Files', desc: 'Export solid models and two-part casing split molds ready for FDM/SLA printing.' }
+      ],
+      testimonial: {
+        quote: "Designing my own custom candle molds has transformed my boutique candle line. The customizer gives me instant STL outputs.",
+        author: "Elena Vance — Artisanal Candlemaker"
+      }
+    },
+    retailer: {
+      tagline: 'Fast-Track Custom Manufacturing',
+      title: 'Zero Tooling Cost. Instant Prototypes.',
+      description: 'Empower your craft brand or custom confectionery shop to compile custom CAD molds. Speed up production and bypass expensive CNC machinery.',
+      cta: 'Launch B2B Craft Portal',
+      features: [
+        { title: 'FDM-Optimized Geometry', desc: 'Generated casings feature integrated snap-locking tabs and vent holes for easy casting.' },
+        { title: 'High-Yield Production', desc: 'Use our generated casing STL files to print production-grade silicone cast liners.' },
+        { title: 'Rapid Iteration', desc: 'Design, adjust, and print new soap or baking cup configurations in under 24 hours.' }
+      ],
+      testimonial: {
+        quote: "Using BAD's CAD engine for custom chocolate and soap molds saved our brand thousands in tooling fees.",
+        author: "David Choi — Operations Director at OrganicSoap Co."
+      }
+    },
+    medical: {
+      tagline: 'Precision Lab Casings',
+      title: 'Custom Containers & Labware Molds.',
+      description: 'Compile specialized scientific silicone casings, chemical containers, and microfluidic trays matched to custom specifications.',
+      cta: 'Open Lab Customization',
+      features: [
+        { title: 'Biocompatible Polymers', desc: 'Cast utilizing high-grade FDA platinum silicones with clean, seamless split lines.' },
+        { title: 'Zero Draft Angle Geometry', desc: 'Perfect cylindrical or faceted geometry outputs ensure seamless object extraction.' },
+        { title: 'Volumetric Precision', desc: 'Ensure precise liquid containment measurements with parametric cylinder calculations.' }
+      ],
+      testimonial: {
+        quote: "We print custom silicone sample trays daily. The CAD compiler generates watertight STL split casings with zero hassle.",
+        author: "Dr. Alan Mercer — BioTech Lab Supplies"
+      }
+    },
+    creator: {
+      tagline: 'Sell Your Custom Shapes',
+      title: 'Monetize Your Craft: Licensing Made Simple.',
+      description: 'Upload and license your custom candle, soap, or collectible figurine shapes. Earn royalties when users customize and download your geometries.',
+      cta: 'Apply for Creator License',
+      features: [
+        { title: 'Digital Rights DRM', desc: 'Your core parameters are securely compiled on the fly, preventing unauthorized STL extraction.' },
+        { title: 'Passive Revenue Streams', desc: 'Earn royalty commissions on every customized STL download or printed mold casing.' },
+        { title: 'Seamless Portfolio Sync', desc: 'List your shape templates directly on the storefront catalog for custom adjustment.' }
+      ],
+      testimonial: {
+        quote: "I license my low-poly chibi figurines on the platform. The customizer is a huge hit with 3D painters.",
+        author: "Chloe Park — Character Artist"
+      }
+    }
+  };
+
+  const currentHooksContent = demoMode ? demoHooksContent : hooksContent;
+  const productsList = demoMode ? DEMO_PREMADE_PRODUCTS : PREMADE_PRODUCTS;
+
   // Checkout Form State
   const [form, setForm] = useState({
     name: '',
@@ -138,7 +241,7 @@ export const Storefront: React.FC<StorefrontProps> = ({
 
   const [orderNumber, setOrderNumber] = useState('');
 
-  const addToCart = (product: typeof PREMADE_PRODUCTS[0]) => {
+  const addToCart = (product: any) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id);
       if (existing) {
@@ -266,20 +369,20 @@ export const Storefront: React.FC<StorefrontProps> = ({
       >
         <div style={{ position: 'relative', zIndex: 1, maxWidth: '640px', margin: '0 auto' }}>
           <span className="badge badge-gold" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            <Sparkles size={12} /> {hooksContent[hook].tagline}
+            <Sparkles size={12} /> {currentHooksContent[hook].tagline}
           </span>
           <h1 style={{ fontSize: '48px', margin: '16px 0', fontFamily: 'var(--font-serif)', lineHeight: 1.25 }}>
-            {hooksContent[hook].title}
+            {currentHooksContent[hook].title}
           </h1>
           <p style={{ fontSize: '16px', color: 'var(--text-secondary)', marginBottom: '32px' }}>
-            {hooksContent[hook].description}
+            {currentHooksContent[hook].description}
           </p>
           <button 
             className="btn btn-primary" 
             style={{ padding: '16px 36px', fontSize: '16px', fontWeight: 600 }}
             onClick={onLaunchBuilder}
           >
-            {hooksContent[hook].cta}
+            {currentHooksContent[hook].cta}
           </button>
         </div>
       </section>
@@ -287,7 +390,7 @@ export const Storefront: React.FC<StorefrontProps> = ({
       {/* Dynamic Features Cards */}
       <section style={{ marginBottom: '40px' }} className="animate-fade-in" key={`feat-${hook}`}>
         <div className="grid-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
-          {hooksContent[hook].features.map((feat, idx) => (
+          {currentHooksContent[hook].features.map((feat, idx) => (
             <div key={idx} className="card" style={{ padding: '24px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
               <h3 style={{ fontSize: '16px', color: 'var(--accent-gold)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Sparkles size={14} /> {feat.title}
@@ -313,10 +416,10 @@ export const Storefront: React.FC<StorefrontProps> = ({
           }}
         >
           <p style={{ fontSize: '15px', fontStyle: 'italic', color: 'var(--text-primary)', marginBottom: '16px', lineHeight: 1.6 }}>
-            "{hooksContent[hook].testimonial.quote}"
+            "{currentHooksContent[hook].testimonial.quote}"
           </p>
           <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--accent-gold)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
-            — {hooksContent[hook].testimonial.author}
+            — {currentHooksContent[hook].testimonial.author}
           </div>
         </div>
       </section>
@@ -324,10 +427,10 @@ export const Storefront: React.FC<StorefrontProps> = ({
       {/* Product Grid */}
       <section style={{ marginBottom: '60px' }}>
         <h2 style={{ fontSize: '28px', marginBottom: '24px', fontFamily: 'var(--font-serif)' }}>
-          {isPOS ? "BAD Floor Catalog: Pre-Made Basics" : "Explore BAD Basics"}
+          {demoMode ? "Explore Custom Craft Molds" : (isPOS ? "BAD Floor Catalog: Pre-Made Basics" : "Explore BAD Basics")}
         </h2>
         <div className="grid-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
-          {PREMADE_PRODUCTS.map((prod) => (
+          {productsList.map((prod) => (
             <div key={prod.id} className="card animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div 
                 style={{ 
@@ -562,9 +665,13 @@ export const Storefront: React.FC<StorefrontProps> = ({
                     }}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-gold)', fontWeight: 600 }}>
-                      <Shield size={14} /> Discrete Billing Enabled
+                      <Shield size={14} /> {demoMode ? "Order Processing Secure" : "Discrete Billing Enabled"}
                     </div>
-                    This transaction will appear on your card statement as <strong>"BAD WELLNESS LLC"</strong>. No adult toy references will be shown.
+                    {demoMode ? (
+                      <>This transaction will appear on your card statement as <strong>"BAD MOLD STUDIO"</strong>.</>
+                    ) : (
+                      <>This transaction will appear on your card statement as <strong>"BAD WELLNESS LLC"</strong>. No adult toy references will be shown.</>
+                    )}
                   </div>
                 )}
 
@@ -762,6 +869,8 @@ export const Storefront: React.FC<StorefrontProps> = ({
                 <div style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '400px', margin: '0 auto 24px auto', lineHeight: 1.6 }}>
                   {isPOS ? (
                     "Receipt has been printed. The physical custom order vector paths have been pushed to the CAD manufacturing queue."
+                  ) : demoMode ? (
+                    "Billed as 'BAD MOLD STUDIO'. A shipping confirmation containing your custom mold blueprints and order tracking information will be emailed to you shortly."
                   ) : (
                     "Billed as 'BAD Wellness LLC'. A shipping confirmation containing discrete tracking information will be emailed to you shortly."
                   )}

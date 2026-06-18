@@ -43,6 +43,195 @@ const calcNormal = (
   return { x: nx / len, y: ny / len, z: nz / len };
 };
 
+const smoothstep = (min: number, max: number, value: number): number => {
+  const x = Math.max(0, Math.min(1, (value - min) / (max - min)));
+  return x * x * (3 - 2 * x);
+};
+
+// Shared vertex generator mapping exactly to GPU shaders
+export const getParametricVertex = (
+  params: BuilderParams,
+  normY: number,
+  angle: number
+): { x: number; y: number; z: number } => {
+  const yVal = normY - 0.5;
+  
+  const uShapeType = 
+    params.shapeType === 'classic' ? 0.0 : 
+    params.shapeType === 'realistic' ? 1.0 : 
+    params.shapeType === 'fantasy' ? 2.0 : 
+    params.shapeType === 'targeted' ? 3.0 : 
+    params.shapeType === 'candle' ? 4.0 : 
+    params.shapeType === 'soap' ? 5.0 : 
+    params.shapeType === 'kitchen' ? 6.0 : 7.0;
+
+  const uBaseType = params.baseType === 'flared' ? 0.0 : params.baseType === 'flat' ? 1.0 : 2.0;
+  const uFantasyType = params.fantasyType === 'dragon' ? 0.0 : params.fantasyType === 'alien' ? 1.0 : 2.0;
+  const uGeometryStyle = params.baseGeometry === 'wave' ? 1.0 : params.baseGeometry === 'ergonomic' ? 2.0 : 0.0;
+  const uTaper = params.taper;
+
+  let shapeScale = params.shaftGirth;
+
+  if (uShapeType < 3.5) {
+    // Apply base profile
+    if (normY < 0.25) {
+      const t = normY / 0.25;
+      if (uBaseType === 0.0) {
+        // Flared Suction Cup
+        shapeScale = params.baseGirth * (1.0 - t) + params.shaftGirth * t;
+        if (params.suctionCup && normY < 0.1) {
+          const t2 = normY / 0.1;
+          const flare = Math.pow(1.0 - t2, 2.2);
+          shapeScale = params.baseGirth * (1.0 - flare) + (params.baseGirth * 2.3) * flare;
+        }
+      } else if (uBaseType === 1.0) {
+        // Flat base
+        shapeScale = params.baseGirth;
+      } else if (uBaseType === 2.0) {
+        // Harness collar
+        let groove = 0.0;
+        if (normY > 0.08 && normY < 0.22) {
+          const gt = (normY - 0.08) / 0.14;
+          groove = 0.22 * Math.sin(gt * Math.PI);
+        }
+        shapeScale = (params.baseGirth * (1.0 - t) + params.shaftGirth * t) - groove * params.shaftGirth;
+      }
+    } 
+    // Head curvature details (bulbous head & corona ridge)
+    else if (normY > 0.76) {
+      const t = (normY - 0.76) / 0.24;
+      let ridge = 0.0;
+      if (uShapeType === 1.0 || params.realisticGlans) {
+        // Realistic Glans
+        const cleft = 0.035 * Math.cos(angle * 2.0);
+        if (t < 0.25) {
+          ridge = 0.18 * Math.sin((t / 0.25) * Math.PI);
+        }
+        const dome = Math.sqrt(1.0 - Math.pow(t, 2.0));
+        shapeScale = (params.shaftGirth + ridge + cleft) * dome;
+      } else {
+        // Classic Glans
+        if (t < 0.25) {
+          ridge = 0.14 * Math.sin((t / 0.25) * Math.PI);
+        }
+        const dome = Math.sqrt(1.0 - Math.pow(t, 2.0));
+        shapeScale = (params.shaftGirth + ridge) * dome;
+      }
+    }
+  }
+
+  // Taper (applied continuously across the main shaft body)
+  const taperScale = (1.0 + uTaper * 0.20) * (1.0 - normY) + (1.0 - uTaper * 0.45) * normY;
+  shapeScale *= taperScale;
+
+  let basePos = { x: Math.cos(angle), y: yVal, z: Math.sin(angle) };
+
+  // Use Scenario shapes (Candle, Soap, Kitchenware, Collectible)
+  if (uShapeType === 4.0) {
+    // Candle: add longitudinal ridges, then apply spiral twist
+    shapeScale += 0.12 * Math.sin(angle * 6.0);
+  } else if (uShapeType === 5.0) {
+    // Soap: square/rectangular block with chamfered look
+    const cos4 = Math.cos(angle * 4.0);
+    shapeScale *= (1.0 - 0.16 * cos4);
+    if (normY < 0.15) {
+      shapeScale *= smoothstep(0.0, 1.0, normY / 0.15);
+    }
+    if (normY > 0.85) {
+      shapeScale *= smoothstep(0.0, 1.0, (1.0 - normY) / 0.15);
+    }
+  } else if (uShapeType === 6.0) {
+    // Kitchenware (Muffin baking cup)
+    shapeScale = params.shaftGirth * (0.7 + normY * 0.9);
+    shapeScale += 0.07 * Math.sin(angle * 18.0) * (0.2 + normY * 0.8);
+    if (normY < 0.1) {
+      shapeScale *= smoothstep(0.0, 1.0, normY / 0.1);
+    }
+  } else if (uShapeType === 7.0) {
+    // Collectible
+    let profile = 1.0;
+    if (normY < 0.45) {
+      profile = 1.25 - 0.5 * (normY / 0.45);
+    } else if (normY < 0.6) {
+      profile = 0.75;
+    } else {
+      const t = (normY - 0.6) / 0.4;
+      profile = 0.75 + 0.55 * Math.sin(t * Math.PI);
+    }
+    shapeScale = params.shaftGirth * profile;
+    
+    const octAngle = Math.floor(angle * 8.0 / (Math.PI * 2) + 0.5) * (Math.PI * 2) / 8.0;
+    basePos.x = Math.cos(octAngle);
+    basePos.z = Math.sin(octAngle);
+  }
+  // Standard shape styles
+  else if (uShapeType === 2.0) {
+    // Fantasy geometries
+    if (normY >= 0.25 && normY <= 0.76) {
+      if (uFantasyType === 0.0) {
+        // Dragon: ridged nodes + scales
+        const dragonKnot = 0.14 * Math.sin(yVal * 2.5);
+        const scaleBump = 0.07 * Math.cos(angle * 5.0 + yVal * 9.0);
+        shapeScale += dragonKnot + scaleBump;
+      } else if (uFantasyType === 1.0) {
+        // Alien: egg nodes + ribs
+        const alienRidge = 0.16 * Math.sin(yVal * 3.5);
+        const alienBumps = 0.04 * Math.sin(angle * 3.0 + yVal * 2.0);
+        shapeScale += alienRidge + alienBumps;
+      } else if (uFantasyType === 2.0) {
+        // Tentacle: spiral rings
+        const spiral = Math.sin(yVal * 5.5 - angle * 2.0);
+        shapeScale += 0.12 * smoothstep(0.0, 1.0, spiral);
+      }
+    }
+  } else {
+    if (uGeometryStyle > 0.5 && uGeometryStyle < 1.5) {
+      // Wave
+      if (normY >= 0.25 && normY <= 0.76) {
+        shapeScale += Math.sin((normY - 0.25) * 22.0) * 0.07;
+      }
+    } else if (uGeometryStyle > 1.5) {
+      // Ergonomic
+      if (normY > 0.4 && normY < 0.76) {
+        shapeScale -= Math.sin((normY - 0.4) / 0.36 * Math.PI) * 0.14;
+      }
+    }
+  }
+
+  let x = basePos.x * shapeScale;
+  let z = basePos.z * shapeScale;
+
+  // Twist for Candle
+  if (uShapeType === 4.0) {
+    const theta = normY * Math.PI * 2.0; 
+    const c = Math.cos(theta);
+    const s = Math.sin(theta);
+    const rx = x * c - z * s;
+    const rz = x * s + z * c;
+    x = rx;
+    z = rz;
+  }
+
+  // Oval flat-head shaping for ergonomic curve / targeted
+  if ((uGeometryStyle > 1.5 || uShapeType === 3.0) && normY > 0.6) {
+    const flatFactor = (normY - 0.6) / 0.4;
+    z *= (1.0 - flatFactor * 0.28);
+    x *= (1.0 + flatFactor * 0.18);
+  }
+
+  // Curvature bend along X
+  let bentX = x;
+  if (normY > 0.25) {
+    const curveT = (normY - 0.25) / 0.75;
+    bentX += Math.pow(curveT, 3.0) * params.curvature * 1.9;
+  }
+
+  // Scale height
+  const yFinal = yVal * params.length;
+
+  return { x: bentX, y: yFinal, z };
+};
+
 // 1. STANDARD TOY STL GENERATOR
 export const generateToySTL = (params: BuilderParams): string => {
   const radialSegments = 32;
@@ -52,116 +241,15 @@ export const generateToySTL = (params: BuilderParams): string => {
   const indices: number[][] = [];
   
   const length = params.length;
-  const shaftGirth = params.shaftGirth;
-  const baseGirth = params.baseGirth;
   const curvature = params.curvature;
-  const uTaper = params.taper;
-  const geometryStyle = params.baseGeometry === 'wave' ? 1.0 : params.baseGeometry === 'ergonomic' ? 2.0 : 0.0;
-  const baseType = params.baseType === 'flared' ? 0.0 : params.baseType === 'flat' ? 1.0 : 2.0;
-  const shapeType = params.shapeType;
-  const fantasyType = params.fantasyType;
 
-  // Generate cylinder vertices
+  // Generate cylinder vertices using shared helper
   for (let yIndex = 0; yIndex <= heightSegments; yIndex++) {
     const normY = yIndex / heightSegments;
-    const yVal = (normY - 0.5) * length;
-    
-    let shapeScale = shaftGirth;
-    
-    // Base profiles
-    if (normY < 0.25) {
-      const t = normY / 0.25;
-      if (baseType === 0.0) { // flared
-        shapeScale = baseGirth * (1.0 - t) + shaftGirth * t;
-        if (params.suctionCup && normY < 0.1) {
-          const t2 = normY / 0.1;
-          const flare = Math.pow(1.0 - t2, 2.2);
-          shapeScale = baseGirth * (1.0 - flare) + (baseGirth * 2.3) * flare;
-        }
-      } else if (baseType === 1.0) { // flat
-        shapeScale = baseGirth;
-      } else if (baseType === 2.0) { // harness
-        let groove = 0.0;
-        if (normY > 0.08 && normY < 0.22) {
-          const gt = (normY - 0.08) / 0.14;
-          groove = 0.22 * Math.sin(gt * Math.PI);
-        }
-        shapeScale = (baseGirth * (1.0 - t) + shaftGirth * t) - groove * shaftGirth;
-      }
-    } 
-    // Head profiles
-    else if (normY > 0.76) {
-      const t = (normY - 0.76) / 0.24;
-      let ridge = 0.0;
-      if (shapeType === 'realistic' || params.realisticGlans) {
-        if (t < 0.25) {
-          ridge = 0.18 * Math.sin((t / 0.25) * Math.PI);
-        }
-        const dome = Math.sqrt(1.0 - Math.pow(t, 2.0));
-        shapeScale = (shaftGirth + ridge) * dome;
-      } else {
-        if (t < 0.25) {
-          ridge = 0.14 * Math.sin((t / 0.25) * Math.PI);
-        }
-        const dome = Math.sqrt(1.0 - Math.pow(t, 2.0));
-        shapeScale = (shaftGirth + ridge) * dome;
-      }
-    }
-
-    // Taper
-    const taperScale = (1.0 + uTaper * 0.20) * (1.0 - normY) + (1.0 - uTaper * 0.45) * normY;
-    shapeScale *= taperScale;
-
-    // Fantasy profiles
-    if (shapeType === 'fantasy') {
-      if (normY >= 0.25 && normY <= 0.76) {
-        if (fantasyType === 'dragon') {
-          const dragonKnot = 0.14 * Math.sin(yVal * 2.5);
-          shapeScale += dragonKnot;
-        } else if (fantasyType === 'alien') {
-          const alienRidge = 0.16 * Math.sin(yVal * 3.5);
-          shapeScale += alienRidge;
-        } else if (fantasyType === 'tentacle') {
-          const spiral = Math.sin(yVal * 5.5);
-          shapeScale += 0.12 * Math.max(spiral, 0.0);
-        }
-      }
-    } else {
-      if (geometryStyle === 1.0) { // wave
-        if (normY >= 0.25 && normY <= 0.76) {
-          shapeScale += Math.sin((normY - 0.25) * 22.0) * 0.07;
-        }
-      } else if (geometryStyle === 2.0) { // ergonomic
-        if (normY > 0.4 && normY < 0.76) {
-          shapeScale -= Math.sin((normY - 0.4) / 0.36 * Math.PI) * 0.14;
-        }
-      }
-    }
-
     for (let xIndex = 0; xIndex < radialSegments; xIndex++) {
       const angle = (xIndex / radialSegments) * Math.PI * 2;
-      let x = Math.cos(angle) * shapeScale;
-      let z = Math.sin(angle) * shapeScale;
-      
-      if (normY > 0.76 && (shapeType === 'realistic' || params.realisticGlans)) {
-        const cleft = 0.035 * Math.cos(angle * 2.0);
-        x += cleft * Math.cos(angle);
-        z += cleft * Math.sin(angle);
-      }
-
-      if ((geometryStyle === 2.0 || shapeType === 'targeted') && normY > 0.6) {
-        const flatFactor = (normY - 0.6) / 0.4;
-        z *= (1.0 - flatFactor * 0.28);
-        x *= (1.0 + flatFactor * 0.18);
-      }
-
-      let bentX = x;
-      if (normY > 0.25) {
-        const curveT = (normY - 0.25) / 0.75;
-        bentX += Math.pow(curveT, 3.0) * curvature * 1.9;
-      }
-
-      vertices.push({ x: bentX, y: yVal, z: z });
+      const v = getParametricVertex(params, normY, angle);
+      vertices.push(v);
     }
   }
 
@@ -238,14 +326,8 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
   const heightSegments = 64;
   
   const length = params.length;
-  const shaftGirth = params.shaftGirth;
   const baseGirth = params.baseGirth;
   const curvature = params.curvature;
-  const uTaper = params.taper;
-  const geometryStyle = params.baseGeometry === 'wave' ? 1.0 : params.baseGeometry === 'ergonomic' ? 2.0 : 0.0;
-  const baseType = params.baseType === 'flared' ? 0.0 : params.baseType === 'flat' ? 1.0 : 2.0;
-  const shapeType = params.shapeType;
-  const fantasyType = params.fantasyType;
 
   // Bounding Box Dimensions
   const yMin = -0.5 * length - 0.6;
@@ -254,103 +336,15 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
   const xMax = baseGirth * 1.6 + 0.4;
   const zMax = baseGirth * 1.6 + 0.4; // Box depth
 
-  // Generate dildo profile vertices
+  // Generate dildo profile vertices using shared helper
   const dildoVertices: { x: number; y: number; z: number }[][] = [];
   for (let yIndex = 0; yIndex <= heightSegments; yIndex++) {
     const normY = yIndex / heightSegments;
-    const yVal = (normY - 0.5) * length;
-    
-    let shapeScale = shaftGirth;
-    
-    // Base profiles
-    if (normY < 0.25) {
-      const t = normY / 0.25;
-      if (baseType === 0.0) {
-        shapeScale = baseGirth * (1.0 - t) + shaftGirth * t;
-        if (params.suctionCup && normY < 0.1) {
-          const t2 = normY / 0.1;
-          const flare = Math.pow(1.0 - t2, 2.2);
-          shapeScale = baseGirth * (1.0 - flare) + (baseGirth * 2.3) * flare;
-        }
-      } else if (baseType === 1.0) {
-        shapeScale = baseGirth;
-      } else if (baseType === 2.0) {
-        let groove = 0.0;
-        if (normY > 0.08 && normY < 0.22) {
-          const gt = (normY - 0.08) / 0.14;
-          groove = 0.22 * Math.sin(gt * Math.PI);
-        }
-        shapeScale = (baseGirth * (1.0 - t) + shaftGirth * t) - groove * shaftGirth;
-      }
-    } 
-    else if (normY > 0.76) {
-      const t = (normY - 0.76) / 0.24;
-      let ridge = 0.0;
-      if (shapeType === 'realistic' || params.realisticGlans) {
-        if (t < 0.25) {
-          ridge = 0.18 * Math.sin((t / 0.25) * Math.PI);
-        }
-        const dome = Math.sqrt(1.0 - Math.pow(t, 2.0));
-        shapeScale = (shaftGirth + ridge) * dome;
-      } else {
-        if (t < 0.25) {
-          ridge = 0.14 * Math.sin((t / 0.25) * Math.PI);
-        }
-        const dome = Math.sqrt(1.0 - Math.pow(t, 2.0));
-        shapeScale = (shaftGirth + ridge) * dome;
-      }
-    }
-
-    const taperScale = (1.0 + uTaper * 0.20) * (1.0 - normY) + (1.0 - uTaper * 0.45) * normY;
-    shapeScale *= taperScale;
-
-    if (shapeType === 'fantasy') {
-      if (normY >= 0.25 && normY <= 0.76) {
-        if (fantasyType === 'dragon') {
-          shapeScale += 0.14 * Math.sin(yVal * 2.5);
-        } else if (fantasyType === 'alien') {
-          shapeScale += 0.16 * Math.sin(yVal * 3.5);
-        } else if (fantasyType === 'tentacle') {
-          shapeScale += 0.12 * Math.max(Math.sin(yVal * 5.5), 0.0);
-        }
-      }
-    } else {
-      if (geometryStyle === 1.0) {
-        if (normY >= 0.25 && normY <= 0.76) {
-          shapeScale += Math.sin((normY - 0.25) * 22.0) * 0.07;
-        }
-      } else if (geometryStyle === 2.0) {
-        if (normY > 0.4 && normY < 0.76) {
-          shapeScale -= Math.sin((normY - 0.4) / 0.36 * Math.PI) * 0.14;
-        }
-      }
-    }
-
     const ring: { x: number; y: number; z: number }[] = [];
     for (let xIndex = 0; xIndex <= radialSegments; xIndex++) {
       const angle = (xIndex / radialSegments) * Math.PI * 2;
-      let x = Math.cos(angle) * shapeScale;
-      let z = Math.sin(angle) * shapeScale;
-      
-      if (normY > 0.76 && (shapeType === 'realistic' || params.realisticGlans)) {
-        const cleft = 0.035 * Math.cos(angle * 2.0);
-        x += cleft * Math.cos(angle);
-        z += cleft * Math.sin(angle);
-      }
-
-      if ((geometryStyle === 2.0 || shapeType === 'targeted') && normY > 0.6) {
-        const flatFactor = (normY - 0.6) / 0.4;
-        z *= (1.0 - flatFactor * 0.28);
-        x *= (1.0 + flatFactor * 0.18);
-      }
-
-      let bentX = x;
-      if (normY > 0.25) {
-        const curveT = (normY - 0.25) / 0.75;
-        bentX += Math.pow(curveT, 3.0) * curvature * 1.9;
-      }
-
-      ring.push({ x: bentX, y: yVal, z: z });
+      const v = getParametricVertex(params, normY, angle);
+      ring.push(v);
     }
     dildoVertices.push(ring);
   }
@@ -364,9 +358,6 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
   };
 
   // Generate the internal cavity (hollow negative shape of the dildo)
-  // We only render half of the dildo cylinder.
-  // Front half: z >= 0 (xIndex from 0 to radialSegments/2)
-  // Back half: z <= 0 (xIndex from radialSegments/2 to radialSegments)
   const isFront = side === 'front';
   const startX = isFront ? 0 : radialSegments / 2;
   const endX = isFront ? radialSegments / 2 : radialSegments;
@@ -379,7 +370,7 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
       const p01 = dildoVertices[y + 1][x];
       const p11 = dildoVertices[y + 1][nextX];
 
-      // Reverse normals (cavity faces inward, so p00->p01->p11 instead of p00->p11->p01)
+      // Reverse normals (cavity faces inward)
       if (isFront) {
         addFacet(p00, p01, p11);
         addFacet(p00, p11, p10);
@@ -417,10 +408,6 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
   }
 
   // Draw the backing mold block box
-  // The block sits at:
-  // x: [xMin, xMax]
-  // y: [yMin, yMax]
-  // z: Front mold box is [0, zMax], Back mold box is [-zMax, 0]
   const zSign = isFront ? 1.0 : -1.0;
   const zBlockValue = zSign * zMax;
 
@@ -482,19 +469,11 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
   }
 
   // Triangulate the flat split interface plane at z = 0
-  // Connect outer box rectangle corners (c000, c100, c110, c010) to the dildo profile loop
-  // The dildo profile loop is the curve made of dildoVertices at xIndex = startX and xIndex = endX.
-  // For front side, startX is 0 (angle = 0, x = positive shaft profile, z = 0) and endX is 16 (angle = pi, x = negative shaft profile, z = 0).
-  // This split plane connects these outline points to the outer box corners.
-  
-  // Left half split plane
   const outerLeftBot = c000;
   const outerLeftTop = c010;
-  // Right half split plane
   const outerRightBot = c100;
   const outerRightTop = c110;
 
-  // Let's connect outline points at angle 0 and angle PI to cap the split interface cleanly
   for (let y = 0; y < heightSegments; y++) {
     const pLeft0 = dildoVertices[y][endX];
     const pLeft1 = dildoVertices[y + 1][endX];

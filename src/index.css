@@ -60,6 +60,27 @@ body.discretion-mode {
   --shadow-glow: none;
 }
 
+/* Demo Mode Override Variables (Summer Bright Blues, Intense Yellows, Hot Pink, and Off-White) */
+body.demo-mode {
+  --bg-primary: #fcfbf7; 
+  --bg-secondary: #ffffff; 
+  --bg-tertiary: #f1f5f9; 
+  --bg-glass: rgba(255, 255, 255, 0.85);
+  --border-color: rgba(15, 23, 42, 0.08);
+  --border-focus: rgba(14, 165, 233, 0.5); 
+
+  --accent-gold: #0ea5e9; 
+  --accent-gold-hover: #0284c7;
+  --accent-crimson: #ec4899; 
+  --accent-pink: #facc15; 
+
+  --text-primary: #0f172a; 
+  --text-secondary: #475569; 
+  --text-muted: #94a3b8; 
+  
+  --shadow-glow: 0 0 20px rgba(14, 165, 233, 0.12);
+}
+
 /* Reset & Base Styles */
 * {
   box-sizing: border-box;

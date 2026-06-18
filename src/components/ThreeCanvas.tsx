@@ -35,6 +35,7 @@ interface BuilderParams {
 
 interface ThreeCanvasProps {
   params: BuilderParams;
+  demoMode: boolean;
 }
 
 // Sleek glass smartphone model acting as a 1:1 real-world scale reference (iPhone dimensions: 5.78" x 2.82" x 0.3")
@@ -73,7 +74,7 @@ const ScaleReferenceDevice: React.FC = () => {
   );
 };
 
-export const CustomToyMesh: React.FC<{ params: BuilderParams }> = ({ params }) => {
+export const CustomToyMesh: React.FC<{ params: BuilderParams; demoMode?: boolean }> = ({ params }) => {
   const meshRef = useRef<THREE.Mesh>(null);
   const outerMaterialRef = useRef<THREE.ShaderMaterial>(null);
   const innerMaterialRef = useRef<THREE.ShaderMaterial>(null);
@@ -108,7 +109,15 @@ export const CustomToyMesh: React.FC<{ params: BuilderParams }> = ({ params }) =
       
       // New uniforms
       uMeshType: { value: meshType },
-      uShapeType: { value: params.shapeType === 'classic' ? 0.0 : params.shapeType === 'realistic' ? 1.0 : params.shapeType === 'fantasy' ? 2.0 : 3.0 },
+      uShapeType: { value: 
+        params.shapeType === 'classic' ? 0.0 : 
+        params.shapeType === 'realistic' ? 1.0 : 
+        params.shapeType === 'fantasy' ? 2.0 : 
+        params.shapeType === 'targeted' ? 3.0 : 
+        params.shapeType === 'candle' ? 4.0 : 
+        params.shapeType === 'soap' ? 5.0 : 
+        params.shapeType === 'kitchen' ? 6.0 : 7.0 
+      },
       uRealisticVeins: { value: params.realisticVeins },
       uRealisticGlans: { value: params.realisticGlans ? 1.0 : 0.0 },
       uFantasyType: { value: params.fantasyType === 'dragon' ? 0.0 : params.fantasyType === 'alien' ? 1.0 : 2.0 },
@@ -144,7 +153,14 @@ export const CustomToyMesh: React.FC<{ params: BuilderParams }> = ({ params }) =
     u.uVibration.value = params.isVibrating ? 1.0 : 0.0;
     
     u.uMeshType.value = meshType;
-    u.uShapeType.value = params.shapeType === 'classic' ? 0.0 : params.shapeType === 'realistic' ? 1.0 : params.shapeType === 'fantasy' ? 2.0 : 3.0;
+    u.uShapeType.value = 
+      params.shapeType === 'classic' ? 0.0 : 
+      params.shapeType === 'realistic' ? 1.0 : 
+      params.shapeType === 'fantasy' ? 2.0 : 
+      params.shapeType === 'targeted' ? 3.0 : 
+      params.shapeType === 'candle' ? 4.0 : 
+      params.shapeType === 'soap' ? 5.0 : 
+      params.shapeType === 'kitchen' ? 6.0 : 7.0;
     u.uRealisticVeins.value = params.realisticVeins;
     u.uRealisticGlans.value = params.realisticGlans ? 1.0 : 0.0;
     u.uFantasyType.value = params.fantasyType === 'dragon' ? 0.0 : params.fantasyType === 'alien' ? 1.0 : 2.0;
@@ -188,7 +204,14 @@ export const CustomToyMesh: React.FC<{ params: BuilderParams }> = ({ params }) =
       u.uVibration.value = params.isVibrating ? 1.0 : 0.0;
       
       u.uMeshType.value = meshType;
-      u.uShapeType.value = params.shapeType === 'classic' ? 0.0 : params.shapeType === 'realistic' ? 1.0 : params.shapeType === 'fantasy' ? 2.0 : 3.0;
+      u.uShapeType.value = 
+        params.shapeType === 'classic' ? 0.0 : 
+        params.shapeType === 'realistic' ? 1.0 : 
+        params.shapeType === 'fantasy' ? 2.0 : 
+        params.shapeType === 'targeted' ? 3.0 : 
+        params.shapeType === 'candle' ? 4.0 : 
+        params.shapeType === 'soap' ? 5.0 : 
+        params.shapeType === 'kitchen' ? 6.0 : 7.0;
       u.uRealisticVeins.value = params.realisticVeins;
       u.uRealisticGlans.value = params.realisticGlans ? 1.0 : 0.0;
       u.uFantasyType.value = params.fantasyType === 'dragon' ? 0.0 : params.fantasyType === 'alien' ? 1.0 : 2.0;
@@ -263,51 +286,53 @@ export const CustomToyMesh: React.FC<{ params: BuilderParams }> = ({ params }) =
       // Base flare / Suction Cup / Harness ring / Flat Base
       float shapeScale = uShaftGirth;
       
-      // Apply base profile
-      if (normY < 0.25) {
-        float t = normY / 0.25;
-        if (uBaseType == 0.0) {
-          // Flared Suction Cup
-          shapeScale = mix(uBaseGirth, uShaftGirth, t);
-          if (uSuctionCup > 0.5 && normY < 0.1) {
-            float t2 = normY / 0.1;
-            float flare = pow(1.0 - t2, 2.2);
-            shapeScale = mix(uBaseGirth, uBaseGirth * 2.3, flare);
+      if (uShapeType < 3.5) {
+        // Apply base profile
+        if (normY < 0.25) {
+          float t = normY / 0.25;
+          if (uBaseType == 0.0) {
+            // Flared Suction Cup
+            shapeScale = mix(uBaseGirth, uShaftGirth, t);
+            if (uSuctionCup > 0.5 && normY < 0.1) {
+              float t2 = normY / 0.1;
+              float flare = pow(1.0 - t2, 2.2);
+              shapeScale = mix(uBaseGirth, uBaseGirth * 2.3, flare);
+            }
+          } else if (uBaseType == 1.0) {
+            // Flat base
+            shapeScale = uBaseGirth;
+          } else if (uBaseType == 2.0) {
+            // Harness collar
+            float groove = 0.0;
+            if (normY > 0.08 && normY < 0.22) {
+              float gt = (normY - 0.08) / 0.14;
+              groove = 0.22 * sin(gt * 3.14159);
+            }
+            shapeScale = mix(uBaseGirth, uShaftGirth, t) - groove * uShaftGirth;
           }
-        } else if (uBaseType == 1.0) {
-          // Flat base
-          shapeScale = uBaseGirth;
-        } else if (uBaseType == 2.0) {
-          // Harness collar
-          float groove = 0.0;
-          if (normY > 0.08 && normY < 0.22) {
-            float gt = (normY - 0.08) / 0.14;
-            groove = 0.22 * sin(gt * 3.14159);
+        } 
+        // Head curvature details (bulbous head & corona ridge)
+        else if (normY > 0.76) {
+          float t = (normY - 0.76) / 0.24;
+          float ridge = 0.0;
+          
+          if (uShapeType == 1.0 || uRealisticGlans > 0.5) {
+            // Realistic Glans
+            float angle = atan(pos.z, pos.x);
+            float cleft = 0.035 * cos(angle * 2.0);
+            if (t < 0.25) {
+              ridge = 0.18 * sin((t / 0.25) * 3.14159);
+            }
+            float dome = sqrt(1.0 - pow(t, 2.0));
+            shapeScale = (uShaftGirth + ridge + cleft) * dome;
+          } else {
+            // Classic Glans
+            if (t < 0.25) {
+              ridge = 0.14 * sin((t / 0.25) * 3.14159);
+            }
+            float dome = sqrt(1.0 - pow(t, 2.0));
+            shapeScale = (uShaftGirth + ridge) * dome;
           }
-          shapeScale = mix(uBaseGirth, uShaftGirth, t) - groove * uShaftGirth;
-        }
-      } 
-      // Head curvature details (bulbous head & corona ridge)
-      else if (normY > 0.76) {
-        float t = (normY - 0.76) / 0.24;
-        float ridge = 0.0;
-        
-        if (uShapeType == 1.0 || uRealisticGlans > 0.5) {
-          // Realistic Glans
-          float angle = atan(pos.z, pos.x);
-          float cleft = 0.035 * cos(angle * 2.0);
-          if (t < 0.25) {
-            ridge = 0.18 * sin((t / 0.25) * 3.14159);
-          }
-          float dome = sqrt(1.0 - pow(t, 2.0));
-          shapeScale = (uShaftGirth + ridge + cleft) * dome;
-        } else {
-          // Classic Glans
-          if (t < 0.25) {
-            ridge = 0.14 * sin((t / 0.25) * 3.14159);
-          }
-          float dome = sqrt(1.0 - pow(t, 2.0));
-          shapeScale = (uShaftGirth + ridge) * dome;
         }
       }
 
@@ -315,8 +340,50 @@ export const CustomToyMesh: React.FC<{ params: BuilderParams }> = ({ params }) =
       float taperScale = mix(1.0 + uTaper * 0.20, 1.0 - uTaper * 0.45, normY);
       shapeScale *= taperScale;
 
-      // Geometry styles (Waves / G-spot necking / Fantasy types)
-      if (uShapeType == 2.0) {
+      // Use Scenario shapes (Candle, Soap, Kitchenware, Collectible)
+      if (uShapeType == 4.0) {
+        // Candle: add longitudinal ridges, then apply spiral twist
+        float angle = atan(pos.z, pos.x);
+        shapeScale += 0.12 * sin(angle * 6.0);
+      } else if (uShapeType == 5.0) {
+        // Soap: square/rectangular block with chamfered look
+        float angle = atan(pos.z, pos.x);
+        float cos4 = cos(angle * 4.0);
+        shapeScale *= (1.0 - 0.16 * cos4);
+        if (normY < 0.15) {
+          shapeScale *= smoothstep(0.0, 1.0, normY / 0.15);
+        }
+        if (normY > 0.85) {
+          shapeScale *= smoothstep(0.0, 1.0, (1.0 - normY) / 0.15);
+        }
+      } else if (uShapeType == 6.0) {
+        // Kitchenware (Muffin baking cup)
+        float angle = atan(pos.z, pos.x);
+        shapeScale = uShaftGirth * (0.7 + normY * 0.9);
+        shapeScale += 0.07 * sin(angle * 18.0) * (0.2 + normY * 0.8);
+        if (normY < 0.1) {
+          shapeScale *= smoothstep(0.0, 1.0, normY / 0.1);
+        }
+      } else if (uShapeType == 7.0) {
+        // Collectible
+        float profile = 1.0;
+        if (normY < 0.45) {
+          profile = 1.25 - 0.5 * (normY / 0.45);
+        } else if (normY < 0.6) {
+          profile = 0.75;
+        } else {
+          float t = (normY - 0.6) / 0.4;
+          profile = 0.75 + 0.55 * sin(t * 3.14159);
+        }
+        shapeScale = uShaftGirth * profile;
+        
+        float angle = atan(pos.z, pos.x);
+        float octAngle = floor(angle * 8.0 / 6.28318 + 0.5) * 6.28318 / 8.0;
+        pos.x = cos(octAngle);
+        pos.z = sin(octAngle);
+      }
+      // Standard shape styles
+      else if (uShapeType == 2.0) {
         // Fantasy geometries
         if (normY >= 0.25 && normY <= 0.76) {
           float angle = atan(pos.z, pos.x);
@@ -337,7 +404,6 @@ export const CustomToyMesh: React.FC<{ params: BuilderParams }> = ({ params }) =
           }
         }
       } else {
-        // Standard shape styles
         if (uGeometryStyle > 0.5 && uGeometryStyle < 1.5) {
           // Wave
           if (normY >= 0.25 && normY <= 0.76) {
@@ -368,6 +434,17 @@ export const CustomToyMesh: React.FC<{ params: BuilderParams }> = ({ params }) =
 
       pos.x *= shapeScale;
       pos.z *= shapeScale;
+
+      // Twist twist for Candle
+      if (uShapeType == 4.0) {
+        float theta = normY * 3.14159 * 2.0; 
+        float c = cos(theta);
+        float s = sin(theta);
+        float rx = pos.x * c - pos.z * s;
+        float rz = pos.x * s + pos.z * c;
+        pos.x = rx;
+        pos.z = rz;
+      }
 
       // Oval flat-head shaping for ergonomic curve / targeted
       if ((uGeometryStyle > 1.5 || uShapeType == 3.0) && normY > 0.6) {
@@ -774,6 +851,14 @@ export const CustomToyMesh: React.FC<{ params: BuilderParams }> = ({ params }) =
           </mesh>
         </>
       )}
+
+      {/* Candle Wick (only rendered if shapeType is 'candle') */}
+      {params.shapeType === 'candle' && (
+        <mesh position={[params.curvature * 1.9, params.length / 2 + 0.2, 0]}>
+          <cylinderGeometry args={[0.02, 0.02, 0.4, 8]} />
+          <meshStandardMaterial color="#2d2d30" roughness={0.8} />
+        </mesh>
+      )}
     </group>
   );
 };
@@ -1002,7 +1087,7 @@ const CustomGridHelper: React.FC<{ length: number }> = ({ length }) => {
   );
 };
 
-const ScreenshotTaker: React.FC<{ params: BuilderParams }> = ({ params }) => {
+const ScreenshotTaker: React.FC<{ params: BuilderParams; demoMode: boolean }> = ({ params, demoMode }) => {
   const { gl, scene, camera } = useThree();
 
   useEffect(() => {
@@ -1020,19 +1105,33 @@ const ScreenshotTaker: React.FC<{ params: BuilderParams }> = ({ params }) => {
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        // 1. Luxury Dark Gradient Background
-        const bgGrad = ctx.createLinearGradient(0, 0, 0, 1800);
-        bgGrad.addColorStop(0, '#131317');
-        bgGrad.addColorStop(0.75, '#0a0a0c');
-        bgGrad.addColorStop(1, '#050507');
-        ctx.fillStyle = bgGrad;
-        ctx.fillRect(0, 0, 2400, 1800);
+        if (demoMode) {
+          const bgGrad = ctx.createLinearGradient(0, 0, 0, 1800);
+          bgGrad.addColorStop(0, '#fefefe');
+          bgGrad.addColorStop(0.75, '#fcfbf7');
+          bgGrad.addColorStop(1, '#f5f4ef');
+          ctx.fillStyle = bgGrad;
+          ctx.fillRect(0, 0, 2400, 1800);
 
-        // 2. Subtle background light focus glow
-        ctx.fillStyle = 'rgba(212, 175, 55, 0.02)';
-        ctx.beginPath();
-        ctx.arc(1200, 700, 600, 0, Math.PI * 2);
-        ctx.fill();
+          ctx.fillStyle = 'rgba(14, 165, 233, 0.03)';
+          ctx.beginPath();
+          ctx.arc(1200, 700, 600, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Luxury Dark Gradient Background
+          const bgGrad = ctx.createLinearGradient(0, 0, 0, 1800);
+          bgGrad.addColorStop(0, '#131317');
+          bgGrad.addColorStop(0.75, '#0a0a0c');
+          bgGrad.addColorStop(1, '#050507');
+          ctx.fillStyle = bgGrad;
+          ctx.fillRect(0, 0, 2400, 1800);
+
+          // Subtle background light focus glow
+          ctx.fillStyle = 'rgba(212, 175, 55, 0.02)';
+          ctx.beginPath();
+          ctx.arc(1200, 700, 600, 0, Math.PI * 2);
+          ctx.fill();
+        }
 
         // 3. Draw WebGL Render Image (resize/center inside viewport)
         const webglWidth = img.width;
@@ -1052,30 +1151,52 @@ const ScreenshotTaker: React.FC<{ params: BuilderParams }> = ({ params }) => {
         ctx.drawImage(img, drawX, drawY, drawW, drawH);
 
         // 4. Draw luxury Gold specifications card at the bottom
-        ctx.fillStyle = 'rgba(18, 18, 20, 0.95)';
-        ctx.fillRect(80, 1330, 2240, 390);
-        
-        ctx.strokeStyle = 'rgba(212, 175, 55, 0.35)';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(80, 1330, 2240, 390);
+        if (demoMode) {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
+          ctx.fillRect(80, 1330, 2240, 390);
+          
+          ctx.strokeStyle = 'rgba(14, 165, 233, 0.4)';
+          ctx.lineWidth = 3;
+          ctx.strokeRect(80, 1330, 2240, 390);
 
-        ctx.strokeStyle = 'rgba(212, 175, 55, 0.15)';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(86, 1336, 2228, 378);
+          ctx.strokeStyle = 'rgba(236, 72, 153, 0.15)';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(86, 1336, 2228, 378);
 
-        // Header and scaling tag
-        ctx.fillStyle = '#d4af37';
-        ctx.font = 'bold 36px Georgia, serif';
-        ctx.fillText('BAD PLATFORM  |  CAD SPECIFICATION SHEET', 130, 1400);
+          ctx.fillStyle = '#0ea5e9';
+          ctx.font = 'bold 36px Georgia, serif';
+          ctx.fillText('BAD MOLD STUDIO  |  CAD SPECIFICATION SHEET', 130, 1400);
 
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-        ctx.font = 'bold 18px system-ui, sans-serif';
-        ctx.textAlign = 'right';
-        ctx.fillText('TRUE-TO-LIFE 1:1 PHYSICAL SCALE PREVIEW', 2210, 1400);
-        ctx.textAlign = 'left';
+          ctx.fillStyle = 'rgba(71, 85, 105, 0.6)';
+          ctx.font = 'bold 18px system-ui, sans-serif';
+          ctx.textAlign = 'right';
+          ctx.fillText('TRUE-TO-LIFE 1:1 PHYSICAL SCALE PREVIEW', 2210, 1400);
+          ctx.textAlign = 'left';
+        } else {
+          ctx.fillStyle = 'rgba(18, 18, 20, 0.95)';
+          ctx.fillRect(80, 1330, 2240, 390);
+          
+          ctx.strokeStyle = 'rgba(212, 175, 55, 0.35)';
+          ctx.lineWidth = 3;
+          ctx.strokeRect(80, 1330, 2240, 390);
+
+          ctx.strokeStyle = 'rgba(212, 175, 55, 0.15)';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(86, 1336, 2228, 378);
+
+          ctx.fillStyle = '#d4af37';
+          ctx.font = 'bold 36px Georgia, serif';
+          ctx.fillText('BAD PLATFORM  |  CAD SPECIFICATION SHEET', 130, 1400);
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+          ctx.font = 'bold 18px system-ui, sans-serif';
+          ctx.textAlign = 'right';
+          ctx.fillText('TRUE-TO-LIFE 1:1 PHYSICAL SCALE PREVIEW', 2210, 1400);
+          ctx.textAlign = 'left';
+        }
 
         // Split Divider line
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.strokeStyle = demoMode ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255, 255, 255, 0.08)';
         ctx.beginPath();
         ctx.moveTo(130, 1425);
         ctx.lineTo(2270, 1425);
@@ -1086,64 +1207,136 @@ const ScreenshotTaker: React.FC<{ params: BuilderParams }> = ({ params }) => {
         const rowH = 34;
 
         const drawColValue = (title: string, value: string, x: number, y: number) => {
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+          ctx.fillStyle = demoMode ? 'rgba(71, 85, 105, 0.7)' : 'rgba(255, 255, 255, 0.4)';
           ctx.font = '17px system-ui, sans-serif';
           ctx.fillText(title + ':', x, y);
 
-          ctx.fillStyle = '#f3f4f6';
+          ctx.fillStyle = demoMode ? '#0f172a' : '#f3f4f6';
           ctx.font = 'bold 19px system-ui, sans-serif';
-          ctx.fillText(value, x + 160, y);
+          ctx.fillText(value, x + 185, y);
         };
 
-        // Col 1: Anatomy Profile
-        ctx.fillStyle = 'rgba(212, 175, 55, 0.7)';
-        ctx.font = 'bold 18px system-ui, sans-serif';
-        ctx.fillText('ANATOMICAL PROFILE', 130, colY);
-        let anatShape = params.shapeType.toUpperCase();
-        if (params.shapeType === 'fantasy') {
-          anatShape += ` (${params.fantasyType.toUpperCase()})`;
+        if (demoMode) {
+          // Col 1: Craft Scenario
+          ctx.fillStyle = '#ec4899';
+          ctx.font = 'bold 18px system-ui, sans-serif';
+          ctx.fillText('CRAFT SCENARIO', 130, colY);
+          
+          let craftShape = params.shapeType.toUpperCase();
+          if (craftShape === 'CANDLE') craftShape = 'SPIRAL PILLAR CANDLE';
+          else if (craftShape === 'SOAP') craftShape = 'HONEYCOMB SOAP MOLD';
+          else if (craftShape === 'KITCHEN') craftShape = 'SILICONE BAKING CUP';
+          else if (craftShape === 'COLLECTIBLE') craftShape = 'CHIBI FIGURINE BASE';
+
+          drawColValue('USE SCENARIO', craftShape, 130, colY + 50);
+          drawColValue('SURFACE TEXTURE', params.texture.toUpperCase(), 130, colY + 50 + rowH);
+          drawColValue('SWEEP BEND', `${params.curvature.toFixed(1)}x`, 130, colY + 50 + rowH * 2);
+
+          // Col 2: Geometric Metrics
+          ctx.fillStyle = '#0ea5e9';
+          ctx.font = 'bold 18px system-ui, sans-serif';
+          ctx.fillText('GEOMETRIC METRICS', 680, colY);
+          drawColValue('HEIGHT', `${params.length.toFixed(1)}"`, 680, colY + 50);
+          drawColValue('BODY DIAMETER', `${(params.shaftGirth * 1.4).toFixed(2)}"`, 680, colY + 50 + rowH);
+          drawColValue('BASE DIAMETER', `${(params.baseGirth * 2.0).toFixed(2)}"`, 680, colY + 50 + rowH * 2);
+
+          // Col 3: Production Material
+          ctx.fillStyle = '#ec4899';
+          ctx.font = 'bold 18px system-ui, sans-serif';
+          ctx.fillText('PRODUCTION MATERIAL', 1230, colY);
+          let colorModeName = 'SOLID';
+          if (params.colorMode === 1) colorModeName = 'MARBLE';
+          else if (params.colorMode === 2) colorModeName = 'GRADIENT';
+          else if (params.colorMode === 3) colorModeName = 'SPLIT POUR';
+
+          let matType = 'Food-Safe Silicone';
+          if (params.shapeType === 'candle' || params.shapeType === 'soap') {
+            matType = 'High-Temp Wax/Soap Safe';
+          }
+          drawColValue('SILICONE TYPE', matType, 1230, colY + 50);
+          
+          let hardness = 'Shore 20A';
+          if (params.firmness === 'soft') hardness = 'Shore 10A (Super Soft)';
+          else if (params.firmness === 'medium') hardness = 'Shore 20A (Standard)';
+          else if (params.firmness === 'firm') hardness = 'Shore 40A (Rigid)';
+          drawColValue('HARDNESS', hardness, 1230, colY + 50 + rowH);
+          drawColValue('PIGMENTATION', `${colorModeName} (${params.color1} / ${params.color2})`, 1230, colY + 50 + rowH * 2);
+
+          // Col 4: Quality & Verification
+          ctx.fillStyle = '#0ea5e9';
+          ctx.font = 'bold 18px system-ui, sans-serif';
+          ctx.fillText('SPEC & QUALITY', 1780, colY);
+          
+          const seedVal = `${params.shapeType}-${params.length}-${params.shaftGirth}-${params.curvature}`;
+          let hash = 0;
+          for (let i = 0; i < seedVal.length; i++) {
+            hash = (hash << 5) - hash + seedVal.charCodeAt(i);
+            hash |= 0;
+          }
+          const hashStr = `MC-${Math.abs(hash).toString(16).toUpperCase().substring(0, 8)}`;
+          
+          drawColValue('ADDITIVES', params.inclusions.toUpperCase(), 1780, colY + 50);
+          drawColValue('COMPLIANCE', 'FDA FOOD-GRADE', 1780, colY + 50 + rowH);
+          drawColValue('MOLD HASH', hashStr, 1780, colY + 50 + rowH * 2);
+        } else {
+          // Col 1: Anatomy Profile
+          ctx.fillStyle = 'rgba(212, 175, 55, 0.7)';
+          ctx.font = 'bold 18px system-ui, sans-serif';
+          ctx.fillText('ANATOMICAL PROFILE', 130, colY);
+          let anatShape = params.shapeType.toUpperCase();
+          if (params.shapeType === 'fantasy') {
+            anatShape += ` (${params.fantasyType.toUpperCase()})`;
+          }
+          drawColValue('SHAPE TYPE', anatShape, 130, colY + 50);
+          drawColValue('TEXTURE', params.texture.toUpperCase(), 130, colY + 50 + rowH);
+          drawColValue('CURVATURE', `${params.curvature.toFixed(1)}x`, 130, colY + 50 + rowH * 2);
+
+          // Col 2: Physical Metrics
+          ctx.fillStyle = 'rgba(212, 175, 55, 0.7)';
+          ctx.font = 'bold 18px system-ui, sans-serif';
+          ctx.fillText('PHYSICAL METRICS', 680, colY);
+          const calcLength = params.suctionCup ? (params.length - 0.8).toFixed(1) : params.length.toFixed(1);
+          drawColValue('LENGTH', `${calcLength}" (${params.length.toFixed(1)}" Total)`, 680, colY + 50);
+          drawColValue('SHAFT girth', `${(params.shaftGirth * 1.4).toFixed(2)}" / ${(params.shaftGirth * Math.PI * 1.4).toFixed(1)}" circ.`, 680, colY + 50 + rowH);
+          drawColValue('BASE DIAM', `${(params.baseGirth * 2.0).toFixed(2)}"`, 680, colY + 50 + rowH * 2);
+
+          // Col 3: Material System
+          ctx.fillStyle = 'rgba(212, 175, 55, 0.7)';
+          ctx.font = 'bold 18px system-ui, sans-serif';
+          ctx.fillText('MATERIAL SYSTEM', 1230, colY);
+          let colorModeName = 'SOLID';
+          if (params.colorMode === 1) colorModeName = 'MARBLE';
+          else if (params.colorMode === 2) colorModeName = 'GRADIENT';
+          else if (params.colorMode === 3) colorModeName = 'SPLIT POUR';
+          drawColValue('SILICONE', 'Platinum Cured', 1230, colY + 50);
+          drawColValue('FIRMNESS', params.firmness.toUpperCase(), 1230, colY + 50 + rowH);
+          drawColValue('PIGMENTS', `${colorModeName} (${params.color1} / ${params.color2})`, 1230, colY + 50 + rowH * 2);
+
+          // Col 4: Quality & Verification
+          ctx.fillStyle = 'rgba(212, 175, 55, 0.7)';
+          ctx.font = 'bold 18px system-ui, sans-serif';
+          ctx.fillText('SYSTEM VERIFICATION', 1780, colY);
+          const seedVal = `${params.shapeType}-${params.length}-${params.shaftGirth}-${params.curvature}`;
+          let hash = 0;
+          for (let i = 0; i < seedVal.length; i++) {
+            hash = (hash << 5) - hash + seedVal.charCodeAt(i);
+            hash |= 0;
+          }
+          const hashStr = `MD-${Math.abs(hash).toString(16).toUpperCase().substring(0, 8)}`;
+          drawColValue('INCLUSIONS', params.inclusions.toUpperCase(), 1780, colY + 50);
+          drawColValue('QC STATUS', 'FDA COMPLIANT', 1780, colY + 50 + rowH);
+          drawColValue('CAD HASH', hashStr, 1780, colY + 50 + rowH * 2);
         }
-        drawColValue('SHAPE TYPE', anatShape, 130, colY + 50);
-        drawColValue('TEXTURE', params.texture.toUpperCase(), 130, colY + 50 + rowH);
-        drawColValue('CURVATURE', `${params.curvature.toFixed(1)}x`, 130, colY + 50 + rowH * 2);
 
-        // Col 2: Physical Metrics
-        ctx.fillStyle = 'rgba(212, 175, 55, 0.7)';
-        ctx.font = 'bold 18px system-ui, sans-serif';
-        ctx.fillText('PHYSICAL METRICS', 680, colY);
-        const calcLength = params.suctionCup ? (params.length - 0.8).toFixed(1) : params.length.toFixed(1);
-        drawColValue('LENGTH', `${calcLength}" (${params.length.toFixed(1)}" Total)`, 680, colY + 50);
-        drawColValue('SHAFT girth', `${(params.shaftGirth * 1.4).toFixed(2)}" / ${(params.shaftGirth * Math.PI * 1.4).toFixed(1)}" circ.`, 680, colY + 50 + rowH);
-        drawColValue('BASE DIAM', `${(params.baseGirth * 2.0).toFixed(2)}"`, 680, colY + 50 + rowH * 2);
-
-        // Col 3: Material System
-        ctx.fillStyle = 'rgba(212, 175, 55, 0.7)';
-        ctx.font = 'bold 18px system-ui, sans-serif';
-        ctx.fillText('MATERIAL SYSTEM', 1230, colY);
-        let colorModeName = 'SOLID';
-        if (params.colorMode === 1) colorModeName = 'MARBLE';
-        else if (params.colorMode === 2) colorModeName = 'GRADIENT';
-        else if (params.colorMode === 3) colorModeName = 'SPLIT POUR';
-        drawColValue('SILICONE', 'Platinum Cured', 1230, colY + 50);
-        drawColValue('FIRMNESS', params.firmness.toUpperCase(), 1230, colY + 50 + rowH);
-        drawColValue('PIGMENTS', `${colorModeName} (${params.color1} / ${params.color2})`, 1230, colY + 50 + rowH * 2);
-
-        // Col 4: Quality & Verification
-        ctx.fillStyle = 'rgba(212, 175, 55, 0.7)';
-        ctx.font = 'bold 18px system-ui, sans-serif';
-        ctx.fillText('SYSTEM VERIFICATION', 1780, colY);
+        // Open high-res download
         const seedVal = `${params.shapeType}-${params.length}-${params.shaftGirth}-${params.curvature}`;
         let hash = 0;
         for (let i = 0; i < seedVal.length; i++) {
           hash = (hash << 5) - hash + seedVal.charCodeAt(i);
           hash |= 0;
         }
-        const hashStr = `MD-${Math.abs(hash).toString(16).toUpperCase().substring(0, 8)}`;
-        drawColValue('INCLUSIONS', params.inclusions.toUpperCase(), 1780, colY + 50);
-        drawColValue('QC STATUS', 'FDA COMPLIANT', 1780, colY + 50 + rowH);
-        drawColValue('CAD HASH', hashStr, 1780, colY + 50 + rowH * 2);
+        const hashStr = (demoMode ? 'MC-' : 'MD-') + Math.abs(hash).toString(16).toUpperCase().substring(0, 8);
 
-        // Open high-res download
         const link = document.createElement('a');
         link.download = `bad_spec_sheet_${hashStr}.png`;
         link.href = canvas.toDataURL('image/png');
@@ -1154,12 +1347,12 @@ const ScreenshotTaker: React.FC<{ params: BuilderParams }> = ({ params }) => {
 
     window.addEventListener('export-hires', handleExport);
     return () => window.removeEventListener('export-hires', handleExport);
-  }, [gl, scene, camera, params]);
+  }, [gl, scene, camera, params, demoMode]);
 
   return null;
 };
 
-export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ params }) => {
+export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ params, demoMode }) => {
 
   // Dynamic calculations for physical dimension text HUD
   const insertableLength = useMemo(() => {
@@ -1192,7 +1385,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ params }) => {
         style={{ position: 'relative', zIndex: 1, background: 'transparent' }}
       >
         <SceneSetup />
-        <ScreenshotTaker params={params} />
+        <ScreenshotTaker params={params} demoMode={demoMode} />
         
         {/* Dynamic environmental lights */}
         {params.sceneEnvironment === 'shower' ? (
@@ -1265,7 +1458,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ params }) => {
         )}
         
         <Center>
-          <CustomToyMesh params={params} />
+          <CustomToyMesh params={params} demoMode={demoMode} />
         </Center>
         
         {/* Transparent glass device scale reference comparison */}
@@ -1313,27 +1506,29 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ params }) => {
         }}
       >
         <div style={{ fontWeight: 700, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--accent-gold)' }}>
-          Real-World Scale Specs
+          {demoMode ? 'Craft Spec Sheet' : 'Real-World Scale Specs'}
         </div>
         <hr style={{ borderColor: 'var(--border-color)' }} />
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: 'var(--text-secondary)' }}>Total Length:</span>
+          <span style={{ color: 'var(--text-secondary)' }}>{demoMode ? 'Total Height:' : 'Total Length:'}</span>
           <span style={{ fontWeight: 600 }}>{params.length.toFixed(1)} in</span>
         </div>
+        {!demoMode && (
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span style={{ color: 'var(--text-secondary)' }}>Insertable:</span>
+            <span style={{ fontWeight: 600 }}>{insertableLength} in</span>
+          </div>
+        )}
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: 'var(--text-secondary)' }}>Insertable:</span>
-          <span style={{ fontWeight: 600 }}>{insertableLength} in</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: 'var(--text-secondary)' }}>Shaft Ø (Girth):</span>
+          <span style={{ color: 'var(--text-secondary)' }}>{demoMode ? 'Body Diameter:' : 'Shaft Ø (Girth):'}</span>
           <span style={{ fontWeight: 600 }}>{shaftDiameter} in</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: 'var(--text-secondary)' }}>Base Flange Ø:</span>
+          <span style={{ color: 'var(--text-secondary)' }}>{demoMode ? 'Base Diameter:' : 'Base Flange Ø:'}</span>
           <span style={{ fontWeight: 600 }}>{baseDiameter} in</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: 'var(--text-secondary)' }}>Curvature Bend:</span>
+          <span style={{ color: 'var(--text-secondary)' }}>{demoMode ? 'Sweep Bend:' : 'Curvature Bend:'}</span>
           <span style={{ fontWeight: 600 }}>{Math.abs(params.curvature * 15).toFixed(0)}°</span>
         </div>
       </div>

@@ -37,6 +37,7 @@ interface BuilderControlsProps {
   setParams: React.Dispatch<React.SetStateAction<BuilderParams>>;
   onAddToCart: (customToy: any) => void;
   onShareToSocial: (customToy: any) => void;
+  demoMode: boolean;
 }
 
 const PREMIUM_COLORS = [
@@ -54,7 +55,8 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
   params,
   setParams,
   onAddToCart,
-  onShareToSocial
+  onShareToSocial,
+  demoMode
 }) => {
   const [aiPrompt, setAiPrompt] = React.useState('');
   const [aiResponse, setAiResponse] = React.useState<string | null>(null);
@@ -73,51 +75,60 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
 
   // Calculate price dynamically based on size, complexity, materials, and additions
   const calculatePrice = () => {
-    let price = 99.00; // Base price
+    let price = demoMode ? 25.00 : 99.00; // Base price is cheaper for crafts
 
     // Dimensions
     if (params.length > 5.0) {
-      price += (params.length - 5.0) * 12.00;
+      price += (params.length - 5.0) * (demoMode ? 3.00 : 12.00);
     }
     if (params.shaftGirth > 1.2) {
-      price += (params.shaftGirth - 1.2) * 15.00;
+      price += (params.shaftGirth - 1.2) * (demoMode ? 4.00 : 15.00);
     }
     if (params.taper > 0.1) {
-      price += params.taper * 8.00;
+      price += params.taper * (demoMode ? 2.00 : 8.00);
     }
 
-    // Anatomy & Shapes
-    if (params.shapeType === 'realistic' || params.shapeType === 'fantasy') {
-      price += 15.00;
-    }
-    if (params.shapeType === 'realistic') {
-      price += params.realisticVeins * 10.00;
-      if (params.realisticGlans) price += 8.00;
-      if (params.hasBalls) price += 20.00;
+    if (!demoMode) {
+      // Anatomy & Shapes
+      if (params.shapeType === 'realistic' || params.shapeType === 'fantasy') {
+        price += 15.00;
+      }
+      if (params.shapeType === 'realistic') {
+        price += params.realisticVeins * 10.00;
+        if (params.realisticGlans) price += 8.00;
+        if (params.hasBalls) price += 20.00;
+      }
+    } else {
+      // Demo shapes adjustments
+      if (params.shapeType === 'collectible') {
+        price += 10.00; // higher density resin
+      }
     }
 
     // Color pours & details
     if (params.colorMode > 0) {
-      price += 15.00; // Marble / Gradient / Split complexity
+      price += demoMode ? 5.00 : 15.00;
     }
 
     // Inclusions & Effects
     if (params.inclusions !== 'none') {
-      price += 12.00; // Glitter / Metallic / Glow pigments
+      price += demoMode ? 4.00 : 12.00;
     }
     if (params.thermochromic) {
-      price += 18.00; // Heat-reactive pigments
+      price += demoMode ? 6.00 : 18.00;
     }
 
     // Firmness / Dual-density
     if (params.firmness === 'dual-density') {
-      price += 30.00; // Core-sheath injection
+      price += demoMode ? 10.00 : 30.00;
     }
 
-    // Add-on components
-    if (params.baseType === 'flared') price += 10.00; // Flanged base
-    if (params.vibrationCore) price += 25.00;
-    if (params.internalTube) price += 25.00;
+    if (!demoMode) {
+      // Add-on components
+      if (params.baseType === 'flared') price += 10.00;
+      if (params.vibrationCore) price += 25.00;
+      if (params.internalTube) price += 25.00;
+    }
 
     return Number(price.toFixed(2));
   };
@@ -129,94 +140,165 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
     setAiResponse(null);
     setTimeout(() => {
       let message = '';
-      if (presetType === 'beginner') {
-        setParams((prev) => ({
-          ...prev,
-          length: 5.0,
-          shaftGirth: 1.0,
-          baseGirth: 1.2,
-          curvature: 0.0,
-          texture: 'smooth',
-          baseGeometry: 'classic',
-          colorMode: 0,
-          color1: '#d97d8c', // Dusty Rose
-          vibrationCore: false,
-          isVibrating: false,
-          shapeType: 'classic',
-          baseType: 'flat',
-          taper: 0.1,
-          firmness: 'soft',
-          inclusions: 'none',
-          thermochromic: false,
-          internalTube: false
-        }));
-        message = "🌱 AI Designer: 'Beginner Wellness' applied. Designed in a soft 5.0\" smooth classic profile, soft 10A density, flat base, and clean solid Dusty Rose silicone for absolute comfort.";
-      } else if (presetType === 'gspot') {
-        setParams((prev) => ({
-          ...prev,
-          length: 6.8,
-          shaftGirth: 1.25,
-          baseGirth: 1.4,
-          curvature: 0.9, // Forward curve
-          texture: 'ribbed',
-          baseGeometry: 'ergonomic',
-          colorMode: 1, // Marble Swirl
-          color1: '#482060', // Royal Plum
-          color2: '#d4af37', // Satin Gold
-          vibrationCore: true,
-          shapeType: 'targeted',
-          baseType: 'flared',
-          taper: 0.2,
-          firmness: 'medium',
-          inclusions: 'none',
-          thermochromic: false,
-          internalTube: false
-        }));
-        message = "🎯 AI Designer: 'G-Spot Sculpt' applied. Targets zones with a 6.8\" ergonomic curve, Concentric Ribbed texture, medium 20A firmness, flared suction cup, and satin Royal Plum & Gold marble swirl.";
-      } else if (presetType === 'marble') {
-        setParams((prev) => ({
-          ...prev,
-          length: 6.0,
-          shaftGirth: 1.2,
-          baseGirth: 1.4,
-          curvature: 0.2,
-          texture: 'smooth',
-          colorMode: 1, // Marble Swirl
-          color1: '#242426', // Midnight Slate
-          color2: '#d4af37', // Satin Gold
-          shapeType: 'classic',
-          baseType: 'flared',
-          taper: 0.25,
-          firmness: 'medium',
-          inclusions: 'glitter',
-          thermochromic: false,
-          internalTube: false
-        }));
-        message = "💎 AI Designer: 'Silk Marble' applied. Classic 6.0\" layout with gradual taper, premium gold-glitter inclusions, and a high-contrast liquid marble swirl of Midnight Slate & Satin Gold.";
-      } else if (presetType === 'intensity') {
-        setParams((prev) => ({
-          ...prev,
-          length: 7.5,
-          shaftGirth: 1.5,
-          baseGirth: 1.8,
-          curvature: 0.4,
-          texture: 'studded',
-          baseGeometry: 'wave',
-          colorMode: 2, // Duo Gradient
-          color1: '#d946ef', // Electric Orchid
-          color2: '#63a388', // Mint Wellness
-          vibrationCore: true,
-          isVibrating: true,
-          shapeType: 'fantasy',
-          fantasyType: 'dragon',
-          baseType: 'flared',
-          taper: 0.3,
-          firmness: 'dual-density',
-          inclusions: 'glow',
-          thermochromic: true,
-          internalTube: true
-        }));
-        message = "⚡ AI Designer: 'Max Intensity' applied. Builds a 7.5\" dragon-scale shape with dual-density (rigid inner core, soft outer silicone), heat-reactive thermochromics, blacklight-ready glow inclusions, and active vibrations.";
+      if (demoMode) {
+        if (presetType === 'candle') {
+          setParams((prev) => ({
+            ...prev,
+            shapeType: 'candle',
+            length: 7.0,
+            shaftGirth: 1.3,
+            baseGirth: 1.5,
+            curvature: 0.0,
+            texture: 'swirled',
+            colorMode: 1, // Marble Swirl
+            color1: '#ffffff', // Pure Pearl (off-white/wax)
+            color2: '#d4af37', // Satin Gold
+            firmness: 'medium',
+            inclusions: 'none',
+            thermochromic: false
+          }));
+          message = "🕯️ AI Designer: 'Spiral Pillar Candle' template applied. Configured with a twisted swirl geometry, pearl-white and gold marble pour wax simulation, and 7.0\" height.";
+        } else if (presetType === 'soap') {
+          setParams((prev) => ({
+            ...prev,
+            shapeType: 'soap',
+            length: 4.5,
+            shaftGirth: 1.4,
+            baseGirth: 1.4,
+            curvature: 0.0,
+            texture: 'smooth',
+            colorMode: 2, // Duo Gradient
+            color1: '#63a388', // Mint Wellness
+            color2: '#e2e8f0', // Pure Pearl
+            firmness: 'soft',
+            inclusions: 'none',
+            thermochromic: false
+          }));
+          message = "🧼 AI Designer: 'Organic Soap Bar' template applied. Configured with a smooth chamfered block profile, a refreshing mint-to-cream gradient pour simulation, and 4.5\" length.";
+        } else if (presetType === 'kitchen') {
+          setParams((prev) => ({
+            ...prev,
+            shapeType: 'kitchen',
+            length: 3.5,
+            shaftGirth: 1.6,
+            baseGirth: 1.8,
+            curvature: 0.0,
+            texture: 'ribbed',
+            colorMode: 0, // Solid
+            color1: '#d946ef', // Electric Orchid
+            firmness: 'soft',
+            inclusions: 'none',
+            thermochromic: true
+          }));
+          message = "🧁 AI Designer: 'Silicone Cupcake Cup' template applied. Configured with a fluted ribbed profile, flexible soft shore density, heat-reactive thermochromic color shift, and 3.5\" height.";
+        } else if (presetType === 'collectible') {
+          setParams((prev) => ({
+            ...prev,
+            shapeType: 'collectible',
+            length: 5.5,
+            shaftGirth: 1.1,
+            baseGirth: 1.3,
+            curvature: 0.1,
+            texture: 'smooth',
+            colorMode: 3, // Split Pour
+            color1: '#242426', // Midnight Slate
+            color2: '#e2e8f0', // Pure Pearl
+            firmness: 'firm',
+            inclusions: 'glitter',
+            thermochromic: false
+          }));
+          message = "🧸 AI Designer: 'Low-Poly Chibi Base' template applied. Configured with an octagonal segment geometry, high-density structure, sparkling glitter inclusions, and a split midnight-and-pearl palette.";
+        }
+      } else {
+        if (presetType === 'beginner') {
+          setParams((prev) => ({
+            ...prev,
+            length: 5.0,
+            shaftGirth: 1.0,
+            baseGirth: 1.2,
+            curvature: 0.0,
+            texture: 'smooth',
+            baseGeometry: 'classic',
+            colorMode: 0,
+            color1: '#d97d8c', // Dusty Rose
+            vibrationCore: false,
+            isVibrating: false,
+            shapeType: 'classic',
+            baseType: 'flat',
+            taper: 0.1,
+            firmness: 'soft',
+            inclusions: 'none',
+            thermochromic: false,
+            internalTube: false
+          }));
+          message = "🌱 AI Designer: 'Beginner Wellness' applied. Designed in a soft 5.0\" smooth classic profile, soft 10A density, flat base, and clean solid Dusty Rose silicone for absolute comfort.";
+        } else if (presetType === 'gspot') {
+          setParams((prev) => ({
+            ...prev,
+            length: 6.8,
+            shaftGirth: 1.25,
+            baseGirth: 1.4,
+            curvature: 0.9, // Forward curve
+            texture: 'ribbed',
+            baseGeometry: 'ergonomic',
+            colorMode: 1, // Marble Swirl
+            color1: '#482060', // Royal Plum
+            color2: '#d4af37', // Satin Gold
+            vibrationCore: true,
+            shapeType: 'targeted',
+            baseType: 'flared',
+            taper: 0.2,
+            firmness: 'medium',
+            inclusions: 'none',
+            thermochromic: false,
+            internalTube: false
+          }));
+          message = "🎯 AI Designer: 'G-Spot Sculpt' applied. Targets zones with a 6.8\" ergonomic curve, Concentric Ribbed texture, medium 20A firmness, flared suction cup, and satin Royal Plum & Gold marble swirl.";
+        } else if (presetType === 'marble') {
+          setParams((prev) => ({
+            ...prev,
+            length: 6.0,
+            shaftGirth: 1.2,
+            baseGirth: 1.4,
+            curvature: 0.2,
+            texture: 'smooth',
+            colorMode: 1, // Marble Swirl
+            color1: '#242426', // Midnight Slate
+            color2: '#d4af37', // Satin Gold
+            shapeType: 'classic',
+            baseType: 'flared',
+            taper: 0.25,
+            firmness: 'medium',
+            inclusions: 'glitter',
+            thermochromic: false,
+            internalTube: false
+          }));
+          message = "💎 AI Designer: 'Silk Marble' applied. Classic 6.0\" layout with gradual taper, premium gold-glitter inclusions, and a high-contrast liquid marble swirl of Midnight Slate & Satin Gold.";
+        } else if (presetType === 'intensity') {
+          setParams((prev) => ({
+            ...prev,
+            length: 7.5,
+            shaftGirth: 1.5,
+            baseGirth: 1.8,
+            curvature: 0.4,
+            texture: 'studded',
+            baseGeometry: 'wave',
+            colorMode: 2, // Duo Gradient
+            color1: '#d946ef', // Electric Orchid
+            color2: '#63a388', // Mint Wellness
+            vibrationCore: true,
+            isVibrating: true,
+            shapeType: 'fantasy',
+            fantasyType: 'dragon',
+            baseType: 'flared',
+            taper: 0.3,
+            firmness: 'dual-density',
+            inclusions: 'glow',
+            thermochromic: true,
+            internalTube: true
+          }));
+          message = "⚡ AI Designer: 'Max Intensity' applied. Builds a 7.5\" dragon-scale shape with dual-density (rigid inner core, soft outer silicone), heat-reactive thermochromics, blacklight-ready glow inclusions, and active vibrations.";
+        }
       }
       setAiResponse(message);
       setIsAiThinking(false);
@@ -263,43 +345,73 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
       let reasons: string[] = [];
 
       // Keyword parsing
-      if (prompt.includes('beginner') || prompt.includes('gentle') || prompt.includes('first') || prompt.includes('soft') || prompt.includes('small') || prompt.includes('light')) {
-        length = 5.0;
-        shaftGirth = 1.0;
-        curvature = 0.0;
-        texture = 'smooth';
-        baseGeometry = 'classic';
-        shapeType = 'classic';
-        firmness = 'soft';
-        reasons.push("scaled down to a gentle 5.0\" length, 1.0x girth, and Soft 10A density");
-      } else if (prompt.includes('thick') || prompt.includes('girth') || prompt.includes('big') || prompt.includes('wide') || prompt.includes('fat') || prompt.includes('huge') || prompt.includes('large')) {
-        shaftGirth = 1.55;
-        baseGirth = 1.8;
-        reasons.push("increased girth to 1.55x and flange base width to 1.8x");
-      }
-
-      if (prompt.includes('realistic') || prompt.includes('vein') || prompt.includes('natural') || prompt.includes('human') || prompt.includes('anatomy') || prompt.includes('anatomical')) {
-        shapeType = 'realistic';
-        realisticVeins = 0.75;
-        realisticGlans = true;
-        reasons.push("shifted silhouette to Realistic with winding veins and anatomical glans head");
-        if (prompt.includes('ball') || prompt.includes('testicle') || prompt.includes('nuts')) {
-          hasBalls = true;
-          reasons.push("added optional organic testicles");
-        }
-      } else if (prompt.includes('fantasy') || prompt.includes('dragon') || prompt.includes('alien') || prompt.includes('tentacle') || prompt.includes('monster') || prompt.includes('creature')) {
-        shapeType = 'fantasy';
-        if (prompt.includes('alien') || prompt.includes('knot')) {
-          fantasyType = 'alien';
-          texture = 'studded';
-        } else if (prompt.includes('tentacle') || prompt.includes('octopus')) {
-          fantasyType = 'tentacle';
-          texture = 'ribbed';
-        } else {
-          fantasyType = 'dragon';
+      if (demoMode) {
+        if (prompt.includes('candle') || prompt.includes('wax') || prompt.includes('wick')) {
+          shapeType = 'candle';
           texture = 'swirled';
+          reasons.push("selected Spiral Candle structure");
+        } else if (prompt.includes('soap') || prompt.includes('honeycomb') || prompt.includes('bar')) {
+          shapeType = 'soap';
+          texture = 'smooth';
+          reasons.push("selected Honeycomb Soap Bar geometry");
+        } else if (prompt.includes('kitchen') || prompt.includes('muffin') || prompt.includes('cupcake') || prompt.includes('baking') || prompt.includes('liner')) {
+          shapeType = 'kitchen';
+          texture = 'ribbed';
+          reasons.push("selected Fluted Cupcake Cup geometry");
+        } else if (prompt.includes('figurine') || prompt.includes('toy') || prompt.includes('chibi') || prompt.includes('collectible') || prompt.includes('statue')) {
+          shapeType = 'collectible';
+          texture = 'smooth';
+          reasons.push("selected Octagonal Chibi Figure base shape");
         }
-        reasons.push(`sculpted fantasy shape in ${fantasyType} style`);
+
+        if (prompt.includes('small') || prompt.includes('light') || prompt.includes('mini')) {
+          length = 3.5;
+          shaftGirth = 1.0;
+          reasons.push("scaled down dimensions to 3.5\" height");
+        } else if (prompt.includes('large') || prompt.includes('big') || prompt.includes('tall') || prompt.includes('giant')) {
+          length = 7.5;
+          shaftGirth = 1.5;
+          reasons.push("scaled up dimensions to 7.5\" height");
+        }
+      } else {
+        if (prompt.includes('beginner') || prompt.includes('gentle') || prompt.includes('first') || prompt.includes('soft') || prompt.includes('small') || prompt.includes('light')) {
+          length = 5.0;
+          shaftGirth = 1.0;
+          curvature = 0.0;
+          texture = 'smooth';
+          baseGeometry = 'classic';
+          shapeType = 'classic';
+          firmness = 'soft';
+          reasons.push("scaled down to a gentle 5.0\" length, 1.0x girth, and Soft 10A density");
+        } else if (prompt.includes('thick') || prompt.includes('girth') || prompt.includes('big') || prompt.includes('wide') || prompt.includes('fat') || prompt.includes('huge') || prompt.includes('large')) {
+          shaftGirth = 1.55;
+          baseGirth = 1.8;
+          reasons.push("increased girth to 1.55x and flange base width to 1.8x");
+        }
+
+        if (prompt.includes('realistic') || prompt.includes('vein') || prompt.includes('natural') || prompt.includes('human') || prompt.includes('anatomy') || prompt.includes('anatomical')) {
+          shapeType = 'realistic';
+          realisticVeins = 0.75;
+          realisticGlans = true;
+          reasons.push("shifted silhouette to Realistic with winding veins and anatomical glans head");
+          if (prompt.includes('ball') || prompt.includes('testicle') || prompt.includes('nuts')) {
+            hasBalls = true;
+            reasons.push("added optional organic testicles");
+          }
+        } else if (prompt.includes('fantasy') || prompt.includes('dragon') || prompt.includes('alien') || prompt.includes('tentacle') || prompt.includes('monster') || prompt.includes('creature')) {
+          shapeType = 'fantasy';
+          if (prompt.includes('alien') || prompt.includes('knot')) {
+            fantasyType = 'alien';
+            texture = 'studded';
+          } else if (prompt.includes('tentacle') || prompt.includes('octopus')) {
+            fantasyType = 'tentacle';
+            texture = 'ribbed';
+          } else {
+            fantasyType = 'dragon';
+            texture = 'swirled';
+          }
+          reasons.push(`sculpted fantasy shape in ${fantasyType} style`);
+        }
       }
 
       if (prompt.includes('g-spot') || prompt.includes('gspot') || prompt.includes('internal') || prompt.includes('curve') || prompt.includes('bend')) {
@@ -423,9 +535,13 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
   };
 
   const handleAddToCart = () => {
+    const itemName = demoMode 
+      ? `Custom ${params.shapeType.charAt(0).toUpperCase() + params.shapeType.slice(1)} Mold`
+      : `Custom ${params.shapeType.toUpperCase()} ${params.baseGeometry.replace('_', ' ').toUpperCase()}`;
+
     onAddToCart({
       id: `custom-${Date.now()}`,
-      name: `Custom ${params.shapeType.toUpperCase()} ${params.baseGeometry.replace('_', ' ').toUpperCase()}`,
+      name: itemName,
       price: currentPrice,
       isCustom: true,
       parameters: { ...params }
@@ -433,8 +549,12 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
   };
 
   const handleShareToSocial = () => {
+    const itemName = demoMode 
+      ? `Custom ${params.shapeType.charAt(0).toUpperCase() + params.shapeType.slice(1)} Mold`
+      : `The Custom ${params.shapeType.toUpperCase()}`;
+
     onShareToSocial({
-      name: `The Custom ${params.shapeType.toUpperCase()}`,
+      name: itemName,
       price: currentPrice,
       parameters: { ...params }
     });
@@ -448,7 +568,12 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
       const link = document.createElement('a');
       link.href = url;
       
-      const shapePrefix = params.shapeType === 'classic' ? 'Classic' : params.shapeType === 'realistic' ? 'Anatomical' : params.shapeType === 'fantasy' ? `${params.fantasyType.charAt(0).toUpperCase() + params.fantasyType.slice(1)}` : 'Targeted';
+      let shapePrefix = 'Custom';
+      if (demoMode) {
+        shapePrefix = params.shapeType === 'candle' ? 'Candle' : params.shapeType === 'soap' ? 'Soap' : params.shapeType === 'kitchen' ? 'Kitchenware' : 'Collectible';
+      } else {
+        shapePrefix = params.shapeType === 'classic' ? 'Classic' : params.shapeType === 'realistic' ? 'Anatomical' : params.shapeType === 'fantasy' ? `${params.fantasyType.charAt(0).toUpperCase() + params.fantasyType.slice(1)}` : 'Targeted';
+      }
       const fileBaseName = `BAD_${shapePrefix}_${params.length.toFixed(1)}in`.replace(/\s+/g, '_');
       
       link.download = `${fileBaseName}.stl`;
@@ -457,7 +582,11 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-      alert(`Export Successful! Downloaded standard 3D STL schematic: ${fileBaseName}.stl\n\n⚠️ IMPORTANT: Home 3D prints (PLA/PETG/Resin) are porous and NOT body-safe. Use this mesh to print a mold, then cast body-safe medical-grade silicone!`);
+      if (demoMode) {
+        alert(`Export Successful! Downloaded standard 3D STL schematic: ${fileBaseName}.stl\n\nUse this mesh to 3D print your custom item, or create a two-part casing split mold to cast in wax, soap, or silicone!`);
+      } else {
+        alert(`Export Successful! Downloaded standard 3D STL schematic: ${fileBaseName}.stl\n\n⚠️ IMPORTANT: Home 3D prints (PLA/PETG/Resin) are porous and NOT body-safe. Use this mesh to print a mold, then cast body-safe medical-grade silicone!`);
+      }
     } catch (err) {
       console.error(err);
       alert('Failed to compile 3D model for export.');
@@ -469,15 +598,17 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
       {/* Title */}
       <div>
         <span className="badge badge-gold" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-          <Sparkles size={10} /> Fully Personalized
+          <Sparkles size={10} /> {demoMode ? "Parametric CAD Mold Studio" : "Fully Personalized"}
         </span>
-        <h2 style={{ marginTop: '8px', fontSize: '24px' }}>Sculpt Your Design</h2>
-        <p style={{ fontSize: '13px' }}>Adjust dimensions, shapes, and aesthetics below.</p>
+        <h2 style={{ marginTop: '8px', fontSize: '24px' }}>{demoMode ? "Sculpt Your Craft Mold" : "Sculpt Your Design"}</h2>
+        <p style={{ fontSize: '13px' }}>
+          {demoMode ? "Adjust dimensions, shapes, and textures of your mold template." : "Adjust dimensions, shapes, and aesthetics below."}
+        </p>
       </div>
 
       <hr style={{ borderColor: 'var(--border-color)' }} />
 
-      {/* AI PLEASURE ARCHITECT CARD */}
+      {/* AI PLEASURE / MOLD ARCHITECT CARD */}
       <div 
         style={{
           background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
@@ -490,25 +621,38 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
           <Sparkles size={16} color="var(--accent-gold)" style={{ filter: 'drop-shadow(0 0 4px rgba(212,175,55,0.4))' }} />
-          <span style={{ fontWeight: 700, fontSize: '12px', letterSpacing: '0.05em', color: 'var(--accent-gold)' }}>AI PLEASURE ARCHITECT</span>
+          <span style={{ fontWeight: 700, fontSize: '12px', letterSpacing: '0.05em', color: 'var(--accent-gold)' }}>
+            {demoMode ? "AI MOLD ARCHITECT" : "AI PLEASURE ARCHITECT"}
+          </span>
         </div>
         <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '12px', lineHeight: '1.4' }}>
-          Describe your perfect toy or vibe, and let our customizer design it for you.
+          {demoMode ? "Describe your craft project, and let our customizer design the mold casing." : "Describe your perfect toy or vibe, and let our customizer design it for you."}
         </p>
 
         {/* AI Quick Presets */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
-          <button type="button" className="preset-pill" onClick={() => handleAiPreset('beginner')}>🌱 Beginner Wellness</button>
-          <button type="button" className="preset-pill" onClick={() => handleAiPreset('gspot')}>🎯 G-Spot Sculpt</button>
-          <button type="button" className="preset-pill" onClick={() => handleAiPreset('marble')}>💎 Silk Marble</button>
-          <button type="button" className="preset-pill" onClick={() => handleAiPreset('intensity')}>⚡ Max Intensity</button>
+          {demoMode ? (
+            <>
+              <button type="button" className="preset-pill" onClick={() => handleAiPreset('candle')}>🕯️ Spiral Candle</button>
+              <button type="button" className="preset-pill" onClick={() => handleAiPreset('soap')}>🧼 Honeycomb Soap</button>
+              <button type="button" className="preset-pill" onClick={() => handleAiPreset('kitchen')}>🧁 Muffin Cup</button>
+              <button type="button" className="preset-pill" onClick={() => handleAiPreset('collectible')}>🧸 Chibi Toy</button>
+            </>
+          ) : (
+            <>
+              <button type="button" className="preset-pill" onClick={() => handleAiPreset('beginner')}>🌱 Beginner Wellness</button>
+              <button type="button" className="preset-pill" onClick={() => handleAiPreset('gspot')}>🎯 G-Spot Sculpt</button>
+              <button type="button" className="preset-pill" onClick={() => handleAiPreset('marble')}>💎 Silk Marble</button>
+              <button type="button" className="preset-pill" onClick={() => handleAiPreset('intensity')}>⚡ Max Intensity</button>
+            </>
+          )}
         </div>
 
         {/* AI Custom Input */}
         <form onSubmit={handleCustomAiPrompt} style={{ display: 'flex', gap: '8px' }}>
           <input 
             type="text" 
-            placeholder="e.g. beginner-friendly pink marble with suction..." 
+            placeholder={demoMode ? "e.g. spiral soy wax candle, yellow & blue marble..." : "e.g. beginner-friendly pink marble with suction..."} 
             value={aiPrompt}
             onChange={(e) => setAiPrompt(e.target.value)}
             disabled={isAiThinking}
@@ -562,185 +706,233 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
 
       <hr style={{ borderColor: 'var(--border-color)' }} />
 
-      {/* SECTION 1: SHAPE & ANATOMY */}
+      {/* SECTION 1: SHAPE / CRAFT TYPE */}
       <div>
-        <h3 style={{ fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-          <Layers size={15} color="var(--accent-gold)" /> 1. Shape & Anatomy
-        </h3>
-
-        {/* Shape Type Selector Buttons */}
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Silhouette Profile Style</label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-            {[
-              { id: 'classic', label: 'Classic Shaft' },
-              { id: 'realistic', label: 'Anatomical' },
-              { id: 'fantasy', label: 'Fantasy/Sci-Fi' },
-              { id: 'targeted', label: 'Targeted Curve' }
-            ].map((shape) => (
-              <button
-                key={shape.id}
-                type="button"
-                className={`btn ${params.shapeType === shape.id ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ padding: '8px 4px', fontSize: '11px', borderRadius: 'var(--radius-sm)' }}
-                onClick={() => {
-                  updateParam('shapeType', shape.id);
-                  if (shape.id === 'targeted') {
-                    updateParam('baseGeometry', 'ergonomic');
-                    updateParam('curvature', 0.85);
-                  } else {
-                    updateParam('baseGeometry', 'classic');
-                  }
-                }}
-              >
-                {shape.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Conditional Anatomy Subsections */}
-        {params.shapeType === 'realistic' && (
-          <div className="animate-fade-in" style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '12px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <span style={{ fontSize: '10px', color: 'var(--accent-gold)', fontWeight: 700 }}>REALISTIC ANATOMICAL CONTROLS</span>
-            
-            {/* Vein Slider */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
-                <span style={{ color: 'var(--text-secondary)' }}>Vein Prominence</span>
-                <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{Math.round(params.realisticVeins * 100)}%</span>
+        {demoMode ? (
+          <div>
+            <h3 style={{ fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <Layers size={15} color="var(--accent-gold)" /> 1. Use Scenario & Craft
+            </h3>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Craft Type Scenario</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                {[
+                  { id: 'candle', label: 'Spiral Candle' },
+                  { id: 'soap', label: 'Honeycomb Soap' },
+                  { id: 'kitchen', label: 'Baking Cup' },
+                  { id: 'collectible', label: 'Chibi Base' }
+                ].map((scenario) => (
+                  <button
+                    key={scenario.id}
+                    type="button"
+                    className={`btn ${params.shapeType === scenario.id ? 'btn-primary' : 'btn-secondary'}`}
+                    style={{ padding: '8px 4px', fontSize: '11px', borderRadius: 'var(--radius-sm)' }}
+                    onClick={() => {
+                      updateParam('shapeType', scenario.id);
+                      if (scenario.id === 'candle') {
+                        updateParam('texture', 'swirled');
+                        updateParam('baseGeometry', 'classic');
+                      } else if (scenario.id === 'soap') {
+                        updateParam('texture', 'smooth');
+                        updateParam('baseGeometry', 'classic');
+                      } else if (scenario.id === 'kitchen') {
+                        updateParam('texture', 'ribbed');
+                        updateParam('baseGeometry', 'classic');
+                      } else if (scenario.id === 'collectible') {
+                        updateParam('texture', 'smooth');
+                        updateParam('baseGeometry', 'classic');
+                      }
+                    }}
+                  >
+                    {scenario.label}
+                  </button>
+                ))}
               </div>
-              <input 
-                type="range" 
-                min="0.0" 
-                max="1.0" 
-                step="0.05" 
-                value={params.realisticVeins} 
-                onChange={(e) => updateParam('realisticVeins', parseFloat(e.target.value))} 
-              />
-            </div>
-
-            {/* Glans shape */}
-            <label className="switch-label">
-              <span style={{ fontSize: '12px', fontWeight: 500 }}>Defined Glans Head</span>
-              <div className="switch">
-                <input 
-                  type="checkbox" 
-                  checked={params.realisticGlans} 
-                  onChange={(e) => updateParam('realisticGlans', e.target.checked)} 
-                />
-                <span className="slider"></span>
-              </div>
-            </label>
-
-            {/* Testicles */}
-            <label className="switch-label">
-              <div>
-                <span style={{ fontSize: '12px', fontWeight: 500 }}>Optional Testicle Base</span>
-                <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>Adds dual base spheres. (+ $20.00)</p>
-              </div>
-              <div className="switch">
-                <input 
-                  type="checkbox" 
-                  checked={params.hasBalls} 
-                  onChange={(e) => updateParam('hasBalls', e.target.checked)} 
-                />
-                <span className="slider"></span>
-              </div>
-            </label>
-          </div>
-        )}
-
-        {params.shapeType === 'fantasy' && (
-          <div className="animate-fade-in" style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '12px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', marginBottom: '16px' }}>
-            <span style={{ fontSize: '10px', color: 'var(--accent-gold)', fontWeight: 700, display: 'block', marginBottom: '8px' }}>FANTASY STYLE OPTIONS</span>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-              {[
-                { id: 'dragon', label: 'Dragon', icon: (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3 3.5-3 3.5 3 3.5-3 3.5-3-3.5 3-3.5-3-3.5zM6 5.5h12M6 12.5h12"/></svg>
-                )},
-                { id: 'alien', label: 'Alien', icon: (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="12" rx="5" ry="8"/><path d="M8 11.5s1-1 4-1 4 1 4 1"/></svg>
-                )},
-                { id: 'tentacle', label: 'Tentacle', icon: (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2c-3 4-3 12 0 20M12 6c-2 0-3 1-3 2s1 2 3 2M12 14c-2 0-3 1-3 2s1 2 3 2"/></svg>
-                )}
-              ].map((fan) => (
-                <button
-                  key={fan.id}
-                  type="button"
-                  className={`btn ${params.fantasyType === fan.id ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ 
-                    padding: '8px 4px', 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    gap: '4px', 
-                    borderRadius: 'var(--radius-sm)',
-                    height: '56px'
-                  }}
-                  onClick={() => {
-                    updateParam('fantasyType', fan.id);
-                    if (fan.id === 'dragon') updateParam('texture', 'swirled');
-                    if (fan.id === 'alien') updateParam('texture', 'studded');
-                    if (fan.id === 'tentacle') updateParam('texture', 'ribbed');
-                  }}
-                  title={fan.label}
-                >
-                  {fan.icon}
-                  <span style={{ fontSize: '9px', fontWeight: 600 }}>{fan.label}</span>
-                </button>
-              ))}
             </div>
           </div>
-        )}
+        ) : (
+          <div>
+            <h3 style={{ fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <Layers size={15} color="var(--accent-gold)" /> 1. Shape & Anatomy
+            </h3>
 
-        {/* Base Design Style Selector */}
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Base Safety Anchor</label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-            {[
-              { id: 'flared', label: 'Suction', icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v10M4 21h16c0-3-2-6-8-6s-8 3-8 6z"/></svg>
-              )},
-              { id: 'flat', label: 'Flat Base', icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v13M3 21h18v-4H3v4z"/></svg>
-              )},
-              { id: 'harness', label: 'Harness', icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v9M6 18c0-2 2.7-3.5 6-3.5s6 1.5 6 3.5M3 21h18"/></svg>
-              )}
-            ].map((base) => (
-              <button
-                key={base.id}
-                type="button"
-                className={`btn ${params.baseType === base.id ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ 
-                  padding: '8px 4px', 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  gap: '4px', 
-                  borderRadius: 'var(--radius-sm)',
-                  height: '56px'
-                }}
-                onClick={() => {
-                  updateParam('baseType', base.id);
-                  updateParam('suctionCup', base.id === 'flared');
-                }}
-                title={base.label}
-              >
-                {base.icon}
-                <span style={{ fontSize: '9px', fontWeight: 600 }}>{base.label}</span>
-              </button>
-            ))}
+            {/* Shape Type Selector Buttons */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Silhouette Profile Style</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                {[
+                  { id: 'classic', label: 'Classic Shaft' },
+                  { id: 'realistic', label: 'Anatomical' },
+                  { id: 'fantasy', label: 'Fantasy/Sci-Fi' },
+                  { id: 'targeted', label: 'Targeted Curve' }
+                ].map((shape) => (
+                  <button
+                    key={shape.id}
+                    type="button"
+                    className={`btn ${params.shapeType === shape.id ? 'btn-primary' : 'btn-secondary'}`}
+                    style={{ padding: '8px 4px', fontSize: '11px', borderRadius: 'var(--radius-sm)' }}
+                    onClick={() => {
+                      updateParam('shapeType', shape.id);
+                      if (shape.id === 'targeted') {
+                        updateParam('baseGeometry', 'ergonomic');
+                        updateParam('curvature', 0.85);
+                      } else {
+                        updateParam('baseGeometry', 'classic');
+                      }
+                    }}
+                  >
+                    {shape.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Conditional Anatomy Subsections */}
+            {params.shapeType === 'realistic' && (
+              <div className="animate-fade-in" style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '12px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <span style={{ fontSize: '10px', color: 'var(--accent-gold)', fontWeight: 700 }}>REALISTIC ANATOMICAL CONTROLS</span>
+                
+                {/* Vein Slider */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Vein Prominence</span>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{Math.round(params.realisticVeins * 100)}%</span>
+                  </div>
+                  <input 
+                    type="range" 
+                    min="0.0" 
+                    max="1.0" 
+                    step="0.05" 
+                    value={params.realisticVeins} 
+                    onChange={(e) => updateParam('realisticVeins', parseFloat(e.target.value))} 
+                  />
+                </div>
+
+                {/* Glans shape */}
+                <label className="switch-label">
+                  <span style={{ fontSize: '12px', fontWeight: 500 }}>Defined Glans Head</span>
+                  <div className="switch">
+                    <input 
+                      type="checkbox" 
+                      checked={params.realisticGlans} 
+                      onChange={(e) => updateParam('realisticGlans', e.target.checked)} 
+                    />
+                    <span className="slider"></span>
+                  </div>
+                </label>
+
+                {/* Testicles */}
+                <label className="switch-label">
+                  <div>
+                    <span style={{ fontSize: '12px', fontWeight: 500 }}>Optional Testicle Base</span>
+                    <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>Adds dual base spheres. (+ $20.00)</p>
+                  </div>
+                  <div className="switch">
+                    <input 
+                      type="checkbox" 
+                      checked={params.hasBalls} 
+                      onChange={(e) => updateParam('hasBalls', e.target.checked)} 
+                    />
+                    <span className="slider"></span>
+                  </div>
+                </label>
+              </div>
+            )}
+
+            {params.shapeType === 'fantasy' && (
+              <div className="animate-fade-in" style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '12px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', marginBottom: '16px' }}>
+                <span style={{ fontSize: '10px', color: 'var(--accent-gold)', fontWeight: 700, display: 'block', marginBottom: '8px' }}>FANTASY STYLE OPTIONS</span>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                  {[
+                    { id: 'dragon', label: 'Dragon', icon: (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3 3.5-3 3.5 3 3.5-3 3.5-3-3.5 3-3.5-3-3.5zM6 5.5h12M6 12.5h12"/></svg>
+                    )},
+                    { id: 'alien', label: 'Alien', icon: (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="12" rx="5" ry="8"/><path d="M8 11.5s1-1 4-1 4 1 4 1"/></svg>
+                    )},
+                    { id: 'tentacle', label: 'Tentacle', icon: (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2c-3 4-3 12 0 20M12 6c-2 0-3 1-3 2s1 2 3 2M12 14c-2 0-3 1-3 2s1 2 3 2"/></svg>
+                    )}
+                  ].map((fan) => (
+                    <button
+                      key={fan.id}
+                      type="button"
+                      className={`btn ${params.fantasyType === fan.id ? 'btn-primary' : 'btn-secondary'}`}
+                      style={{ 
+                        padding: '8px 4px', 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        gap: '4px', 
+                        borderRadius: 'var(--radius-sm)',
+                        height: '56px'
+                      }}
+                      onClick={() => {
+                        updateParam('fantasyType', fan.id);
+                        if (fan.id === 'dragon') updateParam('texture', 'swirled');
+                        if (fan.id === 'alien') updateParam('texture', 'studded');
+                        if (fan.id === 'tentacle') updateParam('texture', 'ribbed');
+                      }}
+                      title={fan.label}
+                    >
+                      {fan.icon}
+                      <span style={{ fontSize: '9px', fontWeight: 600 }}>{fan.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Base Design Style Selector */}
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Base Safety Anchor</label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+                {[
+                  { id: 'flared', label: 'Suction', icon: (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v10M4 21h16c0-3-2-6-8-6s-8 3-8 6z"/></svg>
+                  )},
+                  { id: 'flat', label: 'Flat Base', icon: (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v13M3 21h18v-4H3v4z"/></svg>
+                  )},
+                  { id: 'harness', label: 'Harness', icon: (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v9M6 18c0-2 2.7-3.5 6-3.5s6 1.5 6 3.5M3 21h18"/></svg>
+                  )}
+                ].map((base) => (
+                  <button
+                    key={base.id}
+                    type="button"
+                    className={`btn ${params.baseType === base.id ? 'btn-primary' : 'btn-secondary'}`}
+                    style={{ 
+                      padding: '8px 4px', 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: '4px', 
+                      borderRadius: 'var(--radius-sm)',
+                      height: '56px'
+                    }}
+                    onClick={() => {
+                      updateParam('baseType', base.id);
+                      updateParam('suctionCup', base.id === 'flared');
+                    }}
+                    title={base.label}
+                  >
+                    {base.icon}
+                    <span style={{ fontSize: '9px', fontWeight: 600 }}>{base.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Tactile Texture Selector */}
         <div>
-          <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Tactile Surface Texture Motif</label>
+          <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
+            {demoMode ? "Tactile Surface Motif" : "Tactile Surface Texture Motif"}
+          </label>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
             {[
               { id: 'smooth', label: 'Smooth', icon: (
@@ -792,7 +984,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
         {/* Length Slider */}
         <div style={{ marginBottom: '14px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-            <span style={{ color: 'var(--text-secondary)' }}>Insertable Length</span>
+            <span style={{ color: 'var(--text-secondary)' }}>{demoMode ? "Height" : "Insertable Length"}</span>
             <span style={{ color: 'var(--accent-gold)', fontWeight: 600 }}>{params.length.toFixed(1)}"</span>
           </div>
           <input 
@@ -808,7 +1000,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
         {/* Shaft Girth Slider */}
         <div style={{ marginBottom: '14px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-            <span style={{ color: 'var(--text-secondary)' }}>Shaft Diameter (Girth)</span>
+            <span style={{ color: 'var(--text-secondary)' }}>{demoMode ? "Body Width" : "Shaft Diameter (Girth)"}</span>
             <span style={{ color: 'var(--accent-gold)', fontWeight: 600 }}>{params.shaftGirth.toFixed(2)}x</span>
           </div>
           <input 
@@ -824,7 +1016,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
         {/* Base Girth Slider */}
         <div style={{ marginBottom: '14px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-            <span style={{ color: 'var(--text-secondary)' }}>Base Flange Width</span>
+            <span style={{ color: 'var(--text-secondary)' }}>{demoMode ? "Base Width" : "Base Flange Width"}</span>
             <span style={{ color: 'var(--accent-gold)', fontWeight: 600 }}>{params.baseGirth.toFixed(2)}x</span>
           </div>
           <input 
@@ -840,9 +1032,9 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
         {/* Taper Slider */}
         <div style={{ marginBottom: '14px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-            <span style={{ color: 'var(--text-secondary)' }}>Widening Taper Profile</span>
+            <span style={{ color: 'var(--text-secondary)' }}>{demoMode ? "Taper Angle" : "Widening Taper Profile"}</span>
             <span style={{ color: 'var(--accent-gold)', fontWeight: 600 }}>
-              {params.taper === 0 ? 'Straight cylindrical' : params.taper < 0.4 ? 'Soft Taper' : 'Steep/Cone Taper'}
+              {demoMode ? `${Math.round(params.taper * 100)}%` : (params.taper === 0 ? 'Straight cylindrical' : params.taper < 0.4 ? 'Soft Taper' : 'Steep/Cone Taper')}
             </span>
           </div>
           <input 
@@ -858,7 +1050,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
         {/* Curvature Slider */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-            <span style={{ color: 'var(--text-secondary)' }}>Shaft Curvature</span>
+            <span style={{ color: 'var(--text-secondary)' }}>{demoMode ? "Sweep Curvature" : "Shaft Curvature"}</span>
             <span style={{ color: 'var(--accent-gold)', fontWeight: 600 }}>
               {params.curvature === 0 ? 'Straight' : params.curvature > 0 ? 'Forward Bend' : 'Reverse Bend'}
             </span>
@@ -879,16 +1071,21 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
       {/* SECTION 3: FIRMNESS & DENSITY */}
       <div>
         <h3 style={{ fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-          <Sliders size={15} color="var(--accent-gold)" /> 3. Firmness & Density
+          <Sliders size={15} color="var(--accent-gold)" /> 3. {demoMode ? "Silicone Mold Hardness" : "Firmness & Density"}
         </h3>
         
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
-          {[
+          {(demoMode ? [
+            { id: 'soft', label: 'Highly Flexible (Shore 10A)', sub: 'Baking/Muffin Cups' },
+            { id: 'medium', label: 'Medium Firm (Shore 20A)', sub: 'Soap/Candle Molds' },
+            { id: 'firm', label: 'Rigid Structure (Shore 40A)', sub: 'Industrial Casings' },
+            { id: 'dual-density', label: 'High-Density Shell', sub: 'Supported Sleeves' }
+          ] : [
             { id: 'soft', label: 'Soft (Shore 10A)', sub: 'Flexible/Squishy' },
             { id: 'medium', label: 'Medium (Shore 20A)', sub: 'Realistic Tissue' },
             { id: 'firm', label: 'Firm (Shore 40A)', sub: 'Rigid/Intense' },
             { id: 'dual-density', label: 'Dual-Density', sub: 'Rigid Core + Soft Shell' }
-          ].map((mode) => (
+          ]).map((mode) => (
             <button
               key={mode.id}
               type="button"
@@ -1049,69 +1246,70 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
         </div>
       </div>
 
-      <hr style={{ borderColor: 'var(--border-color)' }} />
-
       {/* SECTION 5: FUNCTIONAL ENHANCEMENTS */}
-      <div>
-        <h3 style={{ fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-          <Heart size={15} color="var(--accent-gold)" /> 5. Functional Enhancements
-        </h3>
+      {!demoMode && (
+        <>
+          <hr style={{ borderColor: 'var(--border-color)' }} />
+          <div>
+            <h3 style={{ fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+              <Heart size={15} color="var(--accent-gold)" /> 5. Functional Enhancements
+            </h3>
 
-        {/* Ejaculation tubes */}
-        <div style={{ marginBottom: '16px' }}>
-          <label className="switch-label">
-            <div>
-              <span style={{ fontSize: '12px', fontWeight: 500 }}>Internal Ejaculation Tube</span>
-              <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>Enables fluid delivery core. (+ $25.00)</p>
+            {/* Ejaculation tubes */}
+            <div style={{ marginBottom: '16px' }}>
+              <label className="switch-label">
+                <div>
+                  <span style={{ fontSize: '12px', fontWeight: 500 }}>Internal Ejaculation Tube</span>
+                  <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>Enables fluid delivery core. (+ $25.00)</p>
+                </div>
+                <div className="switch">
+                  <input 
+                    type="checkbox" 
+                    checked={params.internalTube} 
+                    onChange={(e) => updateParam('internalTube', e.target.checked)} 
+                  />
+                  <span className="slider"></span>
+                </div>
+              </label>
             </div>
-            <div className="switch">
-              <input 
-                type="checkbox" 
-                checked={params.internalTube} 
-                onChange={(e) => updateParam('internalTube', e.target.checked)} 
-              />
-              <span className="slider"></span>
-            </div>
-          </label>
-        </div>
 
-        {/* Vibration bullet pocket */}
-        <div style={{ marginBottom: '16px' }}>
-          <label className="switch-label">
-            <div>
-              <span style={{ fontSize: '12px', fontWeight: 500 }}>Vibrating Bullet Chamber</span>
-              <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>Embeds removable bullet receiver. (+ $25.00)</p>
+            {/* Vibration bullet pocket */}
+            <div style={{ marginBottom: '16px' }}>
+              <label className="switch-label">
+                <div>
+                  <span style={{ fontSize: '12px', fontWeight: 500 }}>Vibrating Bullet Chamber</span>
+                  <p style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>Embeds removable bullet receiver. (+ $25.00)</p>
+                </div>
+                <div className="switch">
+                  <input 
+                    type="checkbox" 
+                    checked={params.vibrationCore} 
+                    onChange={(e) => {
+                      updateParam('vibrationCore', e.target.checked);
+                      if (!e.target.checked) updateParam('isVibrating', false);
+                    }} 
+                  />
+                  <span className="slider"></span>
+                </div>
+              </label>
             </div>
-            <div className="switch">
-              <input 
-                type="checkbox" 
-                checked={params.vibrationCore} 
-                onChange={(e) => {
-                  updateParam('vibrationCore', e.target.checked);
-                  if (!e.target.checked) updateParam('isVibrating', false);
-                }} 
-              />
-              <span className="slider"></span>
-            </div>
-          </label>
-        </div>
 
-        {/* Live Test Vibrations (Only if Vibration Core enabled) */}
-        {params.vibrationCore && (
-          <div className="animate-fade-in">
-            <button 
-              type="button"
-              className={`btn ${params.isVibrating ? 'btn-danger' : 'btn-secondary'}`}
-              style={{ width: '100%', fontSize: '12px', padding: '8px' }}
-              onClick={() => updateParam('isVibrating', !params.isVibrating)}
-            >
-              {params.isVibrating ? "Stop Test Vibration" : "Live Test Vibration Signal"}
-            </button>
+            {/* Live Test Vibrations (Only if Vibration Core enabled) */}
+            {params.vibrationCore && (
+              <div className="animate-fade-in">
+                <button 
+                  type="button"
+                  className={`btn ${params.isVibrating ? 'btn-danger' : 'btn-secondary'}`}
+                  style={{ width: '100%', fontSize: '12px', padding: '8px' }}
+                  onClick={() => updateParam('isVibrating', !params.isVibrating)}
+                >
+                  {params.isVibrating ? "Stop Test Vibration" : "Live Test Vibration Signal"}
+                </button>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-
-      <hr style={{ borderColor: 'var(--border-color)' }} />
+        </>
+      )}
 
       {/* SECTION 6: SCENERY & AR VIEW */}
       <div>
@@ -1285,7 +1483,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
         </div>
 
         <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center', color: 'var(--text-muted)', fontSize: '11px', marginTop: '4px' }}>
-          <ShieldCheck size={14} /> Medical-Grade Platinum Silicone | Cruelty Free
+          <ShieldCheck size={14} /> {demoMode ? "Food-Safe Platinum Silicone | Heat Resistant" : "Medical-Grade Platinum Silicone | Cruelty Free"}
         </div>
       </div>
     </div>
