@@ -2,6 +2,7 @@ import React, { useRef, useMemo, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Center } from '@react-three/drei';
 import * as THREE from 'three';
+import { generateTextHeightmap } from '../utils/textHeightmap';
 
 interface BuilderParams {
   baseGeometry: string;
@@ -31,6 +32,11 @@ interface BuilderParams {
   blacklightMode: boolean;
   arMode: boolean;
   sceneEnvironment: string; // 'studio' | 'shower' | 'case'
+  engraveText: string;
+  engraveStyle: string;
+  engravePosition: number;
+  engraveSize: number;
+  engraveDepth: number;
 }
 
 interface ThreeCanvasProps {
@@ -83,6 +89,29 @@ export const CustomToyMesh: React.FC<{ params: BuilderParams; demoMode?: boolean
   const rightBallMaterialRef = useRef<THREE.ShaderMaterial>(null);
   const groupRef = useRef<THREE.Group>(null);
 
+  // Generate offscreen text heightmap
+  const textHeightmap = useMemo(() => {
+    return generateTextHeightmap(
+      params.engraveText,
+      params.engraveSize,
+      1.0 - params.engravePosition
+    );
+  }, [params.engraveText, params.engraveSize, params.engravePosition]);
+
+  const textTexture = useMemo(() => {
+    const tex = new THREE.CanvasTexture(textHeightmap.canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.ClampToEdgeWrapping;
+    tex.needsUpdate = true;
+    return tex;
+  }, [textHeightmap]);
+
+  useEffect(() => {
+    return () => {
+      textTexture.dispose();
+    };
+  }, [textTexture]);
+
   const textureId = useMemo(() => {
     switch (params.texture) {
       case 'ribbed': return 1;
@@ -129,7 +158,10 @@ export const CustomToyMesh: React.FC<{ params: BuilderParams; demoMode?: boolean
       uBlacklightMode: { value: params.blacklightMode ? 1.0 : 0.0 },
       uBallOffset: { value: ballOffset },
       uBallYOffset: { value: ballYOffset },
-      uAlpha: { value: 1.0 }
+      uAlpha: { value: 1.0 },
+      uTextTexture: { value: textTexture },
+      uTextStyle: { value: params.engraveStyle === 'none' ? 0.0 : params.engraveStyle === 'embossed' ? 1.0 : 2.0 },
+      uTextDepth: { value: params.engraveDepth }
     };
   };
 
@@ -173,6 +205,9 @@ export const CustomToyMesh: React.FC<{ params: BuilderParams; demoMode?: boolean
     u.uBallOffset.value = ballOffset;
     u.uBallYOffset.value = ballYOffset;
     u.uAlpha.value = (meshType === 0 && params.firmness === 'dual-density') ? 0.55 : 1.0;
+    u.uTextTexture.value = textTexture;
+    u.uTextStyle.value = params.engraveStyle === 'none' ? 0.0 : params.engraveStyle === 'embossed' ? 1.0 : 2.0;
+    u.uTextDepth.value = params.engraveDepth;
   };
 
   updateUniformValuesDirectly(outerUniforms, 0);
@@ -224,6 +259,9 @@ export const CustomToyMesh: React.FC<{ params: BuilderParams; demoMode?: boolean
       u.uBallOffset.value = ballOffset;
       u.uBallYOffset.value = ballYOffset;
       u.uAlpha.value = (meshType === 0 && params.firmness === 'dual-density') ? 0.55 : 1.0;
+      u.uTextTexture.value = textTexture;
+      u.uTextStyle.value = params.engraveStyle === 'none' ? 0.0 : params.engraveStyle === 'embossed' ? 1.0 : 2.0;
+      u.uTextDepth.value = params.engraveDepth;
     };
 
     updateMaterialUniforms(outerMaterialRef.current, 0);
@@ -267,6 +305,10 @@ export const CustomToyMesh: React.FC<{ params: BuilderParams; demoMode?: boolean
     uniform float uFantasyType;
     uniform float uBaseType;
     uniform float uTaper;
+
+    uniform sampler2D uTextTexture;
+    uniform float uTextStyle;
+    uniform float uTextDepth;
 
     void main() {
       vNormal = normalize(normalMatrix * normal);
@@ -339,6 +381,18 @@ export const CustomToyMesh: React.FC<{ params: BuilderParams; demoMode?: boolean
       // Taper (applied continuously across the main shaft body)
       float taperScale = mix(1.0 + uTaper * 0.20, 1.0 - uTaper * 0.45, normY);
       shapeScale *= taperScale;
+
+      // Apply custom text displacement
+      if (uTextStyle > 0.5) {
+        float textVal = texture2D(uTextTexture, uv).r;
+        float disp = 0.0;
+        if (uTextStyle == 1.0) {
+          disp = textVal * uTextDepth * 0.08;
+        } else if (uTextStyle == 2.0) {
+          disp = -textVal * uTextDepth * 0.08;
+        }
+        shapeScale += disp;
+      }
 
       // Use Scenario shapes (Candle, Soap, Kitchenware, Collectible)
       if (uShapeType == 4.0) {
@@ -505,6 +559,10 @@ export const CustomToyMesh: React.FC<{ params: BuilderParams; demoMode?: boolean
     uniform float uBallYOffset;
     uniform float uAlpha;
 
+    uniform sampler2D uTextTexture;
+    uniform float uTextStyle;
+    uniform float uTextDepth;
+
     // 3D hash & noise for seamless marble swirl
     float hash3(vec3 p) {
       p = fract(p * vec3(443.8975, 397.2973, 491.1871));
@@ -632,6 +690,22 @@ export const CustomToyMesh: React.FC<{ params: BuilderParams; demoMode?: boolean
       float gradB = (bumpB - bumpCenter) / eps;
       
       normalVec = normalize(normalVec - tangent * gradT * 0.25 - bitangent * gradB * 0.25);
+
+      if (uTextStyle > 0.5) {
+        float textVal = texture2D(uTextTexture, vUv).r;
+        float epsU = 0.003;
+        float epsV = 0.005;
+        float textValU = texture2D(uTextTexture, vUv + vec2(epsU, 0.0)).r;
+        float textValV = texture2D(uTextTexture, vUv + vec2(0.0, epsV)).r;
+        
+        float gradU = (textValU - textVal) / epsU;
+        float gradV = (textValV - textVal) / epsV;
+        
+        float bumpSign = (uTextStyle == 1.0) ? 1.0 : -1.0;
+        float textStrength = uTextDepth * 0.16;
+        
+        normalVec = normalize(normalVec - tangent * gradU * bumpSign * textStrength - bitangent * gradV * bumpSign * textStrength);
+      }
 
       // 2. CREVICE AMBIENT OCCLUSION (AO)
       float ao = 1.0;

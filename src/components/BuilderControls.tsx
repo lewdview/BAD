@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Sliders, Palette, ShieldCheck, Heart, Share2, ShoppingCart, Layers, Ruler, Eye, Camera } from 'lucide-react';
+import { Sparkles, Sliders, Palette, ShieldCheck, Heart, Share2, ShoppingCart, Layers, Ruler, Eye, Camera, Type } from 'lucide-react';
 import { generateToySTL } from '../utils/stlGenerator';
 
 interface BuilderParams {
@@ -30,6 +30,11 @@ interface BuilderParams {
   blacklightMode: boolean;
   arMode: boolean;
   sceneEnvironment: string; // 'studio' | 'shower' | 'case'
+  engraveText: string;
+  engraveStyle: string;
+  engravePosition: number;
+  engraveSize: number;
+  engraveDepth: number;
 }
 
 interface BuilderControlsProps {
@@ -1311,10 +1316,122 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
         </>
       )}
 
-      {/* SECTION 6: SCENERY & AR VIEW */}
+      {/* SECTION: CUSTOM ENGRAVING & BRANDING */}
+      <hr style={{ borderColor: 'var(--border-color)' }} />
       <div>
         <h3 style={{ fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-          <Eye size={15} color="var(--accent-gold)" /> 6. Scenery & AR View
+          <Type size={15} color="var(--accent-gold)" /> {demoMode ? "5. Custom Branding & Text" : "6. Custom Engraving & Text"}
+        </h3>
+        
+        {/* Style Selection */}
+        <div style={{ marginBottom: '14px' }}>
+          <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
+            Engraving Style
+          </label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+            {[
+              { id: 'none', label: 'None' },
+              { id: 'embossed', label: 'Embossed (Raised)' },
+              { id: 'engraved', label: 'Engraved (Carved)' }
+            ].map((style) => (
+              <button
+                key={style.id}
+                type="button"
+                className={`btn ${params.engraveStyle === style.id ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ padding: '8px 4px', fontSize: '11px', borderRadius: 'var(--radius-sm)' }}
+                onClick={() => updateParam('engraveStyle', style.id)}
+              >
+                {style.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {params.engraveStyle !== 'none' && (
+          <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {/* Text Input */}
+            <div>
+              <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                Text Label (Max 15 Characters)
+              </label>
+              <input
+                type="text"
+                value={params.engraveText}
+                maxLength={15}
+                onChange={(e) => updateParam('engraveText', e.target.value)}
+                placeholder="e.g. BRANDNAME"
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  backgroundColor: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--radius-sm)',
+                  color: 'var(--text-primary)',
+                  fontSize: '13px',
+                  fontFamily: 'monospace'
+                }}
+              />
+            </div>
+
+            {/* Vertical Position Slider */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                <span>Vertical Position</span>
+                <span style={{ fontWeight: 600 }}>{Math.round(params.engravePosition * 100)}%</span>
+              </div>
+              <input
+                type="range"
+                min="0.15"
+                max="0.85"
+                step="0.01"
+                value={params.engravePosition}
+                onChange={(e) => updateParam('engravePosition', parseFloat(e.target.value))}
+                style={{ width: '100%' }}
+              />
+            </div>
+
+            {/* Text Font Size Slider */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                <span>Font Size</span>
+                <span style={{ fontWeight: 600 }}>{params.engraveSize}px</span>
+              </div>
+              <input
+                type="range"
+                min="24"
+                max="64"
+                step="1"
+                value={params.engraveSize}
+                onChange={(e) => updateParam('engraveSize', parseInt(e.target.value))}
+                style={{ width: '100%' }}
+              />
+            </div>
+
+            {/* Engraving Depth Slider */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                <span>Displacement Depth</span>
+                <span style={{ fontWeight: 600 }}>{(params.engraveDepth * 2.5).toFixed(2)} mm</span>
+              </div>
+              <input
+                type="range"
+                min="0.1"
+                max="1.0"
+                step="0.05"
+                value={params.engraveDepth}
+                onChange={(e) => updateParam('engraveDepth', parseFloat(e.target.value))}
+                style={{ width: '100%' }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* SECTION 6: SCENERY & AR VIEW */}
+      <hr style={{ borderColor: 'var(--border-color)' }} />
+      <div>
+        <h3 style={{ fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+          <Eye size={15} color="var(--accent-gold)" /> {demoMode ? "6. Scenery & AR View" : "7. Scenery & AR View"}
         </h3>
 
         {/* Webcam AR Mode Toggle */}

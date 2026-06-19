@@ -1,3 +1,5 @@
+import { generateTextHeightmap } from './textHeightmap';
+
 export interface BuilderParams {
   baseGeometry: string;
   length: number;
@@ -26,6 +28,11 @@ export interface BuilderParams {
   blacklightMode: boolean;
   arMode: boolean;
   sceneEnvironment: string;
+  engraveText: string;
+  engraveStyle: string;
+  engravePosition: number;
+  engraveSize: number;
+  engraveDepth: number;
 }
 
 // Helper: Calculate 3D normal vector of a triangle
@@ -52,7 +59,8 @@ const smoothstep = (min: number, max: number, value: number): number => {
 export const getParametricVertex = (
   params: BuilderParams,
   normY: number,
-  angle: number
+  angle: number,
+  textHeightmap?: { heightmap: Uint8Array; width: number; height: number } | null
 ): { x: number; y: number; z: number } => {
   const yVal = normY - 0.5;
   
@@ -123,6 +131,26 @@ export const getParametricVertex = (
   // Taper (applied continuously across the main shaft body)
   const taperScale = (1.0 + uTaper * 0.20) * (1.0 - normY) + (1.0 - uTaper * 0.45) * normY;
   shapeScale *= taperScale;
+
+  // Custom text/engraving displacement
+  if (params.engraveStyle && params.engraveStyle !== 'none' && textHeightmap) {
+    const pxAngle = Math.atan2(Math.sin(angle), Math.cos(angle));
+    const textU = (pxAngle + Math.PI) / (Math.PI * 2);
+    const textV = normY;
+    
+    const xPixel = Math.max(0, Math.min(textHeightmap.width - 1, Math.floor(textU * textHeightmap.width)));
+    const yPixel = Math.max(0, Math.min(textHeightmap.height - 1, Math.floor(textV * textHeightmap.height)));
+    
+    const pixelVal = textHeightmap.heightmap[yPixel * textHeightmap.width + xPixel] / 255.0;
+    
+    let disp = 0;
+    if (params.engraveStyle === 'embossed') {
+      disp = pixelVal * params.engraveDepth * 0.08;
+    } else if (params.engraveStyle === 'engraved') {
+      disp = -pixelVal * params.engraveDepth * 0.08;
+    }
+    shapeScale += disp;
+  }
 
   let basePos = { x: Math.cos(angle), y: yVal, z: Math.sin(angle) };
 
@@ -243,12 +271,17 @@ export const generateToySTL = (params: BuilderParams): string => {
   const length = params.length;
   const curvature = params.curvature;
 
+  // Generate heightmap once at start of export to prevent CPU thrashing
+  const textHeightmap = params.engraveStyle !== 'none' && params.engraveText.trim()
+    ? generateTextHeightmap(params.engraveText, params.engraveSize, 1.0 - params.engravePosition)
+    : null;
+
   // Generate cylinder vertices using shared helper
   for (let yIndex = 0; yIndex <= heightSegments; yIndex++) {
     const normY = yIndex / heightSegments;
     for (let xIndex = 0; xIndex < radialSegments; xIndex++) {
       const angle = (xIndex / radialSegments) * Math.PI * 2;
-      const v = getParametricVertex(params, normY, angle);
+      const v = getParametricVertex(params, normY, angle, textHeightmap);
       vertices.push(v);
     }
   }
@@ -315,7 +348,8 @@ export const generateCoreSTL = (params: BuilderParams): string => {
     baseGirth: params.baseGirth * 0.46,
     length: params.length * 0.88, // Shorter to keep core fully encapsulated inside dildo tip
     suctionCup: false,
-    baseType: 'flat' // Flattened B2B injection base plug
+    baseType: 'flat', // Flattened B2B injection base plug
+    engraveStyle: 'none' // Do not engrave initials on the rigid internal plug
   };
   return generateToySTL(coreParams);
 };
@@ -336,6 +370,11 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
   const xMax = baseGirth * 1.6 + 0.4;
   const zMax = baseGirth * 1.6 + 0.4; // Box depth
 
+  // Generate heightmap once for the mold negative cut-out
+  const textHeightmap = params.engraveStyle !== 'none' && params.engraveText.trim()
+    ? generateTextHeightmap(params.engraveText, params.engraveSize, 1.0 - params.engravePosition)
+    : null;
+
   // Generate dildo profile vertices using shared helper
   const dildoVertices: { x: number; y: number; z: number }[][] = [];
   for (let yIndex = 0; yIndex <= heightSegments; yIndex++) {
@@ -343,7 +382,7 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
     const ring: { x: number; y: number; z: number }[] = [];
     for (let xIndex = 0; xIndex <= radialSegments; xIndex++) {
       const angle = (xIndex / radialSegments) * Math.PI * 2;
-      const v = getParametricVertex(params, normY, angle);
+      const v = getParametricVertex(params, normY, angle, textHeightmap);
       ring.push(v);
     }
     dildoVertices.push(ring);

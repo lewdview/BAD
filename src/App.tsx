@@ -45,6 +45,11 @@ interface BuilderParams {
   blacklightMode: boolean;
   arMode: boolean;
   sceneEnvironment: string; // 'studio' | 'shower' | 'case'
+  engraveText: string;
+  engraveStyle: string; // 'none' | 'embossed' | 'engraved'
+  engravePosition: number; // 0.0 to 1.0
+  engraveSize: number;
+  engraveDepth: number;
 }
 
 interface OrderItem {
@@ -269,7 +274,12 @@ function App() {
     internalTube: false,
     blacklightMode: false,
     arMode: false,
-    sceneEnvironment: 'studio'
+    sceneEnvironment: 'studio',
+    engraveText: '',
+    engraveStyle: 'none',
+    engravePosition: 0.5,
+    engraveSize: 44,
+    engraveDepth: 0.5
   });
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
