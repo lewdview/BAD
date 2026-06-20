@@ -307,45 +307,16 @@ export const Storefront: React.FC<StorefrontProps> = ({
   return (
     <div className="container animate-fade-in" style={{ padding: '40px 24px' }}>
       
-      {/* Target Audience Selector (Glass Capsule style) */}
-      <div 
-        style={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          gap: '8px', 
-          marginBottom: '40px',
-          flexWrap: 'wrap',
-          backgroundColor: 'var(--bg-secondary)',
-          padding: '6px',
-          borderRadius: 'var(--radius-full)',
-          border: '1px solid var(--border-color)',
-          maxWidth: '680px',
-          margin: '0 auto 40px auto',
-          boxShadow: 'var(--shadow-sm)'
-        }}
-      >
-        <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', padding: '0 16px', letterSpacing: '0.05em' }}>
+      {/* Target Audience Selector (Capsule tabs) */}
+      <div className="capsule-tabs" style={{ margin: '0 auto 40px auto' }}>
+        <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-secondary)', padding: '0 16px', letterSpacing: '0.05em' }}>
           Persona:
         </span>
         {(['consumer', 'retailer', 'medical', 'creator'] as const).map((h) => (
           <button
             key={h}
             onClick={() => setHook(h)}
-            style={{
-              padding: '8px 18px',
-              fontSize: '11px',
-              fontWeight: 700,
-              borderRadius: 'var(--radius-full)',
-              border: 'none',
-              cursor: 'pointer',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              transition: 'all var(--transition-fast)',
-              backgroundColor: hook === h ? 'var(--accent-gold)' : 'transparent',
-              color: hook === h ? '#000000' : 'var(--text-secondary)',
-              boxShadow: hook === h ? '0 4px 10px var(--accent-gold-glow)' : 'none'
-            }}
+            className={`capsule-tab ${hook === h ? 'active' : ''}`}
           >
             {h === 'consumer' ? 'Consumer' :
              h === 'retailer' ? 'B2B Retail' :
@@ -359,31 +330,27 @@ export const Storefront: React.FC<StorefrontProps> = ({
         className="card animate-fade-in" 
         key={hook}
         style={{ 
-          background: 'linear-gradient(135deg, var(--bg-tertiary) 0%, rgba(212, 175, 55, 0.06) 100%)',
-          border: '1px solid var(--border-color)',
+          background: 'linear-gradient(135deg, var(--bg-tertiary) 0%, rgba(212, 175, 55, 0.04) 100%)',
           borderLeft: '4px solid var(--accent-gold)',
           padding: '70px 48px',
           borderRadius: 'var(--radius-lg)',
           textAlign: 'center',
-          position: 'relative',
-          overflow: 'hidden',
-          marginBottom: '40px',
-          boxShadow: 'var(--shadow-lg)'
+          marginBottom: '40px'
         }}
       >
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: '680px', margin: '0 auto' }}>
-          <span className="badge badge-gold" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+        <div style={{ maxWidth: '680px', margin: '0 auto' }}>
+          <span className="badge badge-gold" style={{ marginBottom: '8px' }}>
             <Sparkles size={12} /> {currentHooksContent[hook].tagline}
           </span>
-          <h1 style={{ fontSize: '46px', margin: '16px 0', fontFamily: 'var(--font-serif)', lineHeight: 1.2, fontWeight: 700, letterSpacing: '-0.02em' }}>
+          <h1 className="text-gradient-gold" style={{ fontSize: '46px', margin: '16px 0', fontFamily: 'var(--font-serif)', lineHeight: 1.2, fontWeight: 700, letterSpacing: '-0.02em' }}>
             {currentHooksContent[hook].title}
           </h1>
-          <p style={{ fontSize: '15.5px', color: 'var(--text-secondary)', marginBottom: '36px', lineHeight: 1.65 }}>
+          <p style={{ fontSize: '15px', color: 'var(--text-secondary)', marginBottom: '36px', lineHeight: 1.65 }}>
             {currentHooksContent[hook].description}
           </p>
           <button 
             className="btn btn-primary" 
-            style={{ padding: '14px 36px', fontSize: '14px', fontWeight: 700, letterSpacing: '0.05em' }}
+            style={{ padding: '14px 36px', fontSize: '13px' }}
             onClick={onLaunchBuilder}
           >
             {currentHooksContent[hook].cta}
@@ -395,7 +362,7 @@ export const Storefront: React.FC<StorefrontProps> = ({
       <section style={{ marginBottom: '40px' }} className="animate-fade-in" key={`feat-${hook}`}>
         <div className="grid-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
           {currentHooksContent[hook].features.map((feat, idx) => (
-            <div key={idx} className="card" style={{ padding: '24px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
+            <div key={idx} className="card" style={{ padding: '24px', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
               <h3 style={{ fontSize: '15px', color: 'var(--accent-gold)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
                 <Sparkles size={14} /> {feat.title}
               </h3>
@@ -413,7 +380,6 @@ export const Storefront: React.FC<StorefrontProps> = ({
           className="card" 
           style={{ 
             backgroundColor: 'var(--bg-secondary)', 
-            border: '1px solid var(--border-color)',
             borderLeft: '4px solid var(--accent-gold)', 
             padding: '32px 40px',
             borderRadius: 'var(--radius-md)'
@@ -462,8 +428,7 @@ export const Storefront: React.FC<StorefrontProps> = ({
                   backgroundPosition: 'center',
                   boxShadow: 'inset 0 0 40px rgba(0,0,0,0.5)'
                 }}
-              >
-              </div>
+              />
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                   <h3 style={{ fontSize: '18px', fontWeight: 700 }}>{prod.name}</h3>
@@ -505,16 +470,15 @@ export const Storefront: React.FC<StorefrontProps> = ({
           onClick={() => setIsCartOpen(false)}
         >
           <div 
+            className="glass-panel"
             style={{ 
               width: '100%', 
               maxWidth: '450px', 
-              backgroundColor: 'var(--bg-secondary)', 
               height: '100%', 
               display: 'flex', 
               flexDirection: 'column', 
-              borderLeft: '1px solid var(--border-color)',
               padding: '28px',
-              boxShadow: '-10px 0 30px rgba(0,0,0,0.3)'
+              borderLeft: '1px solid var(--border-color)'
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -534,7 +498,7 @@ export const Storefront: React.FC<StorefrontProps> = ({
             {/* Cart Items List */}
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {cart.length === 0 ? (
-                <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '60px', fontSize: '13px' }}>
+                <div style={{ textAlign: 'center', color: 'var(--text-secondary)', marginTop: '60px', fontSize: '13px' }}>
                   Your cart is empty.
                 </div>
               ) : (
@@ -558,7 +522,7 @@ export const Storefront: React.FC<StorefrontProps> = ({
                           ${(item.price * item.quantity).toFixed(2)}
                         </span>
                       </div>
-                      {item.isCustom && (
+                      {item.isCustom && item.parameters && (
                         <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '6px' }}>
                           Length: {item.parameters.length.toFixed(1)}" | Girth: {item.parameters.shaftGirth.toFixed(2)}x
                         </div>
@@ -605,7 +569,7 @@ export const Storefront: React.FC<StorefrontProps> = ({
                 </div>
                 <button 
                   className="btn btn-primary" 
-                  style={{ width: '100%', padding: '14px', letterSpacing: '0.05em' }}
+                  style={{ width: '100%', padding: '14px' }}
                   onClick={() => {
                     setIsCartOpen(false);
                     setIsCheckoutOpen(true);
@@ -640,16 +604,14 @@ export const Storefront: React.FC<StorefrontProps> = ({
           }}
         >
           <div 
+            className="glass-panel"
             style={{ 
               width: '100%', 
               maxWidth: '550px', 
-              backgroundColor: 'var(--bg-secondary)', 
               borderRadius: 'var(--radius-lg)',
-              border: '1px solid var(--border-color)',
               padding: '36px',
               maxHeight: '90vh',
-              overflowY: 'auto',
-              boxShadow: 'var(--shadow-lg)'
+              overflowY: 'auto'
             }}
           >
             {checkoutStep === 'details' && (
@@ -704,20 +666,6 @@ export const Storefront: React.FC<StorefrontProps> = ({
                     <input 
                       type="text" 
                       required 
-                      style={{ 
-                        width: '100%', 
-                        padding: '11px 14px', 
-                        marginTop: '6px', 
-                        border: '1px solid var(--border-color)', 
-                        backgroundColor: 'var(--bg-tertiary)', 
-                        color: 'var(--text-primary)', 
-                        borderRadius: 'var(--radius-sm)', 
-                        outline: 'none',
-                        transition: 'border-color var(--transition-fast)',
-                        fontSize: '13px'
-                      }}
-                      onFocus={(e) => e.target.style.borderColor = 'var(--accent-gold)'}
-                      onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
                     />
@@ -727,20 +675,6 @@ export const Storefront: React.FC<StorefrontProps> = ({
                     <input 
                       type="email" 
                       required 
-                      style={{ 
-                        width: '100%', 
-                        padding: '11px 14px', 
-                        marginTop: '6px', 
-                        border: '1px solid var(--border-color)', 
-                        backgroundColor: 'var(--bg-tertiary)', 
-                        color: 'var(--text-primary)', 
-                        borderRadius: 'var(--radius-sm)', 
-                        outline: 'none',
-                        transition: 'border-color var(--transition-fast)',
-                        fontSize: '13px'
-                      }}
-                      onFocus={(e) => e.target.style.borderColor = 'var(--accent-gold)'}
-                      onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                       value={form.email}
                       onChange={(e) => setForm({ ...form, email: e.target.value })}
                     />
@@ -752,20 +686,6 @@ export const Storefront: React.FC<StorefrontProps> = ({
                       <input 
                         type="text" 
                         required 
-                        style={{ 
-                          width: '100%', 
-                          padding: '11px 14px', 
-                          marginTop: '6px', 
-                          border: '1px solid var(--border-color)', 
-                          backgroundColor: 'var(--bg-tertiary)', 
-                          color: 'var(--text-primary)', 
-                          borderRadius: 'var(--radius-sm)', 
-                          outline: 'none',
-                          transition: 'border-color var(--transition-fast)',
-                          fontSize: '13px' 
-                        }}
-                        onFocus={(e) => e.target.style.borderColor = 'var(--accent-gold)'}
-                        onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                         value={form.address}
                         onChange={(e) => setForm({ ...form, address: e.target.value })}
                       />
@@ -779,20 +699,6 @@ export const Storefront: React.FC<StorefrontProps> = ({
                         <input 
                           type="text" 
                           required 
-                          style={{ 
-                            width: '100%', 
-                            padding: '11px 14px', 
-                            marginTop: '6px', 
-                            border: '1px solid var(--border-color)', 
-                            backgroundColor: 'var(--bg-tertiary)', 
-                            color: 'var(--text-primary)', 
-                            borderRadius: 'var(--radius-sm)', 
-                            outline: 'none',
-                            transition: 'border-color var(--transition-fast)',
-                            fontSize: '13px' 
-                          }}
-                          onFocus={(e) => e.target.style.borderColor = 'var(--accent-gold)'}
-                          onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                           value={form.city}
                           onChange={(e) => setForm({ ...form, city: e.target.value })}
                         />
@@ -803,7 +709,7 @@ export const Storefront: React.FC<StorefrontProps> = ({
                         <input 
                           type="text" 
                           disabled 
-                          style={{ width: '100%', padding: '11px 14px', marginTop: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)', borderRadius: 'var(--radius-sm)', fontSize: '13px' }}
+                          style={{ color: 'var(--text-muted)' }}
                           value="BAD Flagship - New York"
                         />
                       </div>
@@ -813,20 +719,6 @@ export const Storefront: React.FC<StorefrontProps> = ({
                       <input 
                         type="text" 
                         required 
-                        style={{ 
-                          width: '100%', 
-                          padding: '11px 14px', 
-                          marginTop: '6px', 
-                          border: '1px solid var(--border-color)', 
-                          backgroundColor: 'var(--bg-tertiary)', 
-                          color: 'var(--text-primary)', 
-                          borderRadius: 'var(--radius-sm)', 
-                          outline: 'none',
-                          transition: 'border-color var(--transition-fast)',
-                          fontSize: '13px' 
-                        }}
-                        onFocus={(e) => e.target.style.borderColor = 'var(--accent-gold)'}
-                        onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                         value={form.zip}
                         onChange={(e) => setForm({ ...form, zip: e.target.value })}
                       />
@@ -847,20 +739,6 @@ export const Storefront: React.FC<StorefrontProps> = ({
                       type="text" 
                       required 
                       placeholder={isPOS ? "Waiting for Terminal Swipe..." : "•••• •••• •••• ••••"}
-                      style={{ 
-                        width: '100%', 
-                        padding: '11px 14px', 
-                        marginTop: '6px', 
-                        border: '1px solid var(--border-color)', 
-                        backgroundColor: 'var(--bg-tertiary)', 
-                        color: 'var(--text-primary)', 
-                        borderRadius: 'var(--radius-sm)', 
-                        outline: 'none',
-                        transition: 'border-color var(--transition-fast)',
-                        fontSize: '13px' 
-                      }}
-                      onFocus={(e) => e.target.style.borderColor = 'var(--accent-gold)'}
-                      onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                       value={form.cardNum}
                       onChange={(e) => setForm({ ...form, cardNum: e.target.value })}
                     />
@@ -873,20 +751,6 @@ export const Storefront: React.FC<StorefrontProps> = ({
                         type="text" 
                         required 
                         placeholder="MM/YY"
-                        style={{ 
-                          width: '100%', 
-                          padding: '11px 14px', 
-                          marginTop: '6px', 
-                          border: '1px solid var(--border-color)', 
-                          backgroundColor: 'var(--bg-tertiary)', 
-                          color: 'var(--text-primary)', 
-                          borderRadius: 'var(--radius-sm)', 
-                          outline: 'none',
-                          transition: 'border-color var(--transition-fast)',
-                          fontSize: '13px' 
-                        }}
-                        onFocus={(e) => e.target.style.borderColor = 'var(--accent-gold)'}
-                        onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                         value={form.cardExp}
                         onChange={(e) => setForm({ ...form, cardExp: e.target.value })}
                       />
@@ -897,20 +761,6 @@ export const Storefront: React.FC<StorefrontProps> = ({
                         type="text" 
                         required 
                         placeholder="•••"
-                        style={{ 
-                          width: '100%', 
-                          padding: '11px 14px', 
-                          marginTop: '6px', 
-                          border: '1px solid var(--border-color)', 
-                          backgroundColor: 'var(--bg-tertiary)', 
-                          color: 'var(--text-primary)', 
-                          borderRadius: 'var(--radius-sm)', 
-                          outline: 'none',
-                          transition: 'border-color var(--transition-fast)',
-                          fontSize: '13px' 
-                        }}
-                        onFocus={(e) => e.target.style.borderColor = 'var(--accent-gold)'}
-                        onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                         value={form.cardCVV}
                         onChange={(e) => setForm({ ...form, cardCVV: e.target.value })}
                       />
@@ -936,8 +786,8 @@ export const Storefront: React.FC<StorefrontProps> = ({
 
                   <button 
                     type="submit" 
-                    className="btn btn-primary" 
-                    style={{ width: '100%', padding: '14px', marginTop: '16px', letterSpacing: '0.05em' }}
+                    className="btn btn-primary animate-fade-in" 
+                    style={{ width: '100%', marginTop: '16px' }}
                   >
                     Submit Payment of ${subtotal.toFixed(2)}
                   </button>

@@ -56,12 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
             e.preventDefault();
             if (!discretionMode) setActiveTab('storefront');
           }}
-          style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '12px',
-            textDecoration: 'none'
-          }}
+          style={{ display: 'flex', alignItems: 'center', gap: '12px' }}
         >
           {discretionMode ? (
             <span style={{ 
@@ -76,14 +71,14 @@ export const Header: React.FC<HeaderProps> = ({
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span className="logo-main">BAD</span>
+                <span className="logo-main text-gradient-gold">BAD</span>
                 <span style={{ 
                   width: '6px', 
                   height: '6px', 
                   borderRadius: '50%', 
                   backgroundColor: 'var(--accent-gold)', 
                   display: 'inline-block',
-                  boxShadow: '0 0 8px var(--accent-gold)'
+                  boxShadow: '0 0 10px var(--accent-gold)'
                 }} />
               </div>
               <span className="logo-sub">{demoMode ? "mold-studio (demo)" : "buildadil.do"}</span>
@@ -111,7 +106,7 @@ export const Header: React.FC<HeaderProps> = ({
                   onClick={() => setActiveTab('builder')}
                 >
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                    <Hammer size={14} /> {demoMode ? "Mold Studio" : "BAD Builder"}
+                    <Hammer size={13} /> {demoMode ? "Mold Studio" : "BAD Builder"}
                   </span>
                 </a>
               </li>
@@ -122,7 +117,7 @@ export const Header: React.FC<HeaderProps> = ({
                   onClick={() => setActiveTab('social')}
                 >
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                    <Users size={14} /> Social
+                    <Users size={13} /> Social
                   </span>
                 </a>
               </li>
@@ -133,7 +128,7 @@ export const Header: React.FC<HeaderProps> = ({
                   onClick={() => setActiveTab('admin')}
                 >
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                    <Hammer size={14} /> Admin
+                    <Hammer size={13} /> Admin
                   </span>
                 </a>
               </li>
@@ -144,7 +139,7 @@ export const Header: React.FC<HeaderProps> = ({
                   onClick={() => setActiveTab('pitch')}
                 >
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                    <TrendingUp size={14} /> Pitch
+                    <TrendingUp size={13} /> Pitch
                   </span>
                 </a>
               </li>
@@ -153,9 +148,7 @@ export const Header: React.FC<HeaderProps> = ({
                   className={`btn ${isPOS ? 'btn-primary' : 'btn-secondary'}`}
                   style={{ 
                     padding: '6px 14px', 
-                    fontSize: '11px', 
-                    textTransform: 'uppercase', 
-                    fontWeight: 700 
+                    fontSize: '11px'
                   }}
                   onClick={() => {
                     setIsPOS(!isPOS);
@@ -182,16 +175,10 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Brand Demo Toggle */}
           {!discretionMode && (
             <button 
-              className="btn" 
+              className={`btn ${demoMode ? 'btn-primary' : 'btn-secondary'}`}
               style={{ 
-                backgroundColor: demoMode ? 'var(--accent-gold)' : 'rgba(255,255,255,0.03)', 
-                color: demoMode ? '#000000' : 'var(--text-primary)',
-                border: '1px solid var(--border-color)',
                 padding: '8px 16px',
-                fontSize: '11px',
-                fontWeight: 700,
-                boxShadow: demoMode ? '0 4px 12px var(--accent-gold-glow)' : 'none',
-                transition: 'all var(--transition-fast)'
+                fontSize: '11px'
               }}
               onClick={() => {
                 const newDemoMode = !demoMode;
@@ -214,26 +201,23 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Panic / Discretion Button */}
           <button 
-            className="btn" 
+            className="btn btn-secondary" 
             style={{ 
-              backgroundColor: discretionMode ? '#e2e8f0' : 'rgba(255,255,255,0.03)', 
-              color: discretionMode ? '#1e293b' : 'var(--text-primary)',
-              border: '1px solid var(--border-color)',
               padding: '8px 16px',
               fontSize: '11px',
-              fontWeight: 700,
-              transition: 'all var(--transition-fast)'
+              backgroundColor: discretionMode ? 'var(--text-primary)' : 'transparent',
+              color: discretionMode ? 'var(--bg-primary)' : 'var(--text-primary)'
             }}
             onClick={toggleDiscretion}
             title="Toggle Panic / Discretion Mode"
           >
             {discretionMode ? (
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Eye size={14} /> Revert Store
+                <Eye size={13} /> Revert Store
               </span>
             ) : (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-muted)' }}>
-                <EyeOff size={14} /> Discreet Mode (Hide)
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)' }}>
+                <EyeOff size={13} /> Discreet Mode (Hide)
               </span>
             )}
           </button>
@@ -250,8 +234,7 @@ export const Header: React.FC<HeaderProps> = ({
                 alignItems: 'center', 
                 justifyContent: 'center',
                 width: '38px',
-                height: '38px',
-                border: '1px solid var(--border-color)'
+                height: '38px'
               }}
               onClick={() => setActiveTab('storefront')}
             >

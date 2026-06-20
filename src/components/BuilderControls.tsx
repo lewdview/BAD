@@ -619,10 +619,10 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
       {/* AI MOLD/PLEASURE ARCHITECT CARD */}
       <div 
         style={{
-          background: 'linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%)',
-          border: '1px solid rgba(212, 175, 55, 0.25)',
+          background: 'linear-gradient(135deg, rgba(217, 70, 239, 0.06) 0%, rgba(212, 175, 55, 0.06) 100%)',
+          border: '1px solid var(--border-hover)',
           borderRadius: 'var(--radius-md)',
-          padding: '16px',
+          padding: '20px',
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.25)'
         }}
       >
@@ -663,19 +663,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
             value={aiPrompt}
             onChange={(e) => setAiPrompt(e.target.value)}
             disabled={isAiThinking}
-            style={{
-              flex: 1,
-              padding: '8px 12px',
-              backgroundColor: 'var(--bg-secondary)',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-primary)',
-              borderRadius: 'var(--radius-sm)',
-              fontSize: '12px',
-              outline: 'none',
-              transition: 'border-color var(--transition-fast)'
-            }}
-            onFocus={(e) => e.target.style.borderColor = 'var(--accent-gold)'}
-            onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+            style={{ marginTop: 0 }}
           />
           <button 
             type="submit" 
@@ -686,7 +674,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
               fontSize: '11px', 
               borderRadius: 'var(--radius-sm)',
               minWidth: '70px',
-              height: '34px'
+              height: '38px'
             }}
           >
             {isAiThinking ? '...' : 'Ask AI'}
@@ -716,7 +704,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
         {/* ACCORDION 1: SHAPE / CRAFT TYPE */}
-        <div style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="card" style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div 
             onClick={() => toggleSection('shape')}
             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
@@ -724,7 +712,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
             <h3 style={{ fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
               <Layers size={15} color="var(--accent-gold)" /> 1. {demoMode ? "Use Scenario & Craft" : "Shape & Anatomy"}
             </h3>
-            {expandedSection === 'shape' ? <ChevronUp size={16} color="var(--text-muted)" /> : <ChevronDown size={16} color="var(--text-muted)" />}
+            {expandedSection === 'shape' ? <ChevronUp size={16} color="var(--text-secondary)" /> : <ChevronDown size={16} color="var(--text-secondary)" />}
           </div>
 
           {expandedSection === 'shape' && (
@@ -975,7 +963,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
         </div>
 
         {/* ACCORDION 2: DIMENSIONS & SCULPTING */}
-        <div style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="card" style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div 
             onClick={() => toggleSection('dimensions')}
             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
@@ -983,7 +971,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
             <h3 style={{ fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
               <Ruler size={15} color="var(--accent-gold)" /> 2. Dimensions & Sculpting
             </h3>
-            {expandedSection === 'dimensions' ? <ChevronUp size={16} color="var(--text-muted)" /> : <ChevronDown size={16} color="var(--text-muted)" />}
+            {expandedSection === 'dimensions' ? <ChevronUp size={16} color="var(--text-secondary)" /> : <ChevronDown size={16} color="var(--text-secondary)" />}
           </div>
 
           {expandedSection === 'dimensions' && (
@@ -1076,7 +1064,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
         </div>
 
         {/* ACCORDION 3: FIRMNESS & DENSITY */}
-        <div style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="card" style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div 
             onClick={() => toggleSection('firmness')}
             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
@@ -1084,7 +1072,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
             <h3 style={{ fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
               <Sliders size={15} color="var(--accent-gold)" /> 3. {demoMode ? "Silicone Mold Hardness" : "Firmness & Density"}
             </h3>
-            {expandedSection === 'firmness' ? <ChevronUp size={16} color="var(--text-muted)" /> : <ChevronDown size={16} color="var(--text-muted)" />}
+            {expandedSection === 'firmness' ? <ChevronUp size={16} color="var(--text-secondary)" /> : <ChevronDown size={16} color="var(--text-secondary)" />}
           </div>
 
           {expandedSection === 'firmness' && (
@@ -1116,7 +1104,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
         </div>
 
         {/* ACCORDION 4: COLOR POUR & EFFECTS */}
-        <div style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="card" style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div 
             onClick={() => toggleSection('color')}
             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
@@ -1124,7 +1112,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
             <h3 style={{ fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
               <Palette size={15} color="var(--accent-gold)" /> 4. Color Pour & Effects
             </h3>
-            {expandedSection === 'color' ? <ChevronUp size={16} color="var(--text-muted)" /> : <ChevronDown size={16} color="var(--text-muted)" />}
+            {expandedSection === 'color' ? <ChevronUp size={16} color="var(--text-secondary)" /> : <ChevronDown size={16} color="var(--text-secondary)" />}
           </div>
 
           {expandedSection === 'color' && (
@@ -1264,9 +1252,8 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
           )}
         </div>
 
-        {/* ACCORDION 5: FUNCTIONAL ENHANCEMENTS */}
         {!demoMode && (
-          <div style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div className="card" style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div 
               onClick={() => toggleSection('functional')}
               style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
@@ -1274,7 +1261,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
               <h3 style={{ fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
                 <Heart size={15} color="var(--accent-gold)" /> 5. Functional Upgrades
               </h3>
-              {expandedSection === 'functional' ? <ChevronUp size={16} color="var(--text-muted)" /> : <ChevronDown size={16} color="var(--text-muted)" />}
+              {expandedSection === 'functional' ? <ChevronUp size={16} color="var(--text-secondary)" /> : <ChevronDown size={16} color="var(--text-secondary)" />}
             </div>
 
             {expandedSection === 'functional' && (
@@ -1282,7 +1269,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
                 <label className="switch-label">
                   <div>
                     <span style={{ fontSize: '12px', fontWeight: 600 }}>Ejaculation Tube</span>
-                    <p style={{ fontSize: '9.5px', color: 'var(--text-muted)', marginTop: '2px' }}>Internal fluid delivery core (+ $25.00)</p>
+                    <p style={{ fontSize: '9.5px', color: 'var(--text-secondary)', marginTop: '2px' }}>Internal fluid delivery core (+ $25.00)</p>
                   </div>
                   <div className="switch">
                     <input 
@@ -1297,7 +1284,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
                 <label className="switch-label">
                   <div>
                     <span style={{ fontSize: '12px', fontWeight: 600 }}>Vibrating Bullet Chamber</span>
-                    <p style={{ fontSize: '9.5px', color: 'var(--text-muted)', marginTop: '2px' }}>Removable bullet chamber pocket (+ $25.00)</p>
+                    <p style={{ fontSize: '9.5px', color: 'var(--text-secondary)', marginTop: '2px' }}>Removable bullet chamber pocket (+ $25.00)</p>
                   </div>
                   <div className="switch">
                     <input 
@@ -1316,7 +1303,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
                   <button 
                     type="button"
                     className={`btn ${params.isVibrating ? 'btn-danger' : 'btn-secondary'}`}
-                    style={{ width: '100%', fontSize: '11px', padding: '10px', textTransform: 'uppercase', fontWeight: 700 }}
+                    style={{ width: '100%', fontSize: '11px', padding: '10px' }}
                     onClick={() => updateParam('isVibrating', !params.isVibrating)}
                   >
                     {params.isVibrating ? "Stop Test Vibration" : "Test Vibration Signal"}
@@ -1328,7 +1315,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
         )}
 
         {/* ACCORDION 6: PERSONALIZED ENGRAVING & TEXT */}
-        <div style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="card" style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div 
             onClick={() => toggleSection('engraving')}
             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
@@ -1336,7 +1323,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
             <h3 style={{ fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
               <Type size={15} color="var(--accent-gold)" /> {demoMode ? "5. Custom Branding & Text" : "6. Custom Engraving & Text"}
             </h3>
-            {expandedSection === 'engraving' ? <ChevronUp size={16} color="var(--text-muted)" /> : <ChevronDown size={16} color="var(--text-muted)" />}
+            {expandedSection === 'engraving' ? <ChevronUp size={16} color="var(--text-secondary)" /> : <ChevronDown size={16} color="var(--text-secondary)" />}
           </div>
 
           {expandedSection === 'engraving' && (
@@ -1374,19 +1361,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
                       maxLength={15}
                       onChange={(e) => updateParam('engraveText', e.target.value)}
                       placeholder="e.g. BRANDNAME"
-                      style={{
-                        width: '100%',
-                        padding: '10px',
-                        backgroundColor: 'var(--bg-secondary)',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: 'var(--radius-sm)',
-                        color: 'var(--text-primary)',
-                        fontSize: '13px',
-                        fontFamily: 'monospace',
-                        outline: 'none'
-                      }}
-                      onFocus={(e) => e.target.style.borderColor = 'var(--accent-gold)'}
-                      onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                      style={{ fontFamily: 'monospace', marginTop: 0 }}
                     />
                   </div>
 
@@ -1441,7 +1416,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
         </div>
 
         {/* ACCORDION 7: SCENERY & AR VIEW */}
-        <div style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="card" style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div 
             onClick={() => toggleSection('scenery')}
             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
@@ -1449,7 +1424,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
             <h3 style={{ fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
               <Eye size={15} color="var(--accent-gold)" /> {demoMode ? "6. Scenery & AR View" : "7. Scenery & AR View"}
             </h3>
-            {expandedSection === 'scenery' ? <ChevronUp size={16} color="var(--text-muted)" /> : <ChevronDown size={16} color="var(--text-muted)" />}
+            {expandedSection === 'scenery' ? <ChevronUp size={16} color="var(--text-secondary)" /> : <ChevronDown size={16} color="var(--text-secondary)" />}
           </div>
 
           {expandedSection === 'scenery' && (
@@ -1457,7 +1432,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
               <label className="switch-label">
                 <div>
                   <span style={{ fontSize: '12px', fontWeight: 600 }}>Live Webcam AR Mode</span>
-                  <p style={{ fontSize: '9.5px', color: 'var(--text-muted)', marginTop: '2px' }}>Project model into your room using camera</p>
+                  <p style={{ fontSize: '9.5px', color: 'var(--text-secondary)', marginTop: '2px' }}>Project model into your room using camera</p>
                 </div>
                 <div className="switch">
                   <input 
@@ -1553,7 +1528,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
         <label className="switch-label">
           <div>
             <span style={{ fontSize: '12px', fontWeight: 600 }}>Compare Physical Scale</span>
-            <p style={{ fontSize: '9.5px', color: 'var(--text-muted)', marginTop: '2px' }}>Overlay 5.8" smartphone next to model.</p>
+            <p style={{ fontSize: '9.5px', color: 'var(--text-secondary)', marginTop: '2px' }}>Overlay 5.8" smartphone next to model.</p>
           </div>
           <div className="switch">
             <input 
@@ -1596,12 +1571,12 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
           </button>
           <button 
             type="button"
-            className="btn btn-secondary" 
-            style={{ padding: '12px', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, borderColor: 'var(--accent-gold)' }}
+            className="btn btn-glow" 
+            style={{ padding: '12px', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700 }}
             onClick={() => window.dispatchEvent(new CustomEvent('export-hires'))}
             title="Export Hi-Res Render Spec Sheet Card"
           >
-            <Camera size={16} color="var(--accent-gold)" /> Render
+            <Camera size={16} /> Render
           </button>
           <button 
             type="button"
@@ -1613,7 +1588,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
           </button>
         </div>
 
-        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center', color: 'var(--text-muted)', fontSize: '11px', marginTop: '4px' }}>
+        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '11px', marginTop: '4px' }}>
           <ShieldCheck size={14} color="var(--accent-gold)" /> {demoMode ? "Food-Safe Platinum Silicone | Heat Resistant" : "Medical-Grade Platinum Silicone | Body Safe"}
         </div>
       </div>
