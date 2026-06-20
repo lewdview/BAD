@@ -28,11 +28,11 @@ export interface BuilderParams {
   blacklightMode: boolean;
   arMode: boolean;
   sceneEnvironment: string;
-  engraveText: string;
-  engraveStyle: string;
-  engravePosition: number;
-  engraveSize: number;
-  engraveDepth: number;
+  engraveText?: string;
+  engraveStyle?: string;
+  engravePosition?: number;
+  engraveSize?: number;
+  engraveDepth?: number;
 }
 
 // Helper: Calculate 3D normal vector of a triangle
@@ -144,10 +144,11 @@ export const getParametricVertex = (
     const pixelVal = textHeightmap.heightmap[yPixel * textHeightmap.width + xPixel] / 255.0;
     
     let disp = 0;
+    const engraveDepth = params.engraveDepth !== undefined ? params.engraveDepth : 0.5;
     if (params.engraveStyle === 'embossed') {
-      disp = pixelVal * params.engraveDepth * 0.08;
+      disp = pixelVal * engraveDepth * 0.08;
     } else if (params.engraveStyle === 'engraved') {
-      disp = -pixelVal * params.engraveDepth * 0.08;
+      disp = -pixelVal * engraveDepth * 0.08;
     }
     shapeScale += disp;
   }
@@ -272,8 +273,8 @@ export const generateToySTL = (params: BuilderParams): string => {
   const curvature = params.curvature;
 
   // Generate heightmap once at start of export to prevent CPU thrashing
-  const textHeightmap = params.engraveStyle !== 'none' && params.engraveText.trim()
-    ? generateTextHeightmap(params.engraveText, params.engraveSize, 1.0 - params.engravePosition)
+  const textHeightmap = params.engraveStyle && params.engraveStyle !== 'none' && params.engraveText && params.engraveText.trim()
+    ? generateTextHeightmap(params.engraveText, params.engraveSize || 44, 1.0 - (params.engravePosition !== undefined ? params.engravePosition : 0.5))
     : null;
 
   // Generate cylinder vertices using shared helper
@@ -371,8 +372,8 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
   const zMax = baseGirth * 1.6 + 0.4; // Box depth
 
   // Generate heightmap once for the mold negative cut-out
-  const textHeightmap = params.engraveStyle !== 'none' && params.engraveText.trim()
-    ? generateTextHeightmap(params.engraveText, params.engraveSize, 1.0 - params.engravePosition)
+  const textHeightmap = params.engraveStyle && params.engraveStyle !== 'none' && params.engraveText && params.engraveText.trim()
+    ? generateTextHeightmap(params.engraveText, params.engraveSize || 44, 1.0 - (params.engravePosition !== undefined ? params.engravePosition : 0.5))
     : null;
 
   // Generate dildo profile vertices using shared helper

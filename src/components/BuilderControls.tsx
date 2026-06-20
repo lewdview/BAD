@@ -30,11 +30,11 @@ interface BuilderParams {
   blacklightMode: boolean;
   arMode: boolean;
   sceneEnvironment: string; // 'studio' | 'shower' | 'case'
-  engraveText: string;
-  engraveStyle: string;
-  engravePosition: number;
-  engraveSize: number;
-  engraveDepth: number;
+  engraveText?: string;
+  engraveStyle?: string;
+  engravePosition?: number;
+  engraveSize?: number;
+  engraveDepth?: number;
 }
 
 interface BuilderControlsProps {
@@ -1362,7 +1362,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
                 </div>
               </div>
 
-              {params.engraveStyle !== 'none' && (
+              {params.engraveStyle && params.engraveStyle !== 'none' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div>
                     <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
@@ -1370,7 +1370,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
                     </label>
                     <input
                       type="text"
-                      value={params.engraveText}
+                      value={params.engraveText || ''}
                       maxLength={15}
                       onChange={(e) => updateParam('engraveText', e.target.value)}
                       placeholder="e.g. BRANDNAME"
@@ -1393,14 +1393,14 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
                       <span>Vertical Position</span>
-                      <span style={{ fontWeight: 700 }}>{Math.round(params.engravePosition * 100)}%</span>
+                      <span style={{ fontWeight: 700 }}>{Math.round((params.engravePosition !== undefined ? params.engravePosition : 0.5) * 100)}%</span>
                     </div>
                     <input
                       type="range"
                       min="0.15"
                       max="0.85"
                       step="0.01"
-                      value={params.engravePosition}
+                      value={params.engravePosition !== undefined ? params.engravePosition : 0.5}
                       onChange={(e) => updateParam('engravePosition', parseFloat(e.target.value))}
                     />
                   </div>
@@ -1408,14 +1408,14 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
                       <span>Font Size</span>
-                      <span style={{ fontWeight: 700 }}>{params.engraveSize}px</span>
+                      <span style={{ fontWeight: 700 }}>{params.engraveSize !== undefined ? params.engraveSize : 44}px</span>
                     </div>
                     <input
                       type="range"
                       min="24"
                       max="64"
                       step="1"
-                      value={params.engraveSize}
+                      value={params.engraveSize !== undefined ? params.engraveSize : 44}
                       onChange={(e) => updateParam('engraveSize', parseInt(e.target.value))}
                     />
                   </div>
@@ -1423,14 +1423,14 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
                       <span>Displacement Depth</span>
-                      <span style={{ fontWeight: 700 }}>{(params.engraveDepth * 2.5).toFixed(2)} mm</span>
+                      <span style={{ fontWeight: 700 }}>{((params.engraveDepth !== undefined ? params.engraveDepth : 0.5) * 2.5).toFixed(2)} mm</span>
                     </div>
                     <input
                       type="range"
                       min="0.1"
                       max="1.0"
                       step="0.05"
-                      value={params.engraveDepth}
+                      value={params.engraveDepth !== undefined ? params.engraveDepth : 0.5}
                       onChange={(e) => updateParam('engraveDepth', parseFloat(e.target.value))}
                     />
                   </div>

@@ -32,11 +32,11 @@ interface BuilderParams {
   blacklightMode: boolean;
   arMode: boolean;
   sceneEnvironment: string; // 'studio' | 'shower' | 'case'
-  engraveText: string;
-  engraveStyle: string;
-  engravePosition: number;
-  engraveSize: number;
-  engraveDepth: number;
+  engraveText?: string;
+  engraveStyle?: string;
+  engravePosition?: number;
+  engraveSize?: number;
+  engraveDepth?: number;
 }
 
 interface ThreeCanvasProps {
@@ -92,9 +92,9 @@ export const CustomToyMesh: React.FC<{ params: BuilderParams; demoMode?: boolean
   // Generate offscreen text heightmap
   const textHeightmap = useMemo(() => {
     return generateTextHeightmap(
-      params.engraveText,
-      params.engraveSize,
-      1.0 - params.engravePosition
+      params.engraveText || '',
+      params.engraveSize !== undefined ? params.engraveSize : 44,
+      1.0 - (params.engravePosition !== undefined ? params.engravePosition : 0.5)
     );
   }, [params.engraveText, params.engraveSize, params.engravePosition]);
 
@@ -160,8 +160,8 @@ export const CustomToyMesh: React.FC<{ params: BuilderParams; demoMode?: boolean
       uBallYOffset: { value: ballYOffset },
       uAlpha: { value: 1.0 },
       uTextTexture: { value: textTexture },
-      uTextStyle: { value: params.engraveStyle === 'none' ? 0.0 : params.engraveStyle === 'embossed' ? 1.0 : 2.0 },
-      uTextDepth: { value: params.engraveDepth }
+      uTextStyle: { value: (!params.engraveStyle || params.engraveStyle === 'none') ? 0.0 : params.engraveStyle === 'embossed' ? 1.0 : 2.0 },
+      uTextDepth: { value: params.engraveDepth !== undefined ? params.engraveDepth : 0.5 }
     };
   };
 
@@ -206,8 +206,8 @@ export const CustomToyMesh: React.FC<{ params: BuilderParams; demoMode?: boolean
     u.uBallYOffset.value = ballYOffset;
     u.uAlpha.value = (meshType === 0 && params.firmness === 'dual-density') ? 0.55 : 1.0;
     u.uTextTexture.value = textTexture;
-    u.uTextStyle.value = params.engraveStyle === 'none' ? 0.0 : params.engraveStyle === 'embossed' ? 1.0 : 2.0;
-    u.uTextDepth.value = params.engraveDepth;
+    u.uTextStyle.value = (!params.engraveStyle || params.engraveStyle === 'none') ? 0.0 : params.engraveStyle === 'embossed' ? 1.0 : 2.0;
+    u.uTextDepth.value = params.engraveDepth !== undefined ? params.engraveDepth : 0.5;
   };
 
   updateUniformValuesDirectly(outerUniforms, 0);
@@ -260,8 +260,8 @@ export const CustomToyMesh: React.FC<{ params: BuilderParams; demoMode?: boolean
       u.uBallYOffset.value = ballYOffset;
       u.uAlpha.value = (meshType === 0 && params.firmness === 'dual-density') ? 0.55 : 1.0;
       u.uTextTexture.value = textTexture;
-      u.uTextStyle.value = params.engraveStyle === 'none' ? 0.0 : params.engraveStyle === 'embossed' ? 1.0 : 2.0;
-      u.uTextDepth.value = params.engraveDepth;
+      u.uTextStyle.value = (!params.engraveStyle || params.engraveStyle === 'none') ? 0.0 : params.engraveStyle === 'embossed' ? 1.0 : 2.0;
+      u.uTextDepth.value = params.engraveDepth !== undefined ? params.engraveDepth : 0.5;
     };
 
     updateMaterialUniforms(outerMaterialRef.current, 0);

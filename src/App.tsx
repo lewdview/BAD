@@ -45,11 +45,11 @@ interface BuilderParams {
   blacklightMode: boolean;
   arMode: boolean;
   sceneEnvironment: string; // 'studio' | 'shower' | 'case'
-  engraveText: string;
-  engraveStyle: string; // 'none' | 'embossed' | 'engraved'
-  engravePosition: number; // 0.0 to 1.0
-  engraveSize: number;
-  engraveDepth: number;
+  engraveText?: string;
+  engraveStyle?: string; // 'none' | 'embossed' | 'engraved'
+  engravePosition?: number; // 0.0 to 1.0
+  engraveSize?: number;
+  engraveDepth?: number;
 }
 
 interface OrderItem {

@@ -6,7 +6,7 @@ export interface TextHeightmapResult {
 }
 
 export const generateTextHeightmap = (
-  text: string,
+  text: string = '',
   fontSize: number = 44,
   textYOffset: number = 0.5, // 0.0 to 1.0 (vertical position along texture space)
   fontFamily: string = '"Arial Black", Impact, sans-serif'
@@ -33,7 +33,7 @@ export const generateTextHeightmap = (
   ctx.fillStyle = '#000000';
   ctx.fillRect(0, 0, width, height);
 
-  const cleanText = text.trim();
+  const cleanText = (text || '').trim();
   if (cleanText) {
     ctx.fillStyle = '#ffffff'; // White text (255 intensity = max displacement)
     ctx.font = `bold ${fontSize}px ${fontFamily}`;
