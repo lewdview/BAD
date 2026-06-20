@@ -509,34 +509,107 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
   }
 
   // Triangulate the flat split interface plane at z = 0
-  const outerLeftBot = c000;
-  const outerLeftTop = c010;
-  const outerRightBot = c100;
-  const outerRightTop = c110;
+  const yMin_dildo = dildoVertices[0][0].y;
+  const yMax_dildo = dildoVertices[heightSegments][0].y;
+
+  const startCornerX = isFront ? xMax : xMin;
+  const endCornerX = isFront ? xMin : xMax;
+
+  const S_startX = { x: startCornerX, y: yMin_dildo, z: 0 };
+  const S_endX = { x: endCornerX, y: yMin_dildo, z: 0 };
+
+  // 1. Bottom Zone Rectangle (y from yMin to yMin_dildo)
+  if (isFront) {
+    addFacet(c000, S_endX, S_startX);
+    addFacet(c000, S_startX, c100);
+  } else {
+    addFacet(c000, S_startX, S_endX);
+    addFacet(c000, c100, S_startX);
+  }
+
+  // 2. Bottom Zone Quad Strip (transition at yMin_dildo)
+  for (let x = startX; x < endX; x++) {
+    const t0 = (x - startX) / (endX - startX);
+    const t1 = (x + 1 - startX) / (endX - startX);
+    const B_curr = { x: startCornerX + t0 * (endCornerX - startCornerX), y: yMin_dildo, z: 0 };
+    const B_next = { x: startCornerX + t1 * (endCornerX - startCornerX), y: yMin_dildo, z: 0 };
+    const D_curr = dildoVertices[0][x];
+    const D_next = dildoVertices[0][x + 1];
+
+    if (isFront) {
+      addFacet(B_curr, D_curr, D_next);
+      addFacet(B_curr, D_next, B_next);
+    } else {
+      addFacet(B_curr, D_next, D_curr);
+      addFacet(B_curr, B_next, D_next);
+    }
+  }
+
+  // 3. Middle Zone Left & Right Quad Strips
+  const leftIdx = 16;
+  const rightIdx = 0;
 
   for (let y = 0; y < heightSegments; y++) {
-    const pLeft0 = dildoVertices[y][endX];
-    const pLeft1 = dildoVertices[y + 1][endX];
-    const pRight0 = dildoVertices[y][startX];
-    const pRight1 = dildoVertices[y + 1][startX];
+    const pLeft0 = dildoVertices[y][leftIdx];
+    const pLeft1 = dildoVertices[y + 1][leftIdx];
+    const pRight0 = dildoVertices[y][rightIdx];
+    const pRight1 = dildoVertices[y + 1][rightIdx];
+
+    const y0_coord = dildoVertices[y][0].y;
+    const y1_coord = dildoVertices[y + 1][0].y;
+
+    const L_y = { x: xMin, y: y0_coord, z: 0 };
+    const L_y1 = { x: xMin, y: y1_coord, z: 0 };
+    const R_y = { x: xMax, y: y0_coord, z: 0 };
+    const R_y1 = { x: xMax, y: y1_coord, z: 0 };
 
     // Left interface connection
     if (isFront) {
-      addFacet(outerLeftBot, pLeft1, pLeft0);
-      addFacet(outerLeftBot, outerLeftTop, pLeft1);
+      addFacet(L_y, L_y1, pLeft1);
+      addFacet(L_y, pLeft1, pLeft0);
     } else {
-      addFacet(outerLeftBot, pLeft0, pLeft1);
-      addFacet(outerLeftBot, pLeft1, outerLeftTop);
+      addFacet(L_y, pLeft1, L_y1);
+      addFacet(L_y, pLeft0, pLeft1);
     }
 
     // Right interface connection
     if (isFront) {
-      addFacet(outerRightBot, pRight0, pRight1);
-      addFacet(outerRightBot, pRight1, outerRightTop);
+      addFacet(pRight0, pRight1, R_y1);
+      addFacet(pRight0, R_y1, R_y);
     } else {
-      addFacet(outerRightBot, pRight1, pRight0);
-      addFacet(outerRightBot, outerRightTop, pRight1);
+      addFacet(pRight0, R_y1, pRight1);
+      addFacet(pRight0, R_y, R_y1);
     }
+  }
+
+  // 4. Top Zone Quad Strip (transition at yMax_dildo)
+  for (let x = startX; x < endX; x++) {
+    const t0 = (x - startX) / (endX - startX);
+    const t1 = (x + 1 - startX) / (endX - startX);
+    const T_curr = { x: startCornerX + t0 * (endCornerX - startCornerX), y: yMax_dildo, z: 0 };
+    const T_next = { x: startCornerX + t1 * (endCornerX - startCornerX), y: yMax_dildo, z: 0 };
+    const D_curr = dildoVertices[heightSegments][x];
+    const D_next = dildoVertices[heightSegments][x + 1];
+
+    if (isFront) {
+      addFacet(D_curr, T_curr, T_next);
+      addFacet(D_curr, T_next, D_next);
+    } else {
+      addFacet(D_curr, T_next, T_curr);
+      addFacet(D_curr, D_next, T_next);
+    }
+  }
+
+  // 5. Top Zone Rectangle (y from yMax_dildo to yMax)
+  const S_top_startX = { x: startCornerX, y: yMax_dildo, z: 0 };
+  const S_top_endX = { x: endCornerX, y: yMax_dildo, z: 0 };
+
+  if (isFront) {
+    addFacet(S_top_endX, c010, c110);
+    addFacet(S_top_endX, c110, S_top_startX);
+  } else {
+    addFacet(S_top_endX, c110, c010);
+    addFacet(S_top_endX, S_top_startX, c110);
   }
 
   // Write out to STL
