@@ -361,15 +361,7 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
   const heightSegments = 64;
   
   const length = params.length;
-  const baseGirth = params.baseGirth;
   const curvature = params.curvature;
-
-  // Bounding Box Dimensions
-  const yMin = -0.5 * length - 0.6;
-  const yMax = 0.5 * length + 0.6;
-  const xMin = -baseGirth * 1.6 - 0.4;
-  const xMax = baseGirth * 1.6 + 0.4;
-  const zMax = baseGirth * 1.6 + 0.4; // Box depth
 
   // Generate heightmap once for the mold negative cut-out
   const textHeightmap = params.engraveStyle && params.engraveStyle !== 'none' && params.engraveText && params.engraveText.trim()
@@ -388,6 +380,29 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
     }
     dildoVertices.push(ring);
   }
+
+  // Calculate Bounding Box Dimensions dynamically from actual geometry vertices
+  let maxDildoX = -Infinity;
+  let minDildoX = Infinity;
+  let maxDildoZ = 0;
+
+  for (let y = 0; y <= heightSegments; y++) {
+    for (let x = 0; x <= radialSegments; x++) {
+      const v = dildoVertices[y][x];
+      if (v.x > maxDildoX) maxDildoX = v.x;
+      if (v.x < minDildoX) minDildoX = v.x;
+      const absZ = Math.abs(v.z);
+      if (absZ > maxDildoZ) maxDildoZ = absZ;
+    }
+  }
+
+  // Dynamic bounds with a safe margin for backing mold block walls (0.6" / ~15mm thickness)
+  const margin = 0.6;
+  const yMin = -0.5 * length - margin;
+  const yMax = 0.5 * length + margin;
+  const xMin = minDildoX - margin;
+  const xMax = maxDildoX + margin;
+  const zMax = maxDildoZ + margin; // Box depth
 
   // Build the Solid STL facets
   let stl = `solid BAD_Mold_${side.toUpperCase()}_Half\n`;
