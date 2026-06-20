@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingBag, X, Shield, Truck, CreditCard, Sparkles, CheckCircle2 } from 'lucide-react';
+import { ShoppingBag, X, Truck, CreditCard, Sparkles, CheckCircle2, Star, ShieldCheck } from 'lucide-react';
 
 interface CartItem {
   id: string;
@@ -26,7 +26,7 @@ const PREMADE_PRODUCTS = [
     name: 'BAD Basic Classic',
     description: 'Sleek, firm, cylindrical silhouette crafted in pure medical silicone.',
     price: 89.00,
-    image: 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?auto=format&fit=crop&q=80&w=400', // Mock representation
+    image: 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?auto=format&fit=crop&q=80&w=400',
     rating: '4.8 (192 reviews)'
   },
   {
@@ -307,34 +307,35 @@ export const Storefront: React.FC<StorefrontProps> = ({
   return (
     <div className="container animate-fade-in" style={{ padding: '40px 24px' }}>
       
-      {/* Target Audience Selector */}
+      {/* Target Audience Selector (Glass Capsule style) */}
       <div 
         style={{ 
           display: 'flex', 
           justifyContent: 'center', 
           alignItems: 'center', 
-          gap: '12px', 
-          marginBottom: '32px',
+          gap: '8px', 
+          marginBottom: '40px',
           flexWrap: 'wrap',
           backgroundColor: 'var(--bg-secondary)',
-          padding: '8px',
+          padding: '6px',
           borderRadius: 'var(--radius-full)',
           border: '1px solid var(--border-color)',
-          maxWidth: '720px',
-          margin: '0 auto 36px auto'
+          maxWidth: '680px',
+          margin: '0 auto 40px auto',
+          boxShadow: 'var(--shadow-sm)'
         }}
       >
-        <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: 'var(--text-muted)', padding: '0 12px' }}>
-          Target Audience:
+        <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', padding: '0 16px', letterSpacing: '0.05em' }}>
+          Persona:
         </span>
         {(['consumer', 'retailer', 'medical', 'creator'] as const).map((h) => (
           <button
             key={h}
             onClick={() => setHook(h)}
             style={{
-              padding: '8px 16px',
-              fontSize: '12px',
-              fontWeight: 600,
+              padding: '8px 18px',
+              fontSize: '11px',
+              fontWeight: 700,
               borderRadius: 'var(--radius-full)',
               border: 'none',
               cursor: 'pointer',
@@ -342,7 +343,8 @@ export const Storefront: React.FC<StorefrontProps> = ({
               letterSpacing: '0.05em',
               transition: 'all var(--transition-fast)',
               backgroundColor: hook === h ? 'var(--accent-gold)' : 'transparent',
-              color: hook === h ? '#000000' : 'var(--text-secondary)'
+              color: hook === h ? '#000000' : 'var(--text-secondary)',
+              boxShadow: hook === h ? '0 4px 10px var(--accent-gold-glow)' : 'none'
             }}
           >
             {h === 'consumer' ? 'Consumer' :
@@ -357,29 +359,31 @@ export const Storefront: React.FC<StorefrontProps> = ({
         className="card animate-fade-in" 
         key={hook}
         style={{ 
-          background: 'linear-gradient(135deg, var(--bg-tertiary) 0%, rgba(212, 175, 55, 0.05) 100%)',
-          border: '1px solid rgba(212, 175, 55, 0.15)',
-          padding: '60px 40px',
+          background: 'linear-gradient(135deg, var(--bg-tertiary) 0%, rgba(212, 175, 55, 0.06) 100%)',
+          border: '1px solid var(--border-color)',
+          borderLeft: '4px solid var(--accent-gold)',
+          padding: '70px 48px',
           borderRadius: 'var(--radius-lg)',
           textAlign: 'center',
           position: 'relative',
           overflow: 'hidden',
-          marginBottom: '40px'
+          marginBottom: '40px',
+          boxShadow: 'var(--shadow-lg)'
         }}
       >
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: '640px', margin: '0 auto' }}>
-          <span className="badge badge-gold" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+        <div style={{ position: 'relative', zIndex: 1, maxWidth: '680px', margin: '0 auto' }}>
+          <span className="badge badge-gold" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
             <Sparkles size={12} /> {currentHooksContent[hook].tagline}
           </span>
-          <h1 style={{ fontSize: '48px', margin: '16px 0', fontFamily: 'var(--font-serif)', lineHeight: 1.25 }}>
+          <h1 style={{ fontSize: '46px', margin: '16px 0', fontFamily: 'var(--font-serif)', lineHeight: 1.2, fontWeight: 700, letterSpacing: '-0.02em' }}>
             {currentHooksContent[hook].title}
           </h1>
-          <p style={{ fontSize: '16px', color: 'var(--text-secondary)', marginBottom: '32px' }}>
+          <p style={{ fontSize: '15.5px', color: 'var(--text-secondary)', marginBottom: '36px', lineHeight: 1.65 }}>
             {currentHooksContent[hook].description}
           </p>
           <button 
             className="btn btn-primary" 
-            style={{ padding: '16px 36px', fontSize: '16px', fontWeight: 600 }}
+            style={{ padding: '14px 36px', fontSize: '14px', fontWeight: 700, letterSpacing: '0.05em' }}
             onClick={onLaunchBuilder}
           >
             {currentHooksContent[hook].cta}
@@ -392,10 +396,10 @@ export const Storefront: React.FC<StorefrontProps> = ({
         <div className="grid-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
           {currentHooksContent[hook].features.map((feat, idx) => (
             <div key={idx} className="card" style={{ padding: '24px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
-              <h3 style={{ fontSize: '16px', color: 'var(--accent-gold)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ fontSize: '15px', color: 'var(--accent-gold)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
                 <Sparkles size={14} /> {feat.title}
               </h3>
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
                 {feat.desc}
               </p>
             </div>
@@ -408,17 +412,17 @@ export const Storefront: React.FC<StorefrontProps> = ({
         <div 
           className="card" 
           style={{ 
-            backgroundColor: 'var(--bg-tertiary)', 
+            backgroundColor: 'var(--bg-secondary)', 
             border: '1px solid var(--border-color)',
             borderLeft: '4px solid var(--accent-gold)', 
-            padding: '30px 40px',
+            padding: '32px 40px',
             borderRadius: 'var(--radius-md)'
           }}
         >
-          <p style={{ fontSize: '15px', fontStyle: 'italic', color: 'var(--text-primary)', marginBottom: '16px', lineHeight: 1.6 }}>
+          <p style={{ fontSize: '15px', fontStyle: 'italic', color: 'var(--text-primary)', marginBottom: '18px', lineHeight: 1.65 }}>
             "{currentHooksContent[hook].testimonial.quote}"
           </p>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--accent-gold)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--accent-gold)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
             — {currentHooksContent[hook].testimonial.author}
           </div>
         </div>
@@ -426,12 +430,21 @@ export const Storefront: React.FC<StorefrontProps> = ({
 
       {/* Product Grid */}
       <section style={{ marginBottom: '60px' }}>
-        <h2 style={{ fontSize: '28px', marginBottom: '24px', fontFamily: 'var(--font-serif)' }}>
+        <h2 style={{ fontSize: '32px', marginBottom: '28px', fontFamily: 'var(--font-serif)', letterSpacing: '-0.02em', fontWeight: 700 }}>
           {demoMode ? "Explore Custom Craft Molds" : (isPOS ? "BAD Floor Catalog: Pre-Made Basics" : "Explore BAD Basics")}
         </h2>
-        <div className="grid-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
+        <div className="grid-2" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '28px' }}>
           {productsList.map((prod) => (
-            <div key={prod.id} className="card animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div 
+              key={prod.id} 
+              className="card animate-fade-in" 
+              style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '20px',
+                padding: '24px'
+              }}
+            >
               <div 
                 style={{ 
                   width: '100%', 
@@ -444,24 +457,26 @@ export const Storefront: React.FC<StorefrontProps> = ({
                   fontSize: '12px',
                   color: 'var(--text-muted)',
                   border: '1px solid var(--border-color)',
-                  backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url(${prod.image})`,
+                  backgroundImage: `linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35)), url(${prod.image})`,
                   backgroundSize: 'cover',
-                  backgroundPosition: 'center'
+                  backgroundPosition: 'center',
+                  boxShadow: 'inset 0 0 40px rgba(0,0,0,0.5)'
                 }}
               >
-                {/* Visual Placeholder */}
               </div>
-              <div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <h3 style={{ fontSize: '18px' }}>{prod.name}</h3>
-                  <span style={{ fontWeight: 600, color: 'var(--accent-gold)' }}>${prod.price.toFixed(2)}</span>
+                  <h3 style={{ fontSize: '18px', fontWeight: 700 }}>{prod.name}</h3>
+                  <span style={{ fontWeight: 700, color: 'var(--accent-gold)', fontSize: '16px' }}>${prod.price.toFixed(2)}</span>
                 </div>
-                <p style={{ fontSize: '13px', marginTop: '6px' }}>{prod.description}</p>
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>★ {prod.rating}</div>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>{prod.description}</p>
+                <div style={{ fontSize: '11px', color: 'var(--accent-gold)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+                  <Star size={12} fill="var(--accent-gold)" stroke="none" /> {prod.rating}
+                </div>
               </div>
               <button 
                 className="btn btn-secondary" 
-                style={{ width: '100%', marginTop: 'auto' }}
+                style={{ width: '100%', marginTop: 'auto', padding: '11px 20px', fontWeight: 700 }}
                 onClick={() => addToCart(prod)}
               >
                 Add to Cart
@@ -471,7 +486,7 @@ export const Storefront: React.FC<StorefrontProps> = ({
         </div>
       </section>
 
-      {/* Cart Drawer (Fixed overlay) */}
+      {/* Cart Drawer (Fixed glass overlay) */}
       {isCartOpen && (
         <div 
           style={{ 
@@ -480,8 +495,9 @@ export const Storefront: React.FC<StorefrontProps> = ({
             right: 0, 
             bottom: 0, 
             left: 0, 
-            backgroundColor: 'rgba(0,0,0,0.7)', 
-            backdropFilter: 'blur(4px)',
+            backgroundColor: 'rgba(0,0,0,0.75)', 
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
             zIndex: 1000, 
             display: 'flex', 
             justifyContent: 'flex-end' 
@@ -497,27 +513,28 @@ export const Storefront: React.FC<StorefrontProps> = ({
               display: 'flex', 
               flexDirection: 'column', 
               borderLeft: '1px solid var(--border-color)',
-              padding: '24px' 
+              padding: '28px',
+              boxShadow: '-10px 0 30px rgba(0,0,0,0.3)'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h2 style={{ fontSize: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <ShoppingBag size={20} /> Shopping Cart
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
+              <h2 style={{ fontSize: '20px', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 700 }}>
+                <ShoppingBag size={20} color="var(--accent-gold)" /> Shopping Cart
               </h2>
               <button 
                 className="btn btn-secondary" 
-                style={{ padding: '8px', borderRadius: '50%' }}
+                style={{ padding: '8px', borderRadius: '50%', width: '34px', height: '34px' }}
                 onClick={() => setIsCartOpen(false)}
               >
-                <X size={16} />
+                <X size={14} />
               </button>
             </div>
 
             {/* Cart Items List */}
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {cart.length === 0 ? (
-                <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '40px' }}>
+                <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '60px', fontSize: '13px' }}>
                   Your cart is empty.
                 </div>
               ) : (
@@ -525,40 +542,41 @@ export const Storefront: React.FC<StorefrontProps> = ({
                   <div 
                     key={item.id} 
                     style={{ 
-                      padding: '16px', 
+                      padding: '18px', 
                       backgroundColor: 'var(--bg-tertiary)', 
                       border: '1px solid var(--border-color)', 
                       borderRadius: 'var(--radius-md)',
                       display: 'flex',
-                      gap: '12px'
+                      gap: '14px',
+                      boxShadow: 'var(--shadow-sm)'
                     }}
                   >
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ fontWeight: 600, fontSize: '14px' }}>{item.name}</span>
-                        <span style={{ color: 'var(--accent-gold)', fontWeight: 600, fontSize: '14px' }}>
+                        <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--text-primary)' }}>{item.name}</span>
+                        <span style={{ color: 'var(--accent-gold)', fontWeight: 700, fontSize: '14px' }}>
                           ${(item.price * item.quantity).toFixed(2)}
                         </span>
                       </div>
                       {item.isCustom && (
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '6px' }}>
                           Length: {item.parameters.length.toFixed(1)}" | Girth: {item.parameters.shaftGirth.toFixed(2)}x
                         </div>
                       )}
                       
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '12px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-full)', padding: '2px 8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '14px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-full)', padding: '2px 10px', backgroundColor: 'var(--bg-secondary)' }}>
                           <button 
                             className="btn btn-secondary" 
-                            style={{ padding: '2px 6px', border: 'none', background: 'transparent' }}
+                            style={{ padding: '2px 4px', border: 'none', background: 'transparent', minWidth: 'auto', height: 'auto' }}
                             onClick={() => updateQuantity(item.id, -1)}
                           >
                             -
                           </button>
-                          <span style={{ fontSize: '13px' }}>{item.quantity}</span>
+                          <span style={{ fontSize: '12px', fontWeight: 700, minWidth: '16px', textAlign: 'center' }}>{item.quantity}</span>
                           <button 
                             className="btn btn-secondary" 
-                            style={{ padding: '2px 6px', border: 'none', background: 'transparent' }}
+                            style={{ padding: '2px 4px', border: 'none', background: 'transparent', minWidth: 'auto', height: 'auto' }}
                             onClick={() => updateQuantity(item.id, 1)}
                           >
                             +
@@ -566,7 +584,7 @@ export const Storefront: React.FC<StorefrontProps> = ({
                         </div>
                         
                         <button 
-                          style={{ background: 'transparent', border: 'none', color: 'var(--accent-crimson)', fontSize: '11px', cursor: 'pointer' }}
+                          style={{ background: 'transparent', border: 'none', color: 'var(--accent-crimson)', fontSize: '11px', cursor: 'pointer', fontWeight: 600 }}
                           onClick={() => removeFromCart(item.id)}
                         >
                           Remove
@@ -580,14 +598,14 @@ export const Storefront: React.FC<StorefrontProps> = ({
 
             {/* Subtotal & Checkout */}
             {cart.length > 0 && (
-              <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '20px', marginTop: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Subtotal:</span>
-                  <span style={{ fontSize: '20px', fontWeight: 700 }}>${subtotal.toFixed(2)}</span>
+              <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '24px', marginTop: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '18px' }}>
+                  <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>Subtotal:</span>
+                  <span style={{ fontSize: '22px', fontWeight: 700, color: 'var(--accent-gold)' }}>${subtotal.toFixed(2)}</span>
                 </div>
                 <button 
                   className="btn btn-primary" 
-                  style={{ width: '100%', padding: '14px' }}
+                  style={{ width: '100%', padding: '14px', letterSpacing: '0.05em' }}
                   onClick={() => {
                     setIsCartOpen(false);
                     setIsCheckoutOpen(true);
@@ -602,7 +620,7 @@ export const Storefront: React.FC<StorefrontProps> = ({
         </div>
       )}
 
-      {/* Checkout Modal */}
+      {/* Checkout Modal (Glass theme) */}
       {isCheckoutOpen && (
         <div 
           style={{ 
@@ -612,7 +630,8 @@ export const Storefront: React.FC<StorefrontProps> = ({
             bottom: 0, 
             left: 0, 
             backgroundColor: 'rgba(0,0,0,0.85)', 
-            backdropFilter: 'blur(8px)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
             zIndex: 2000, 
             display: 'flex', 
             alignItems: 'center', 
@@ -627,72 +646,101 @@ export const Storefront: React.FC<StorefrontProps> = ({
               backgroundColor: 'var(--bg-secondary)', 
               borderRadius: 'var(--radius-lg)',
               border: '1px solid var(--border-color)',
-              padding: '32px',
+              padding: '36px',
               maxHeight: '90vh',
-              overflowY: 'auto'
+              overflowY: 'auto',
+              boxShadow: 'var(--shadow-lg)'
             }}
           >
             {checkoutStep === 'details' && (
               <form onSubmit={handleCheckoutSubmit}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                  <h2 style={{ fontSize: '22px', fontFamily: 'var(--font-serif)' }}>
+                  <h2 style={{ fontSize: '22px', fontFamily: 'var(--font-serif)', fontWeight: 700 }}>
                     {isPOS ? "In-Store Terminal POS Billing" : "Secure Checkout"}
                   </h2>
                   <button 
                     type="button" 
                     className="btn btn-secondary" 
-                    style={{ padding: '8px', borderRadius: '50%' }}
+                    style={{ padding: '8px', borderRadius: '50%', width: '34px', height: '34px' }}
                     onClick={() => setIsCheckoutOpen(false)}
                   >
-                    <X size={16} />
+                    <X size={14} />
                   </button>
                 </div>
 
-                {/* Privacy Notices (Only in Consumer Web Mode) */}
+                {/* Privacy Notices */}
                 {!isPOS && (
                   <div 
                     style={{ 
-                      backgroundColor: 'rgba(212, 175, 55, 0.05)', 
-                      border: '1px solid rgba(212, 175, 55, 0.2)', 
+                      backgroundColor: 'rgba(212, 175, 55, 0.06)', 
+                      border: '1px solid rgba(212, 175, 55, 0.25)', 
                       borderRadius: 'var(--radius-sm)',
-                      padding: '12px 16px',
+                      padding: '14px 18px',
                       fontSize: '12px',
                       color: 'var(--text-secondary)',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '4px',
-                      marginBottom: '20px'
+                      gap: '6px',
+                      marginBottom: '24px'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-gold)', fontWeight: 600 }}>
-                      <Shield size={14} /> {demoMode ? "Order Processing Secure" : "Discrete Billing Enabled"}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--accent-gold)', fontWeight: 700 }}>
+                      <ShieldCheck size={16} /> {demoMode ? "Order Processing Secure" : "Discrete Billing Enabled"}
                     </div>
-                    {demoMode ? (
-                      <>This transaction will appear on your card statement as <strong>"BAD MOLD STUDIO"</strong>.</>
-                    ) : (
-                      <>This transaction will appear on your card statement as <strong>"BAD WELLNESS LLC"</strong>. No adult toy references will be shown.</>
-                    )}
+                    <div style={{ lineHeight: 1.5 }}>
+                      {demoMode ? (
+                        <>This transaction will appear on your card statement as <strong>"BAD MOLD STUDIO"</strong>.</>
+                      ) : (
+                        <>This transaction will appear on your card statement as <strong>"BAD WELLNESS LLC"</strong>. No adult references will be shown on any statement.</>
+                      )}
+                    </div>
                   </div>
                 )}
 
                 {/* Billing Details fields */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
                   <div>
-                    <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Full Name</label>
+                    <label style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Full Name</label>
                     <input 
                       type="text" 
                       required 
-                      style={{ width: '100%', padding: '10px', marginTop: '4px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', borderRadius: 'var(--radius-sm)', outline: 'none' }}
+                      style={{ 
+                        width: '100%', 
+                        padding: '11px 14px', 
+                        marginTop: '6px', 
+                        border: '1px solid var(--border-color)', 
+                        backgroundColor: 'var(--bg-tertiary)', 
+                        color: 'var(--text-primary)', 
+                        borderRadius: 'var(--radius-sm)', 
+                        outline: 'none',
+                        transition: 'border-color var(--transition-fast)',
+                        fontSize: '13px'
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = 'var(--accent-gold)'}
+                      onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
                     />
                   </div>
                   <div>
-                    <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Email Address</label>
+                    <label style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email Address</label>
                     <input 
                       type="email" 
                       required 
-                      style={{ width: '100%', padding: '10px', marginTop: '4px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', borderRadius: 'var(--radius-sm)', outline: 'none' }}
+                      style={{ 
+                        width: '100%', 
+                        padding: '11px 14px', 
+                        marginTop: '6px', 
+                        border: '1px solid var(--border-color)', 
+                        backgroundColor: 'var(--bg-tertiary)', 
+                        color: 'var(--text-primary)', 
+                        borderRadius: 'var(--radius-sm)', 
+                        outline: 'none',
+                        transition: 'border-color var(--transition-fast)',
+                        fontSize: '13px'
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = 'var(--accent-gold)'}
+                      onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                       value={form.email}
                       onChange={(e) => setForm({ ...form, email: e.target.value })}
                     />
@@ -700,11 +748,24 @@ export const Storefront: React.FC<StorefrontProps> = ({
                   
                   {!isPOS && (
                     <div>
-                      <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Shipping Address</label>
+                      <label style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Shipping Address</label>
                       <input 
                         type="text" 
                         required 
-                        style={{ width: '100%', padding: '10px', marginTop: '4px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', borderRadius: 'var(--radius-sm)', outline: 'none' }}
+                        style={{ 
+                          width: '100%', 
+                          padding: '11px 14px', 
+                          marginTop: '6px', 
+                          border: '1px solid var(--border-color)', 
+                          backgroundColor: 'var(--bg-tertiary)', 
+                          color: 'var(--text-primary)', 
+                          borderRadius: 'var(--radius-sm)', 
+                          outline: 'none',
+                          transition: 'border-color var(--transition-fast)',
+                          fontSize: '13px' 
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = 'var(--accent-gold)'}
+                        onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                         value={form.address}
                         onChange={(e) => setForm({ ...form, address: e.target.value })}
                       />
@@ -714,53 +775,92 @@ export const Storefront: React.FC<StorefrontProps> = ({
                   <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px' }}>
                     {!isPOS ? (
                       <div>
-                        <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>City</label>
+                        <label style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>City</label>
                         <input 
                           type="text" 
                           required 
-                          style={{ width: '100%', padding: '10px', marginTop: '4px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', borderRadius: 'var(--radius-sm)', outline: 'none' }}
+                          style={{ 
+                            width: '100%', 
+                            padding: '11px 14px', 
+                            marginTop: '6px', 
+                            border: '1px solid var(--border-color)', 
+                            backgroundColor: 'var(--bg-tertiary)', 
+                            color: 'var(--text-primary)', 
+                            borderRadius: 'var(--radius-sm)', 
+                            outline: 'none',
+                            transition: 'border-color var(--transition-fast)',
+                            fontSize: '13px' 
+                          }}
+                          onFocus={(e) => e.target.style.borderColor = 'var(--accent-gold)'}
+                          onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                           value={form.city}
                           onChange={(e) => setForm({ ...form, city: e.target.value })}
                         />
                       </div>
                     ) : (
                       <div>
-                        <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Retail Store Location</label>
+                        <label style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Store Location</label>
                         <input 
                           type="text" 
                           disabled 
-                          style={{ width: '100%', padding: '10px', marginTop: '4px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)', borderRadius: 'var(--radius-sm)' }}
+                          style={{ width: '100%', padding: '11px 14px', marginTop: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)', borderRadius: 'var(--radius-sm)', fontSize: '13px' }}
                           value="BAD Flagship - New York"
                         />
                       </div>
                     )}
                     <div>
-                      <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Zip Code</label>
+                      <label style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Zip Code</label>
                       <input 
                         type="text" 
                         required 
-                        style={{ width: '100%', padding: '10px', marginTop: '4px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', borderRadius: 'var(--radius-sm)', outline: 'none' }}
+                        style={{ 
+                          width: '100%', 
+                          padding: '11px 14px', 
+                          marginTop: '6px', 
+                          border: '1px solid var(--border-color)', 
+                          backgroundColor: 'var(--bg-tertiary)', 
+                          color: 'var(--text-primary)', 
+                          borderRadius: 'var(--radius-sm)', 
+                          outline: 'none',
+                          transition: 'border-color var(--transition-fast)',
+                          fontSize: '13px' 
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = 'var(--accent-gold)'}
+                        onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                         value={form.zip}
                         onChange={(e) => setForm({ ...form, zip: e.target.value })}
                       />
                     </div>
                   </div>
 
-                  <hr style={{ borderColor: 'var(--border-color)', margin: '10px 0' }} />
+                  <hr style={{ borderColor: 'var(--border-color)', margin: '8px 0' }} />
 
                   {/* Card Billing info */}
                   <div>
-                    <h4 style={{ fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                      <CreditCard size={16} /> Payment Information
+                    <h4 style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px', fontWeight: 700, color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      <CreditCard size={15} color="var(--accent-gold)" /> Payment Details
                     </h4>
-                    <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                    <label style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       {isPOS ? "Scan Card / Input Card Number" : "Credit Card Number"}
                     </label>
                     <input 
                       type="text" 
                       required 
                       placeholder={isPOS ? "Waiting for Terminal Swipe..." : "•••• •••• •••• ••••"}
-                      style={{ width: '100%', padding: '10px', marginTop: '4px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', borderRadius: 'var(--radius-sm)', outline: 'none' }}
+                      style={{ 
+                        width: '100%', 
+                        padding: '11px 14px', 
+                        marginTop: '6px', 
+                        border: '1px solid var(--border-color)', 
+                        backgroundColor: 'var(--bg-tertiary)', 
+                        color: 'var(--text-primary)', 
+                        borderRadius: 'var(--radius-sm)', 
+                        outline: 'none',
+                        transition: 'border-color var(--transition-fast)',
+                        fontSize: '13px' 
+                      }}
+                      onFocus={(e) => e.target.style.borderColor = 'var(--accent-gold)'}
+                      onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                       value={form.cardNum}
                       onChange={(e) => setForm({ ...form, cardNum: e.target.value })}
                     />
@@ -768,23 +868,49 @@ export const Storefront: React.FC<StorefrontProps> = ({
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                     <div>
-                      <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Expiration</label>
+                      <label style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Expiration</label>
                       <input 
                         type="text" 
                         required 
                         placeholder="MM/YY"
-                        style={{ width: '100%', padding: '10px', marginTop: '4px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', borderRadius: 'var(--radius-sm)', outline: 'none' }}
+                        style={{ 
+                          width: '100%', 
+                          padding: '11px 14px', 
+                          marginTop: '6px', 
+                          border: '1px solid var(--border-color)', 
+                          backgroundColor: 'var(--bg-tertiary)', 
+                          color: 'var(--text-primary)', 
+                          borderRadius: 'var(--radius-sm)', 
+                          outline: 'none',
+                          transition: 'border-color var(--transition-fast)',
+                          fontSize: '13px' 
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = 'var(--accent-gold)'}
+                        onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                         value={form.cardExp}
                         onChange={(e) => setForm({ ...form, cardExp: e.target.value })}
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>CVV</label>
+                      <label style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>CVV</label>
                       <input 
                         type="text" 
                         required 
                         placeholder="•••"
-                        style={{ width: '100%', padding: '10px', marginTop: '4px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-primary)', borderRadius: 'var(--radius-sm)', outline: 'none' }}
+                        style={{ 
+                          width: '100%', 
+                          padding: '11px 14px', 
+                          marginTop: '6px', 
+                          border: '1px solid var(--border-color)', 
+                          backgroundColor: 'var(--bg-tertiary)', 
+                          color: 'var(--text-primary)', 
+                          borderRadius: 'var(--radius-sm)', 
+                          outline: 'none',
+                          transition: 'border-color var(--transition-fast)',
+                          fontSize: '13px' 
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = 'var(--accent-gold)'}
+                        onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
                         value={form.cardCVV}
                         onChange={(e) => setForm({ ...form, cardCVV: e.target.value })}
                       />
@@ -793,14 +919,15 @@ export const Storefront: React.FC<StorefrontProps> = ({
 
                   {/* Discreet Checkboxes */}
                   {!isPOS && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', cursor: 'pointer' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
                         <input 
                           type="checkbox" 
                           checked={form.discreetShipping} 
                           onChange={(e) => setForm({ ...form, discreetShipping: e.target.checked })} 
+                          style={{ accentColor: 'var(--accent-gold)' }}
                         />
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
                           <Truck size={14} /> Pack in plain, unbranded packaging
                         </span>
                       </label>
@@ -810,7 +937,7 @@ export const Storefront: React.FC<StorefrontProps> = ({
                   <button 
                     type="submit" 
                     className="btn btn-primary" 
-                    style={{ width: '100%', padding: '14px', marginTop: '12px' }}
+                    style={{ width: '100%', padding: '14px', marginTop: '16px', letterSpacing: '0.05em' }}
                   >
                     Submit Payment of ${subtotal.toFixed(2)}
                   </button>
@@ -823,17 +950,17 @@ export const Storefront: React.FC<StorefrontProps> = ({
                 <div 
                   className="spinner"
                   style={{
-                    width: '40px',
-                    height: '40px',
+                    width: '44px',
+                    height: '44px',
                     border: '3px solid var(--border-color)',
                     borderTopColor: 'var(--accent-gold)',
                     borderRadius: '50%',
                     margin: '0 auto 24px auto',
-                    animation: 'spin 1s linear infinite'
+                    animation: 'spin 0.8s linear infinite'
                   }}
                 />
-                <h3 style={{ fontSize: '18px', marginBottom: '8px' }}>Processing Payment...</h3>
-                <p style={{ fontSize: '13px' }}>Encrypting credentials via PCI-compliant gateway.</p>
+                <h3 style={{ fontSize: '18px', marginBottom: '8px', fontWeight: 700 }}>Processing Payment...</h3>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Encrypting credentials via PCI-compliant gateway.</p>
                 <style>{`
                   @keyframes spin {
                     to { transform: rotate(360deg); }
@@ -844,41 +971,43 @@ export const Storefront: React.FC<StorefrontProps> = ({
 
             {checkoutStep === 'success' && (
               <div style={{ textAlign: 'center', padding: '30px 0' }}>
-                <CheckCircle2 size={60} color="var(--accent-gold)" style={{ margin: '0 auto 20px auto' }} />
-                <h3 style={{ fontSize: '24px', marginBottom: '12px', fontFamily: 'var(--font-serif)' }}>Order Confirmed!</h3>
+                <CheckCircle2 size={64} color="var(--accent-gold)" style={{ margin: '0 auto 24px auto', filter: 'drop-shadow(0 0 8px var(--accent-gold-glow))' }} />
+                <h3 style={{ fontSize: '24px', marginBottom: '12px', fontFamily: 'var(--font-serif)', fontWeight: 700 }}>Order Confirmed!</h3>
                 <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
                   Thank you for your order. Your receipt code is:
                 </p>
                 <div 
                   style={{ 
                     fontFamily: 'monospace', 
-                    fontSize: '18px', 
+                    fontSize: '20px', 
                     fontWeight: 700, 
                     backgroundColor: 'var(--bg-tertiary)', 
-                    padding: '12px', 
+                    padding: '12px 24px', 
                     borderRadius: 'var(--radius-sm)',
                     display: 'inline-block',
-                    marginBottom: '24px',
+                    marginBottom: '28px',
                     border: '1px solid var(--border-color)',
-                    color: 'var(--accent-gold)'
+                    color: 'var(--accent-gold)',
+                    boxShadow: 'var(--shadow-inset)',
+                    letterSpacing: '0.05em'
                   }}
                 >
                   {orderNumber}
                 </div>
                 
-                <div style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '400px', margin: '0 auto 24px auto', lineHeight: 1.6 }}>
+                <div style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '420px', margin: '0 auto 28px auto', lineHeight: 1.65 }}>
                   {isPOS ? (
                     "Receipt has been printed. The physical custom order vector paths have been pushed to the CAD manufacturing queue."
                   ) : demoMode ? (
-                    "Billed as 'BAD MOLD STUDIO'. A shipping confirmation containing your custom mold blueprints and order tracking information will be emailed to you shortly."
+                    "Blueprinted and billed as 'BAD MOLD STUDIO'. A shipping confirmation containing your custom mold blueprints and order tracking information will be emailed to you shortly."
                   ) : (
-                    "Billed as 'BAD Wellness LLC'. A shipping confirmation containing discrete tracking information will be emailed to you shortly."
+                    "Blueprinted and billed as 'BAD Wellness LLC'. A shipping confirmation containing discrete tracking information will be emailed to you shortly."
                   )}
                 </div>
 
                 <button 
                   className="btn btn-secondary" 
-                  style={{ width: '100%' }}
+                  style={{ width: '100%', padding: '12px 20px', fontWeight: 700 }}
                   onClick={() => setIsCheckoutOpen(false)}
                 >
                   Return to Storefront

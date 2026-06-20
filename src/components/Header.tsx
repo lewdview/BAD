@@ -47,7 +47,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="glass-header">
-      <div className="container header-container">
+      <div className="container header-container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '70px' }}>
         {/* Brand Logo */}
         <a 
           href="#" 
@@ -56,24 +56,45 @@ export const Header: React.FC<HeaderProps> = ({
             e.preventDefault();
             if (!discretionMode) setActiveTab('storefront');
           }}
-          style={{ display: 'flex', flexDirection: 'column', alignItems: discretionMode ? 'center' : 'flex-start' }}
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '12px',
+            textDecoration: 'none'
+          }}
         >
           {discretionMode ? (
-            <span style={{ fontFamily: 'var(--font-serif)', fontSize: '20px', fontWeight: 700, letterSpacing: '0.05em' }}>
+            <span style={{ 
+              fontFamily: 'var(--font-serif)', 
+              fontSize: '20px', 
+              fontWeight: 700, 
+              letterSpacing: '0.05em',
+              color: 'var(--accent-gold)'
+            }}>
               HEALTHY LIVING
             </span>
           ) : (
-            <>
-              <span className="logo-main">BAD</span>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="logo-main">BAD</span>
+                <span style={{ 
+                  width: '6px', 
+                  height: '6px', 
+                  borderRadius: '50%', 
+                  backgroundColor: 'var(--accent-gold)', 
+                  display: 'inline-block',
+                  boxShadow: '0 0 8px var(--accent-gold)'
+                }} />
+              </div>
               <span className="logo-sub">{demoMode ? "mold-studio (demo)" : "buildadil.do"}</span>
-            </>
+            </div>
           )}
         </a>
 
-        {/* Navigation Tabs (Hidden in Discretion Mode, except standard wellness link placeholders) */}
+        {/* Navigation Tabs (Hidden in Discretion Mode) */}
         {!discretionMode ? (
           <nav>
-            <ul className="nav-links">
+            <ul className="nav-links" style={{ display: 'flex', gap: '28px', listStyle: 'none', alignItems: 'center' }}>
               <li>
                 <a 
                   href={demoMode ? "#demo" : "#storefront"} 
@@ -89,7 +110,7 @@ export const Header: React.FC<HeaderProps> = ({
                   className={activeTab === 'builder' ? 'active' : ''} 
                   onClick={() => setActiveTab('builder')}
                 >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                     <Hammer size={14} /> {demoMode ? "Mold Studio" : "BAD Builder"}
                   </span>
                 </a>
@@ -100,7 +121,7 @@ export const Header: React.FC<HeaderProps> = ({
                   className={activeTab === 'social' ? 'active' : ''} 
                   onClick={() => setActiveTab('social')}
                 >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                     <Users size={14} /> Social
                   </span>
                 </a>
@@ -111,7 +132,7 @@ export const Header: React.FC<HeaderProps> = ({
                   className={activeTab === 'admin' ? 'active' : ''} 
                   onClick={() => setActiveTab('admin')}
                 >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                     <Hammer size={14} /> Admin
                   </span>
                 </a>
@@ -122,7 +143,7 @@ export const Header: React.FC<HeaderProps> = ({
                   className={activeTab === 'pitch' ? 'active' : ''} 
                   onClick={() => setActiveTab('pitch')}
                 >
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                     <TrendingUp size={14} /> Pitch
                   </span>
                 </a>
@@ -130,10 +151,15 @@ export const Header: React.FC<HeaderProps> = ({
               <li>
                 <button 
                   className={`btn ${isPOS ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ padding: '6px 12px', fontSize: '12px' }}
+                  style={{ 
+                    padding: '6px 14px', 
+                    fontSize: '11px', 
+                    textTransform: 'uppercase', 
+                    fontWeight: 700 
+                  }}
                   onClick={() => {
                     setIsPOS(!isPOS);
-                    setActiveTab('storefront'); // Return to shop index in POS view
+                    setActiveTab('storefront');
                   }}
                 >
                   <Smartphone size={13} /> {isPOS ? "Exit POS Mode" : "POS Kiosk"}
@@ -143,7 +169,7 @@ export const Header: React.FC<HeaderProps> = ({
           </nav>
         ) : (
           <nav>
-            <ul className="nav-links">
+            <ul className="nav-links" style={{ display: 'flex', gap: '28px', listStyle: 'none', alignItems: 'center' }}>
               <li><a href="#" className="active" onClick={(e) => e.preventDefault()}>Organic Recipes</a></li>
               <li><a href="#" onClick={(e) => e.preventDefault()}>Diet Plans</a></li>
               <li><a href="#" onClick={(e) => e.preventDefault()}>Fitness Advice</a></li>
@@ -158,11 +184,14 @@ export const Header: React.FC<HeaderProps> = ({
             <button 
               className="btn" 
               style={{ 
-                backgroundColor: demoMode ? 'var(--accent-gold)' : 'rgba(255,255,255,0.05)', 
+                backgroundColor: demoMode ? 'var(--accent-gold)' : 'rgba(255,255,255,0.03)', 
                 color: demoMode ? '#000000' : 'var(--text-primary)',
                 border: '1px solid var(--border-color)',
-                padding: '8px 14px',
-                fontSize: '12px'
+                padding: '8px 16px',
+                fontSize: '11px',
+                fontWeight: 700,
+                boxShadow: demoMode ? '0 4px 12px var(--accent-gold-glow)' : 'none',
+                transition: 'all var(--transition-fast)'
               }}
               onClick={() => {
                 const newDemoMode = !demoMode;
@@ -187,11 +216,13 @@ export const Header: React.FC<HeaderProps> = ({
           <button 
             className="btn" 
             style={{ 
-              backgroundColor: discretionMode ? '#e2e8f0' : 'rgba(255,255,255,0.05)', 
+              backgroundColor: discretionMode ? '#e2e8f0' : 'rgba(255,255,255,0.03)', 
               color: discretionMode ? '#1e293b' : 'var(--text-primary)',
               border: '1px solid var(--border-color)',
-              padding: '8px 14px',
-              fontSize: '12px'
+              padding: '8px 16px',
+              fontSize: '11px',
+              fontWeight: 700,
+              transition: 'all var(--transition-fast)'
             }}
             onClick={toggleDiscretion}
             title="Toggle Panic / Discretion Mode"
@@ -217,11 +248,14 @@ export const Header: React.FC<HeaderProps> = ({
                 borderRadius: '50%', 
                 display: 'flex', 
                 alignItems: 'center', 
-                justifyContent: 'center' 
+                justifyContent: 'center',
+                width: '38px',
+                height: '38px',
+                border: '1px solid var(--border-color)'
               }}
-              onClick={() => setActiveTab('storefront')} // Open storefront and trigger cart view
+              onClick={() => setActiveTab('storefront')}
             >
-              <ShoppingBag size={18} />
+              <ShoppingBag size={16} />
               {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
             </button>
           )}
