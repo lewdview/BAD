@@ -6,6 +6,7 @@ import { Storefront } from './components/Storefront';
 import { SocialFeed } from './components/SocialFeed';
 import { AdminDashboard } from './components/AdminDashboard';
 import { PitchDeck } from './components/PitchDeck';
+import { AcquisitionPortal } from './components/AcquisitionPortal';
 import { Smartphone, Leaf } from 'lucide-react';
 
 interface CartItem {
@@ -82,10 +83,11 @@ function App() {
         else if (hash === 'demo-social') setActiveTab('social');
         else if (hash === 'demo-admin') setActiveTab('admin');
         else if (hash === 'demo-pitch') setActiveTab('pitch');
+        else if (hash === 'demo-acquisition') setActiveTab('acquisition');
         else setActiveTab('storefront');
       } else {
         setDemoMode(false);
-        if (['storefront', 'builder', 'social', 'admin', 'pitch'].includes(hash)) {
+        if (['storefront', 'builder', 'social', 'admin', 'pitch', 'acquisition'].includes(hash)) {
           setActiveTab(hash);
         }
       }
@@ -423,6 +425,10 @@ function App() {
 
             {activeTab === 'pitch' && (
               <PitchDeck />
+            )}
+
+            {activeTab === 'acquisition' && (
+              <AcquisitionPortal />
             )}
           </>
         )}

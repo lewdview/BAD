@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ShoppingBag, EyeOff, Eye, Users, Hammer, Smartphone, TrendingUp } from 'lucide-react';
+import { ShoppingBag, EyeOff, Eye, Users, Hammer, Smartphone, TrendingUp, DollarSign } from 'lucide-react';
 
 interface HeaderProps {
   activeTab: string;
@@ -144,6 +144,17 @@ export const Header: React.FC<HeaderProps> = ({
                 </a>
               </li>
               <li>
+                <a 
+                  href={demoMode ? "#demo-acquisition" : "#acquisition"} 
+                  className={activeTab === 'acquisition' ? 'active' : ''} 
+                  onClick={() => setActiveTab('acquisition')}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <DollarSign size={13} /> Acquisition
+                  </span>
+                </a>
+              </li>
+              <li>
                 <button 
                   className={`btn ${isPOS ? 'btn-primary' : 'btn-secondary'}`}
                   style={{ 
@@ -188,6 +199,7 @@ export const Header: React.FC<HeaderProps> = ({
                   else if (activeTab === 'social') newHash = 'demo-social';
                   else if (activeTab === 'admin') newHash = 'demo-admin';
                   else if (activeTab === 'pitch') newHash = 'demo-pitch';
+                  else if (activeTab === 'acquisition') newHash = 'demo-acquisition';
                   else newHash = 'demo';
                 } else {
                   newHash = activeTab;
