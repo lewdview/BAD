@@ -2,6 +2,106 @@ import { generateTextHeightmap } from './textHeightmap';
 import type { BuilderParams, Vec3 } from '../types';
 import { getParametricVertex, isDegenerate, calcNormal } from './geometryCore';
 
+const getBallCoords = (params: BuilderParams) => {
+  const girth = params.shaftGirth;
+  const length = params.length;
+  const ballSize = params.ballSize !== undefined ? params.ballSize : 1.0;
+  const ballAsymmetry = params.ballAsymmetry !== undefined ? params.ballAsymmetry : 0.0;
+  
+  const theta = (ballAsymmetry * Math.PI) / 180;
+  
+  // Original centers in XZ plane
+  // Left ball
+  const x0_L = -0.55 * girth;
+  const z0_L = -0.5 * girth - 0.1;
+  const y0_L = -0.25 * length;
+  
+  // Right ball
+  const x0_R = 0.55 * girth;
+  const z0_R = -0.5 * girth - 0.1;
+  const y0_R = -0.25 * length;
+  
+  // Center sack
+  const x0_C = 0.0;
+  const z0_C = -0.6 * girth - 0.1;
+  const y0_C = -0.28 * length;
+  
+  // Radii/scales
+  const R_L = 0.5 * girth * ballSize;
+  const R_R = 0.5 * girth * ballSize;
+  const R_C = 0.5 * girth * ballSize;
+  const scaleZ_C = 0.9;
+  
+  // Rotate around Y axis (origin (0,0) in XZ plane)
+  const cosT = Math.cos(theta);
+  const sinT = Math.sin(theta);
+  
+  const x_rot_L = x0_L * cosT - z0_L * sinT;
+  const z_rot_L = x0_L * sinT + z0_L * cosT;
+  
+  const x_rot_R = x0_R * cosT - z0_R * sinT;
+  const z_rot_R = x0_R * sinT + z0_R * cosT;
+  
+  const x_rot_C = x0_C * cosT - z0_C * sinT;
+  const z_rot_C = x0_C * sinT + z0_C * cosT;
+  
+  // Find maximum Z surface boundary
+  const zMax_L = z_rot_L + R_L;
+  const zMax_R = z_rot_R + R_R;
+  const zMax_C = z_rot_C + R_C * scaleZ_C;
+  
+  const zMax = Math.max(zMax_L, zMax_R, zMax_C);
+  
+  // If any part crosses z = 0, shift the entire assembly back
+  const zShift = zMax > 0.0 ? zMax : 0.0;
+  
+  return {
+    left: {
+      x: x_rot_L,
+      y: y0_L,
+      z: z_rot_L - zShift,
+      r: R_L
+    },
+    right: {
+      x: x_rot_R,
+      y: y0_R,
+      z: z_rot_R - zShift,
+      r: R_R
+    },
+    center: {
+      x: x_rot_C,
+      y: y0_C,
+      z: z_rot_C - zShift,
+      r: R_C
+    },
+    theta,
+    zShift
+  };
+};
+
+const rotateAndShiftFacets = (
+  facets: { p1: Vec3; p2: Vec3; p3: Vec3 }[],
+  theta: number,
+  zShift: number
+): { p1: Vec3; p2: Vec3; p3: Vec3 }[] => {
+  const cosT = Math.cos(theta);
+  const sinT = Math.sin(theta);
+  
+  return facets.map(f => {
+    const rotatePoint = (p: Vec3): Vec3 => {
+      const x = p.x * cosT - p.z * sinT;
+      const y = p.y;
+      const z = p.x * sinT + p.z * cosT - zShift;
+      return { x, y, z };
+    };
+    return {
+      p1: rotatePoint(f.p1),
+      p2: rotatePoint(f.p2),
+      p3: rotatePoint(f.p3)
+    };
+  });
+};
+
 // Helper to generate sphere/ellipsoid facets for testicles/sack
 const getSphereFacets = (
   cx: number,
@@ -154,12 +254,24 @@ export const generateToySTL = (params: BuilderParams): string => {
   if (params.hasBalls) {
     const girth = params.shaftGirth;
     const length = params.length;
-    const cz_balls = -0.5 * girth - 0.1;
-    const cz_center = -0.6 * girth - 0.1;
+    const ballSize = params.ballSize !== undefined ? params.ballSize : 1.0;
+    const coords = getBallCoords(params);
     
-    const leftFacets = getSphereFacets(-0.55 * girth, -0.25 * length, cz_balls, 0.5 * girth);
-    const rightFacets = getSphereFacets(0.55 * girth, -0.25 * length, cz_balls, 0.5 * girth);
-    const centerFacets = getSphereFacets(0, -0.28 * length, cz_center, 0.5 * girth, 1.25, 1.15, 0.9);
+    const leftFacets = rotateAndShiftFacets(
+      getSphereFacets(-0.55 * girth, -0.25 * length, -0.5 * girth - 0.1, 0.5 * girth * ballSize),
+      coords.theta,
+      coords.zShift
+    );
+    const rightFacets = rotateAndShiftFacets(
+      getSphereFacets(0.55 * girth, -0.25 * length, -0.5 * girth - 0.1, 0.5 * girth * ballSize),
+      coords.theta,
+      coords.zShift
+    );
+    const centerFacets = rotateAndShiftFacets(
+      getSphereFacets(0, -0.28 * length, -0.6 * girth - 0.1, 0.5 * girth * ballSize, 1.25, 1.15, 0.9),
+      coords.theta,
+      coords.zShift
+    );
     
     const appendFacets = (facetsList: { p1: Vec3; p2: Vec3; p3: Vec3 }[]) => {
       for (let i = 0; i < facetsList.length; i++) {
@@ -265,10 +377,22 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
   }
 
   if (params.hasBalls) {
-    const girth = params.shaftGirth;
-    const minBallX = -1.05 * girth;
-    const maxBallX = 1.05 * girth;
-    const maxBallZ = 1.0 * girth + 0.1;
+    const coords = getBallCoords(params);
+    const minX_L = coords.left.x - coords.left.r;
+    const maxX_L = coords.left.x + coords.left.r;
+    const minX_R = coords.right.x - coords.right.r;
+    const maxX_R = coords.right.x + coords.right.r;
+    const minX_C = coords.center.x - coords.center.r * 1.25;
+    const maxX_C = coords.center.x + coords.center.r * 1.25;
+    
+    const minBallX = Math.min(minX_L, minX_R, minX_C);
+    const maxBallX = Math.max(maxX_L, maxX_R, maxX_C);
+    
+    const maxBallZ = Math.max(
+      -(coords.left.z - coords.left.r),
+      -(coords.right.z - coords.right.r),
+      -(coords.center.z - coords.center.r * 0.9)
+    );
     
     if (minBallX < minDildoX) minDildoX = minBallX;
     if (maxBallX > maxDildoX) maxDildoX = maxBallX;
@@ -549,13 +673,25 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
   if (params.hasBalls && !isFront) {
     const girth = params.shaftGirth;
     const length = params.length;
-    const cz_balls = -0.5 * girth - 0.1;
-    const cz_center = -0.6 * girth - 0.1;
+    const ballSize = params.ballSize !== undefined ? params.ballSize : 1.0;
+    const coords = getBallCoords(params);
     
     // We want reversed facets because the cavity faces inwards
-    const leftFacets = getSphereFacets(-0.55 * girth, -0.25 * length, cz_balls, 0.5 * girth, 1, 1, 1, true);
-    const rightFacets = getSphereFacets(0.55 * girth, -0.25 * length, cz_balls, 0.5 * girth, 1, 1, 1, true);
-    const centerFacets = getSphereFacets(0, -0.28 * length, cz_center, 0.5 * girth, 1.25, 1.15, 0.9, true);
+    const leftFacets = rotateAndShiftFacets(
+      getSphereFacets(-0.55 * girth, -0.25 * length, -0.5 * girth - 0.1, 0.5 * girth * ballSize, 1, 1, 1, true),
+      coords.theta,
+      coords.zShift
+    );
+    const rightFacets = rotateAndShiftFacets(
+      getSphereFacets(0.55 * girth, -0.25 * length, -0.5 * girth - 0.1, 0.5 * girth * ballSize, 1, 1, 1, true),
+      coords.theta,
+      coords.zShift
+    );
+    const centerFacets = rotateAndShiftFacets(
+      getSphereFacets(0, -0.28 * length, -0.6 * girth - 0.1, 0.5 * girth * ballSize, 1.25, 1.15, 0.9, true),
+      coords.theta,
+      coords.zShift
+    );
     
     facets.push(...leftFacets, ...rightFacets, ...centerFacets);
   }

@@ -82,7 +82,9 @@ function App() {
     engraveStyle: 'none',
     engravePosition: 0.5,
     engraveSize: 44,
-    engraveDepth: 0.5
+    engraveDepth: 0.5,
+    ballSize: 1.0,
+    ballAsymmetry: 0.0
   });
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);

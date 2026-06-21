@@ -83,6 +83,8 @@ export interface BuilderParams {
   engraveSize?: number;
   engraveDepth?: number;
   isCore?: boolean;
+  ballSize?: number;
+  ballAsymmetry?: number;
 }
 
 // ── Cart & Commerce ───────────────────────────────────────────

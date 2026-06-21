@@ -13,6 +13,7 @@ import { FunctionalUpgrades } from './builder/FunctionalUpgrades';
 import { EngravingControls } from './builder/EngravingControls';
 import { SceneryARControls } from './builder/SceneryARControls';
 import { CartActions } from './builder/CartActions';
+import { TesticleControls } from './builder/TesticleControls';
 
 interface BuilderControlsProps {
   params: BuilderParams;
@@ -449,11 +450,29 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
           </AccordionSection>
         </div>
 
-        {/* ACCORDION 3: FIRMNESS / DENSITY */}
+        {/* ACCORDION 3: TESTICLES / SACK CONFIGURATION */}
+        {!demoMode && (
+          <div className="card" style={{ padding: '0 18px' }}>
+            <AccordionSection
+              id="testicles"
+              title="3. Testicles & Sack"
+              icon={<Sparkles size={15} color="var(--accent-gold)" />}
+              isExpanded={expandedSection === 'testicles'}
+              onToggle={toggleSection}
+            >
+              <TesticleControls
+                params={params}
+                updateParam={updateParam}
+              />
+            </AccordionSection>
+          </div>
+        )}
+
+        {/* ACCORDION 4: FIRMNESS / DENSITY */}
         <div className="card" style={{ padding: '0 18px' }}>
           <AccordionSection
             id="firmness"
-            title={demoMode ? "3. Silicone Shore Firmness" : "3. Firmness & Density"}
+            title={demoMode ? "3. Silicone Shore Firmness" : "4. Firmness & Density"}
             icon={<Sliders size={15} color="var(--accent-gold)" />}
             isExpanded={expandedSection === 'firmness'}
             onToggle={toggleSection}
@@ -466,11 +485,11 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
           </AccordionSection>
         </div>
 
-        {/* ACCORDION 4: COLOR / SILICONE POUR */}
+        {/* ACCORDION 5: COLOR / SILICONE POUR */}
         <div className="card" style={{ padding: '0 18px' }}>
           <AccordionSection
             id="color"
-            title={demoMode ? "4. Color & Craft presets" : "4. Pigment & Material"}
+            title={demoMode ? "4. Color & Craft presets" : "5. Pigment & Material"}
             icon={<Palette size={15} color="var(--accent-gold)" />}
             isExpanded={expandedSection === 'color'}
             onToggle={toggleSection}
@@ -482,12 +501,12 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
           </AccordionSection>
         </div>
 
-        {/* ACCORDION 5: FUNCTIONAL UPGRADES */}
+        {/* ACCORDION 6: FUNCTIONAL UPGRADES */}
         {!demoMode && (
           <div className="card" style={{ padding: '0 18px' }}>
             <AccordionSection
               id="functional"
-              title="5. Functional Upgrades"
+              title="6. Functional Upgrades"
               icon={<Heart size={15} color="var(--accent-gold)" />}
               isExpanded={expandedSection === 'functional'}
               onToggle={toggleSection}
@@ -500,11 +519,11 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
           </div>
         )}
 
-        {/* ACCORDION 6: PERSONALIZED ENGRAVING & TEXT */}
+        {/* ACCORDION 7: PERSONALIZED ENGRAVING & TEXT */}
         <div className="card" style={{ padding: '0 18px' }}>
           <AccordionSection
             id="engraving"
-            title={demoMode ? "5. Custom Branding & Text" : "6. Custom Engraving & Text"}
+            title={demoMode ? "5. Custom Branding & Text" : "7. Custom Engraving & Text"}
             icon={<Type size={15} color="var(--accent-gold)" />}
             isExpanded={expandedSection === 'engraving'}
             onToggle={toggleSection}
@@ -520,7 +539,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
         <div className="card" style={{ padding: '0 18px' }}>
           <AccordionSection
             id="scenery"
-            title={demoMode ? "6. Scenery & AR View" : "7. Scenery & AR View"}
+            title={demoMode ? "6. Scenery & AR View" : "8. Scenery & AR View"}
             icon={<Eye size={15} color="var(--accent-gold)" />}
             isExpanded={expandedSection === 'scenery'}
             onToggle={toggleSection}

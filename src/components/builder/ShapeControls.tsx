@@ -104,21 +104,6 @@ export const ShapeControls: React.FC<ShapeControlsProps> = ({
                   <span className="slider"></span>
                 </div>
               </label>
-
-              <label className="switch-label">
-                <div>
-                  <span style={{ fontSize: '12px', fontWeight: 600 }}>Optional Testicle Base</span>
-                  <p style={{ fontSize: '9px', color: 'var(--text-muted)', marginTop: '2px' }}>Adds dual base spheres (+ $20.00)</p>
-                </div>
-                <div className="switch">
-                  <input 
-                    type="checkbox" 
-                    checked={params.hasBalls} 
-                    onChange={(e) => updateParam('hasBalls', e.target.checked)} 
-                  />
-                  <span className="slider"></span>
-                </div>
-              </label>
             </div>
           )}
 
