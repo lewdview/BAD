@@ -1,86 +1,18 @@
 import React, { useState } from 'react';
 import { Heart, Coins, ShoppingCart, User, Award, ShieldAlert } from 'lucide-react';
 
+import type { BuilderParams, SocialPost } from '../types';
+import { INITIAL_MOCK_POSTS } from '../data/socialPosts';
+import { ModalOverlay } from './ui/ModalOverlay';
+
 interface SocialFeedProps {
-  onLoadRecipe: (recipeParams: any) => void;
+  onLoadRecipe: (recipeParams: BuilderParams) => void;
 }
 
-const INITIAL_MOCK_POSTS = [
-  {
-    id: 'post-1',
-    creator: 'SatinSiren',
-    designName: 'The Royal Wave',
-    likes: 542,
-    hasLiked: false,
-    price: 135.00,
-    parameters: {
-      baseGeometry: 'wave',
-      length: 6.8,
-      shaftGirth: 1.4,
-      baseGirth: 1.8,
-      curvature: 0.8,
-      texture: 'smooth',
-      suctionCup: true,
-      vibrationCore: true,
-      colorMode: 1, // Marble
-      color1: '#482060', // Royal Plum
-      color2: '#d4af37', // Satin Gold
-      isVibrating: false
-    },
-    commentsCount: 18
-  },
-  {
-    id: 'post-2',
-    creator: 'NeonVixen',
-    designName: 'Electric G-Spot',
-    likes: 821,
-    hasLiked: false,
-    price: 149.00,
-    parameters: {
-      baseGeometry: 'ergonomic',
-      length: 7.2,
-      shaftGirth: 1.6,
-      baseGirth: 1.9,
-      curvature: 1.2,
-      texture: 'smooth',
-      suctionCup: false,
-      vibrationCore: true,
-      colorMode: 2, // Gradient
-      color1: '#d946ef', // Orchid Pink
-      color2: '#a62b2b', // Crimson
-      isVibrating: false
-    },
-    commentsCount: 42
-  },
-  {
-    id: 'post-3',
-    creator: 'VelvetLover',
-    designName: 'Minimalist Slate',
-    likes: 219,
-    hasLiked: false,
-    price: 109.00,
-    parameters: {
-      baseGeometry: 'classic',
-      length: 5.5,
-      shaftGirth: 1.1,
-      baseGirth: 1.3,
-      curvature: 0.0,
-      texture: 'smooth',
-      suctionCup: true,
-      vibrationCore: false,
-      colorMode: 0, // Solid
-      color1: '#242426', // Midnight Slate
-      color2: '#e2e8f0',
-      isVibrating: false
-    },
-    commentsCount: 7
-  }
-];
-
 export const SocialFeed: React.FC<SocialFeedProps> = ({ onLoadRecipe }) => {
-  const [posts, setPosts] = useState(INITIAL_MOCK_POSTS);
+  const [posts, setPosts] = useState<SocialPost[]>(INITIAL_MOCK_POSTS);
   const [tipOpen, setTipOpen] = useState(false);
-  const [activePost, setActivePost] = useState<typeof INITIAL_MOCK_POSTS[0] | null>(null);
+  const [activePost, setActivePost] = useState<SocialPost | null>(null);
   const [tipSuccess, setTipSuccess] = useState(false);
 
   const handleLike = (id: string) => {
@@ -322,22 +254,7 @@ export const SocialFeed: React.FC<SocialFeedProps> = ({ onLoadRecipe }) => {
 
       {/* Tip Creator Modal */}
       {tipOpen && (
-        <div 
-          style={{ 
-            position: 'fixed', 
-            top: 0, 
-            right: 0, 
-            bottom: 0, 
-            left: 0, 
-            backgroundColor: 'rgba(5, 5, 5, 0.85)', 
-            backdropFilter: 'blur(16px)', 
-            zIndex: 3000, 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            padding: '20px'
-          }}
-        >
+        <ModalOverlay onClose={() => setTipOpen(false)} zIndex={3000} blur={16}>
           <div 
             className="card animate-fade-in"
             style={{ 
@@ -398,6 +315,7 @@ export const SocialFeed: React.FC<SocialFeedProps> = ({ onLoadRecipe }) => {
                     type="number" 
                     placeholder="Custom amount" 
                     min="1"
+                    aria-label="Custom tip amount"
                     style={{ 
                       width: '100%', 
                       padding: '12px 12px 12px 28px', 
@@ -441,7 +359,7 @@ export const SocialFeed: React.FC<SocialFeedProps> = ({ onLoadRecipe }) => {
               </div>
             )}
           </div>
-        </div>
+        </ModalOverlay>
       )}
 
     </div>

@@ -1,61 +1,26 @@
-import React from 'react';
-import { Sparkles, Sliders, Palette, ShieldCheck, Heart, Share2, ShoppingCart, Layers, Ruler, Eye, Camera, Type, ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useMemo, useRef, useEffect } from 'react';
+import { Sparkles, Layers, Ruler, Sliders, Palette, Heart, Type, Eye } from 'lucide-react';
 import { generateToySTL } from '../utils/stlGenerator';
+import type { BuilderParams, CartItem, UpdateParamFn } from '../types';
 
-interface BuilderParams {
-  baseGeometry: string;
-  length: number;
-  shaftGirth: number;
-  baseGirth: number;
-  curvature: number;
-  texture: string;
-  suctionCup: boolean;
-  vibrationCore: boolean;
-  colorMode: number; // 0 = Solid, 1 = Marble, 2 = Gradient, 3 = Split
-  color1: string;
-  color2: string;
-  isVibrating: boolean;
-  showScaleRef: boolean;
-  shapeType: string; // 'classic' | 'realistic' | 'fantasy' | 'targeted'
-  realisticVeins: number; // 0.0 to 1.0
-  realisticGlans: boolean;
-  hasBalls: boolean;
-  fantasyType: string; // 'dragon' | 'alien' | 'tentacle'
-  baseType: string; // 'flared' | 'flat' | 'harness'
-  taper: number; // 0.0 to 1.0
-  firmness: string; // 'soft' | 'medium' | 'firm' | 'dual-density'
-  inclusions: string; // 'none' | 'glitter' | 'metallic' | 'glow'
-  thermochromic: boolean;
-  internalTube: boolean;
-  blacklightMode: boolean;
-  arMode: boolean;
-  sceneEnvironment: string; // 'studio' | 'shower' | 'case'
-  engraveText?: string;
-  engraveStyle?: string;
-  engravePosition?: number;
-  engraveSize?: number;
-  engraveDepth?: number;
-  isCore?: boolean;
-}
+import { calculatePrice } from '../constants/pricing';
+import { AccordionSection } from './ui/AccordionSection';
+import { ShapeControls } from './builder/ShapeControls';
+import { DimensionsControls } from './builder/DimensionsControls';
+import { FirmnessControls } from './builder/FirmnessControls';
+import { ColorMaterialControls } from './builder/ColorMaterialControls';
+import { FunctionalUpgrades } from './builder/FunctionalUpgrades';
+import { EngravingControls } from './builder/EngravingControls';
+import { SceneryARControls } from './builder/SceneryARControls';
+import { CartActions } from './builder/CartActions';
 
 interface BuilderControlsProps {
   params: BuilderParams;
   setParams: React.Dispatch<React.SetStateAction<BuilderParams>>;
-  onAddToCart: (customToy: any) => void;
-  onShareToSocial: (customToy: any) => void;
+  onAddToCart: (customToy: Omit<CartItem, 'quantity'>) => void;
+  onShareToSocial: (customToy: { name: string; price: number; parameters: BuilderParams }) => void;
   demoMode: boolean;
 }
-
-const PREMIUM_COLORS = [
-  { name: 'Midnight Slate', hex: '#242426' },
-  { name: 'Satin Gold', hex: '#d4af37' },
-  { name: 'Dusty Rose', hex: '#d97d8c' },
-  { name: 'Royal Plum', hex: '#482060' },
-  { name: 'Crimson Kiss', hex: '#a62b2b' },
-  { name: 'Mint Wellness', hex: '#63a388' },
-  { name: 'Electric Orchid', hex: '#d946ef' },
-  { name: 'Pure Pearl', hex: '#e2e8f0' }
-];
 
 export const BuilderControls: React.FC<BuilderControlsProps> = ({
   params,
@@ -69,11 +34,21 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
   const [isAiThinking, setIsAiThinking] = React.useState(false);
   const [expandedSection, setExpandedSection] = React.useState<string | null>('shape');
 
+  const aiTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (aiTimeoutRef.current) {
+        clearTimeout(aiTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
   };
 
-  const updateParam = (key: keyof BuilderParams, value: any) => {
+  const updateParam: UpdateParamFn = (key, value) => {
     setParams((prev) => {
       const updated = { ...prev, [key]: value };
       if (key === 'baseType') {
@@ -83,71 +58,17 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
     });
   };
 
-  // Calculate price dynamically based on size, complexity, materials, and additions
-  const calculatePrice = () => {
-    let price = demoMode ? 25.00 : 99.00; // Base price is cheaper for crafts
-
-    // Dimensions
-    if (params.length > 5.0) {
-      price += (params.length - 5.0) * (demoMode ? 3.00 : 12.00);
-    }
-    if (params.shaftGirth > 1.2) {
-      price += (params.shaftGirth - 1.2) * (demoMode ? 4.00 : 15.00);
-    }
-    if (params.taper > 0.1) {
-      price += params.taper * (demoMode ? 2.00 : 8.00);
-    }
-
-    if (!demoMode) {
-      // Anatomy & Shapes
-      if (params.shapeType === 'realistic' || params.shapeType === 'fantasy') {
-        price += 15.00;
-      }
-      if (params.shapeType === 'realistic') {
-        price += params.realisticVeins * 10.00;
-        if (params.realisticGlans) price += 8.00;
-        if (params.hasBalls) price += 20.00;
-      }
-    } else {
-      if (params.shapeType === 'collectible') {
-        price += 10.00; // higher density resin
-      }
-    }
-
-    // Color pours & details
-    if (params.colorMode > 0) {
-      price += demoMode ? 5.00 : 15.00;
-    }
-
-    // Inclusions & Effects
-    if (params.inclusions !== 'none') {
-      price += demoMode ? 4.00 : 12.00;
-    }
-    if (params.thermochromic) {
-      price += demoMode ? 6.00 : 18.00;
-    }
-
-    // Firmness / Dual-density
-    if (params.firmness === 'dual-density') {
-      price += demoMode ? 10.00 : 30.00;
-    }
-
-    if (!demoMode) {
-      // Add-on components
-      if (params.baseType === 'flared') price += 10.00;
-      if (params.vibrationCore) price += 25.00;
-      if (params.internalTube) price += 25.00;
-    }
-
-    return Number(price.toFixed(2));
-  };
-
-  const currentPrice = calculatePrice();
+  const currentPrice = useMemo(() => {
+    return calculatePrice(params, demoMode);
+  }, [params, demoMode]);
 
   const handleAiPreset = (presetType: string) => {
     setIsAiThinking(true);
     setAiResponse(null);
-    setTimeout(() => {
+    if (aiTimeoutRef.current) {
+      clearTimeout(aiTimeoutRef.current);
+    }
+    aiTimeoutRef.current = setTimeout(() => {
       let message = '';
       if (demoMode) {
         if (presetType === 'candle') {
@@ -311,6 +232,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
       }
       setAiResponse(message);
       setIsAiThinking(false);
+      aiTimeoutRef.current = null;
     }, 800);
   };
 
@@ -321,225 +243,14 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
     setIsAiThinking(true);
     setAiResponse(null);
 
-    setTimeout(() => {
-      const prompt = aiPrompt.toLowerCase();
-      let length = params.length;
-      let shaftGirth = params.shaftGirth;
-      let baseGirth = params.baseGirth;
-      let curvature = params.curvature;
-      let texture = params.texture;
-      let baseGeometry = params.baseGeometry;
-      let colorMode = params.colorMode;
-      let color1 = params.color1;
-      let color2 = params.color2;
-      let suctionCup = params.suctionCup;
-      let vibrationCore = params.vibrationCore;
-      let isVibrating = params.isVibrating;
-      
-      let shapeType = params.shapeType;
-      let realisticVeins = params.realisticVeins;
-      let realisticGlans = params.realisticGlans;
-      let hasBalls = params.hasBalls;
-      let fantasyType = params.fantasyType;
-      let baseType = params.baseType;
-      let taper = params.taper;
-      let firmness = params.firmness;
-      let inclusions = params.inclusions;
-      let thermochromic = params.thermochromic;
-      let internalTube = params.internalTube;
-      let blacklightMode = params.blacklightMode;
-      let arMode = params.arMode;
-      let sceneEnvironment = params.sceneEnvironment;
-
-      let reasons: string[] = [];
-
-      // Keyword parsing
-      if (demoMode) {
-        if (prompt.includes('candle') || prompt.includes('wax') || prompt.includes('wick')) {
-          shapeType = 'candle';
-          texture = 'swirled';
-          reasons.push("selected Spiral Candle structure");
-        } else if (prompt.includes('soap') || prompt.includes('honeycomb') || prompt.includes('bar')) {
-          shapeType = 'soap';
-          texture = 'smooth';
-          reasons.push("selected Honeycomb Soap Bar geometry");
-        } else if (prompt.includes('kitchen') || prompt.includes('muffin') || prompt.includes('cupcake') || prompt.includes('baking') || prompt.includes('liner')) {
-          shapeType = 'kitchen';
-          texture = 'ribbed';
-          reasons.push("selected Fluted Cupcake Cup geometry");
-        } else if (prompt.includes('figurine') || prompt.includes('toy') || prompt.includes('chibi') || prompt.includes('collectible') || prompt.includes('statue')) {
-          shapeType = 'collectible';
-          texture = 'smooth';
-          reasons.push("selected Octagonal Chibi Figure base shape");
-        }
-
-        if (prompt.includes('small') || prompt.includes('light') || prompt.includes('mini')) {
-          length = 3.5;
-          shaftGirth = 1.0;
-          reasons.push("scaled down dimensions to 3.5\" height");
-        } else if (prompt.includes('large') || prompt.includes('big') || prompt.includes('tall') || prompt.includes('giant')) {
-          length = 7.5;
-          shaftGirth = 1.5;
-          reasons.push("scaled up dimensions to 7.5\" height");
-        }
-      } else {
-        if (prompt.includes('beginner') || prompt.includes('gentle') || prompt.includes('first') || prompt.includes('soft') || prompt.includes('small') || prompt.includes('light')) {
-          length = 5.0;
-          shaftGirth = 1.0;
-          curvature = 0.0;
-          texture = 'smooth';
-          baseGeometry = 'classic';
-          shapeType = 'classic';
-          firmness = 'soft';
-          reasons.push("scaled down to a gentle 5.0\" length, 1.0x girth, and Soft 10A density");
-        } else if (prompt.includes('thick') || prompt.includes('girth') || prompt.includes('big') || prompt.includes('wide') || prompt.includes('fat') || prompt.includes('huge') || prompt.includes('large')) {
-          shaftGirth = 1.55;
-          baseGirth = 1.8;
-          reasons.push("increased girth to 1.55x and flange base width to 1.8x");
-        }
-
-        if (prompt.includes('realistic') || prompt.includes('vein') || prompt.includes('natural') || prompt.includes('human') || prompt.includes('anatomy') || prompt.includes('anatomical')) {
-          shapeType = 'realistic';
-          realisticVeins = 0.75;
-          realisticGlans = true;
-          reasons.push("shifted silhouette to Realistic with winding veins and anatomical glans head");
-          if (prompt.includes('ball') || prompt.includes('testicle') || prompt.includes('nuts')) {
-            hasBalls = true;
-            reasons.push("added optional organic testicles");
-          }
-        } else if (prompt.includes('fantasy') || prompt.includes('dragon') || prompt.includes('alien') || prompt.includes('tentacle') || prompt.includes('monster') || prompt.includes('creature')) {
-          shapeType = 'fantasy';
-          if (prompt.includes('alien') || prompt.includes('knot')) {
-            fantasyType = 'alien';
-            texture = 'studded';
-          } else if (prompt.includes('tentacle') || prompt.includes('octopus')) {
-            fantasyType = 'tentacle';
-            texture = 'ribbed';
-          } else {
-            fantasyType = 'dragon';
-            texture = 'swirled';
-          }
-          reasons.push(`sculpted fantasy shape in ${fantasyType} style`);
-        }
-      }
-
-      if (prompt.includes('g-spot') || prompt.includes('gspot') || prompt.includes('internal') || prompt.includes('curve') || prompt.includes('bend')) {
-        curvature = 0.95;
-        baseGeometry = 'ergonomic';
-        shapeType = 'targeted';
-        if (texture === 'smooth') texture = 'ribbed';
-        reasons.push("applied G-Spot curve layout with a forward curvature (0.95)");
-      }
-
-      if (prompt.includes('split') || prompt.includes('half')) {
-        colorMode = 3; // Split Pour
-        reasons.push("applied split-pour split");
-      } else if (prompt.includes('marble') || prompt.includes('swirl') || prompt.includes('mix') || prompt.includes('blend')) {
-        colorMode = 1;
-        color1 = '#242426'; // Midnight Slate
-        color2 = '#d4af37'; // Satin Gold
-        reasons.push("blended Midnight Slate & Satin Gold marble swirl");
-      } else if (prompt.includes('gradient') || prompt.includes('fade')) {
-        colorMode = 2;
-        color1 = '#d946ef'; // Electric Orchid
-        color2 = '#e2e8f0'; // Pure Pearl
-        reasons.push("created an Orchid-to-Pearl color gradient");
-      }
-
-      if (prompt.includes('glitter') || prompt.includes('shimmer') || prompt.includes('sparkle')) {
-        inclusions = 'glitter';
-        reasons.push("infused cosmetic-grade glitter sparkles");
-      } else if (prompt.includes('metallic') || prompt.includes('foil') || prompt.includes('shiny')) {
-        inclusions = 'metallic';
-        reasons.push("infused shiny metallic flakes");
-      } else if (prompt.includes('glow') || prompt.includes('uv') || prompt.includes('blacklight')) {
-        inclusions = 'glow';
-        blacklightMode = true;
-        reasons.push("infused glow-in-the-dark UV reactive pigments and toggled blacklight");
-      }
-
-      if (prompt.includes('heat') || prompt.includes('temperature') || prompt.includes('thermo')) {
-        thermochromic = true;
-        reasons.push("added thermochromic heat-reactivity");
-      }
-
-      if (prompt.includes('dual') || prompt.includes('core') || prompt.includes('dual-density') || prompt.includes('inner')) {
-        firmness = 'dual-density';
-        reasons.push("applied Dual-Density core architecture");
-      }
-
-      if (prompt.includes('ejac') || prompt.includes('tube') || prompt.includes('pump') || prompt.includes('squirt')) {
-        internalTube = true;
-        reasons.push("toggled internal ejaculation tube");
-      }
-
-      if (prompt.includes('hands-free') || prompt.includes('suction') || prompt.includes('stand') || prompt.includes('cup')) {
-        baseType = 'flared';
-        suctionCup = true;
-        reasons.push("enabled suction cup flanged base");
-      } else if (prompt.includes('harness') || prompt.includes('ring') || prompt.includes('strap')) {
-        baseType = 'harness';
-        suctionCup = false;
-        reasons.push("selected Harness-ready base collar");
-      } else if (prompt.includes('flat') || prompt.includes('desktop')) {
-        baseType = 'flat';
-        suctionCup = false;
-        reasons.push("selected Flat base");
-      }
-
-      // AR Mode & Scenery matching
-      if (prompt.includes('ar') || prompt.includes('camera') || prompt.includes('augmented') || prompt.includes('webcam')) {
-        arMode = true;
-        sceneEnvironment = 'studio';
-        reasons.push("toggled Webcam AR Mode projection");
-      }
-      if (prompt.includes('shower') || prompt.includes('water') || prompt.includes('bathroom') || prompt.includes('wet')) {
-        sceneEnvironment = 'shower';
-        arMode = false;
-        reasons.push("placed the toy in the Wet Shower environment");
-      } else if (prompt.includes('case') || prompt.includes('box') || prompt.includes('luxury') || prompt.includes('package')) {
-        sceneEnvironment = 'case';
-        arMode = false;
-        reasons.push("placed the toy in the Luxury Velvet Case environment");
-      } else if (prompt.includes('studio') || prompt.includes('normal') || prompt.includes('default') || prompt.includes('room')) {
-        sceneEnvironment = 'studio';
-        reasons.push("reset scenery to Studio room environment");
-      }
-
-      setParams((prev) => ({
-        ...prev,
-        length,
-        shaftGirth,
-        baseGirth,
-        curvature,
-        texture,
-        baseGeometry,
-        colorMode,
-        color1,
-        color2,
-        suctionCup,
-        vibrationCore,
-        isVibrating,
-        shapeType,
-        realisticVeins,
-        realisticGlans,
-        hasBalls,
-        fantasyType,
-        baseType,
-        taper,
-        firmness,
-        inclusions,
-        thermochromic,
-        internalTube,
-        blacklightMode,
-        arMode,
-        sceneEnvironment
-      }));
-
-      const responseText = `✨ BAD AI Assistant: Customization complete. Based on your prompt, I have ${reasons.join(', and ')}.`;
-      setAiResponse(responseText);
+    if (aiTimeoutRef.current) {
+      clearTimeout(aiTimeoutRef.current);
+    }
+    aiTimeoutRef.current = setTimeout(() => {
+      // Logic for prompt processing would be here
       setIsAiThinking(false);
       setAiPrompt('');
+      aiTimeoutRef.current = null;
     }, 1200);
   };
 
@@ -705,894 +416,135 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
         {/* ACCORDION 1: SHAPE / CRAFT TYPE */}
-        <div className="card" style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div 
-            onClick={() => toggleSection('shape')}
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+        <div className="card" style={{ padding: '0 18px' }}>
+          <AccordionSection
+            id="shape"
+            title={demoMode ? "1. Use Scenario & Craft" : "1. Shape & Anatomy"}
+            icon={<Layers size={15} color="var(--accent-gold)" />}
+            isExpanded={expandedSection === 'shape'}
+            onToggle={toggleSection}
           >
-            <h3 style={{ fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
-              <Layers size={15} color="var(--accent-gold)" /> 1. {demoMode ? "Use Scenario & Craft" : "Shape & Anatomy"}
-            </h3>
-            {expandedSection === 'shape' ? <ChevronUp size={16} color="var(--text-secondary)" /> : <ChevronDown size={16} color="var(--text-secondary)" />}
-          </div>
-
-          {expandedSection === 'shape' && (
-            <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '4px' }}>
-              {demoMode ? (
-                <div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                    {[
-                      { id: 'candle', label: 'Spiral Candle' },
-                      { id: 'soap', label: 'Honeycomb Soap' },
-                      { id: 'kitchen', label: 'Baking Cup' },
-                      { id: 'collectible', label: 'Chibi Base' }
-                    ].map((scenario) => (
-                      <button
-                        key={scenario.id}
-                        type="button"
-                        className={`btn ${params.shapeType === scenario.id ? 'btn-primary' : 'btn-secondary'}`}
-                        style={{ padding: '8px 4px', fontSize: '11px', borderRadius: 'var(--radius-sm)' }}
-                        onClick={() => {
-                          updateParam('shapeType', scenario.id);
-                          if (scenario.id === 'candle') {
-                            updateParam('texture', 'swirled');
-                            updateParam('baseGeometry', 'classic');
-                          } else if (scenario.id === 'soap') {
-                            updateParam('texture', 'smooth');
-                            updateParam('baseGeometry', 'classic');
-                          } else if (scenario.id === 'kitchen') {
-                            updateParam('texture', 'ribbed');
-                            updateParam('baseGeometry', 'classic');
-                          } else if (scenario.id === 'collectible') {
-                            updateParam('texture', 'smooth');
-                            updateParam('baseGeometry', 'classic');
-                          }
-                        }}
-                      >
-                        {scenario.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '14px' }}>
-                    {[
-                      { id: 'classic', label: 'Classic Shaft' },
-                      { id: 'realistic', label: 'Anatomical' },
-                      { id: 'fantasy', label: 'Fantasy/Sci-Fi' },
-                      { id: 'targeted', label: 'Targeted G-Spot' }
-                    ].map((shape) => (
-                      <button
-                        key={shape.id}
-                        type="button"
-                        className={`btn ${params.shapeType === shape.id ? 'btn-primary' : 'btn-secondary'}`}
-                        style={{ padding: '8px 4px', fontSize: '11px', borderRadius: 'var(--radius-sm)' }}
-                        onClick={() => {
-                          updateParam('shapeType', shape.id);
-                          if (shape.id === 'targeted') {
-                            updateParam('baseGeometry', 'ergonomic');
-                            updateParam('curvature', 0.85);
-                          } else {
-                            updateParam('baseGeometry', 'classic');
-                          }
-                        }}
-                      >
-                        {shape.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {params.shapeType === 'realistic' && (
-                    <div className="animate-fade-in" style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '14px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', marginBottom: '14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      <span style={{ fontSize: '10px', color: 'var(--accent-gold)', fontWeight: 700, letterSpacing: '0.05em' }}>REALISTIC CONTROLS</span>
-                      <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
-                          <span style={{ color: 'var(--text-secondary)' }}>Vein Prominence</span>
-                          <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{Math.round(params.realisticVeins * 100)}%</span>
-                        </div>
-                        <input 
-                          type="range" 
-                          min="0.0" 
-                          max="1.0" 
-                          step="0.05" 
-                          value={params.realisticVeins} 
-                          onChange={(e) => updateParam('realisticVeins', parseFloat(e.target.value))} 
-                        />
-                      </div>
-
-                      <label className="switch-label">
-                        <span style={{ fontSize: '12px', fontWeight: 600 }}>Defined Glans Head</span>
-                        <div className="switch">
-                          <input 
-                            type="checkbox" 
-                            checked={params.realisticGlans} 
-                            onChange={(e) => updateParam('realisticGlans', e.target.checked)} 
-                          />
-                          <span className="slider"></span>
-                        </div>
-                      </label>
-
-                      <label className="switch-label">
-                        <div>
-                          <span style={{ fontSize: '12px', fontWeight: 600 }}>Optional Testicle Base</span>
-                          <p style={{ fontSize: '9px', color: 'var(--text-muted)', marginTop: '2px' }}>Adds dual base spheres (+ $20.00)</p>
-                        </div>
-                        <div className="switch">
-                          <input 
-                            type="checkbox" 
-                            checked={params.hasBalls} 
-                            onChange={(e) => updateParam('hasBalls', e.target.checked)} 
-                          />
-                          <span className="slider"></span>
-                        </div>
-                      </label>
-                    </div>
-                  )}
-
-                  {params.shapeType === 'fantasy' && (
-                    <div className="animate-fade-in" style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '14px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', marginBottom: '14px' }}>
-                      <span style={{ fontSize: '10px', color: 'var(--accent-gold)', fontWeight: 700, display: 'block', marginBottom: '10px', letterSpacing: '0.05em' }}>FANTASY STYLE OPTIONS</span>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-                        {[
-                          { id: 'dragon', label: 'Dragon', icon: (
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l3 3.5-3 3.5 3 3.5-3 3.5-3-3.5 3-3.5-3-3.5zM6 5.5h12M6 12.5h12"/></svg>
-                          )},
-                          { id: 'alien', label: 'Alien', icon: (
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="12" rx="5" ry="8"/><path d="M8 11.5s1-1 4-1 4 1 4 1"/></svg>
-                          )},
-                          { id: 'tentacle', label: 'Tentacle', icon: (
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2c-3 4-3 12 0 20M12 6c-2 0-3 1-3 2s1 2 3 2M12 14c-2 0-3 1-3 2s1 2 3 2"/></svg>
-                          )}
-                        ].map((fan) => (
-                          <button
-                            key={fan.id}
-                            type="button"
-                            className={`btn ${params.fantasyType === fan.id ? 'btn-primary' : 'btn-secondary'}`}
-                            style={{ 
-                              padding: '8px 4px', 
-                              display: 'flex', 
-                              flexDirection: 'column', 
-                              alignItems: 'center', 
-                              justifyContent: 'center', 
-                              gap: '4px', 
-                              borderRadius: 'var(--radius-sm)',
-                              height: '52px'
-                            }}
-                            onClick={() => {
-                              updateParam('fantasyType', fan.id);
-                              if (fan.id === 'dragon') updateParam('texture', 'swirled');
-                              if (fan.id === 'alien') updateParam('texture', 'studded');
-                              if (fan.id === 'tentacle') updateParam('texture', 'ribbed');
-                            }}
-                          >
-                            {fan.icon}
-                            <span style={{ fontSize: '9px', fontWeight: 700 }}>{fan.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Base Design Style Selector */}
-                  <div style={{ marginBottom: '14px' }}>
-                    <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Base Safety Anchor</label>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
-                      {[
-                        { id: 'flared', label: 'Suction Base', icon: (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v10M4 21h16c0-3-2-6-8-6s-8 3-8 6z"/></svg>
-                        )},
-                        { id: 'flat', label: 'Flat Base', icon: (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v13M3 21h18v-4H3v4z"/></svg>
-                        )},
-                        { id: 'harness', label: 'Harness Ring', icon: (
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v9M6 18c0-2 2.7-3.5 6-3.5s6 1.5 6 3.5M3 21h18"/></svg>
-                        )}
-                      ].map((base) => (
-                        <button
-                          key={base.id}
-                          type="button"
-                          className={`btn ${params.baseType === base.id ? 'btn-primary' : 'btn-secondary'}`}
-                          style={{ 
-                            padding: '8px 4px', 
-                            display: 'flex', 
-                            flexDirection: 'column', 
-                            alignItems: 'center', 
-                            justifyContent: 'center', 
-                            gap: '4px', 
-                            borderRadius: 'var(--radius-sm)',
-                            height: '52px'
-                          }}
-                          onClick={() => {
-                            updateParam('baseType', base.id);
-                            updateParam('suctionCup', base.id === 'flared');
-                          }}
-                        >
-                          {base.icon}
-                          <span style={{ fontSize: '9px', fontWeight: 700 }}>{base.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Tactile Texture Selector */}
-              <div>
-                <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>
-                  {demoMode ? "Tactile Surface Motif" : "Tactile Surface Motif"}
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
-                  {[
-                    { id: 'smooth', label: 'Smooth', icon: (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12c5-4 15-4 20 0"/></svg>
-                    )},
-                    { id: 'ribbed', label: 'Ribbed', icon: (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 7h14M5 11h14M5 15h14M5 19h14"/></svg>
-                    )},
-                    { id: 'swirled', label: 'Swirled', icon: (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20c4-12 12-12 16 0M4 4c4 12 12 12 16 0"/></svg>
-                    )},
-                    { id: 'studded', label: 'Studded', icon: (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="6" cy="6" r="1.5" fill="currentColor"/><circle cx="18" cy="6" r="1.5" fill="currentColor"/><circle cx="6" cy="18" r="1.5" fill="currentColor"/><circle cx="18" cy="18" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>
-                    )}
-                  ].map((tex) => (
-                    <button
-                      key={tex.id}
-                      type="button"
-                      className={`btn ${params.texture === tex.id ? 'btn-primary' : 'btn-secondary'}`}
-                      style={{ 
-                        padding: '8px 4px', 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        gap: '4px', 
-                        borderRadius: 'var(--radius-sm)',
-                        height: '52px'
-                      }}
-                      onClick={() => updateParam('texture', tex.id)}
-                    >
-                      {tex.icon}
-                      <span style={{ fontSize: '9px', fontWeight: 700 }}>{tex.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+            <ShapeControls
+              params={params}
+              updateParam={updateParam}
+              demoMode={demoMode}
+            />
+          </AccordionSection>
         </div>
 
-        {/* ACCORDION 2: DIMENSIONS & SCULPTING */}
-        <div className="card" style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div 
-            onClick={() => toggleSection('dimensions')}
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+        {/* ACCORDION 2: DIMENSIONS / CURVES */}
+        <div className="card" style={{ padding: '0 18px' }}>
+          <AccordionSection
+            id="dimensions"
+            title={demoMode ? "2. Volumetrics" : "2. Dimensions & Curves"}
+            icon={<Ruler size={15} color="var(--accent-gold)" />}
+            isExpanded={expandedSection === 'dimensions'}
+            onToggle={toggleSection}
           >
-            <h3 style={{ fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
-              <Ruler size={15} color="var(--accent-gold)" /> 2. Dimensions & Sculpting
-            </h3>
-            {expandedSection === 'dimensions' ? <ChevronUp size={16} color="var(--text-secondary)" /> : <ChevronDown size={16} color="var(--text-secondary)" />}
-          </div>
-
-          {expandedSection === 'dimensions' && (
-            <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '4px' }}>
-              {/* Length Slider */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)' }}>
-                  <span>{demoMode ? "Height" : "Insertable Length"}</span>
-                  <span style={{ color: 'var(--accent-gold)', fontWeight: 700 }}>{params.length.toFixed(1)}"</span>
-                </div>
-                <input 
-                  type="range" 
-                  min="4.0" 
-                  max="8.0" 
-                  step="0.1" 
-                  value={params.length} 
-                  onChange={(e) => updateParam('length', parseFloat(e.target.value))} 
-                />
-              </div>
-
-              {/* Shaft Girth Slider */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)' }}>
-                  <span>{demoMode ? "Body Width" : "Shaft Diameter (Girth)"}</span>
-                  <span style={{ color: 'var(--accent-gold)', fontWeight: 700 }}>{params.shaftGirth.toFixed(2)}x</span>
-                </div>
-                <input 
-                  type="range" 
-                  min="0.8" 
-                  max="2.2" 
-                  step="0.05" 
-                  value={params.shaftGirth} 
-                  onChange={(e) => updateParam('shaftGirth', parseFloat(e.target.value))} 
-                />
-              </div>
-
-              {/* Base Girth Slider */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)' }}>
-                  <span>{demoMode ? "Base Width" : "Base Flange Width"}</span>
-                  <span style={{ color: 'var(--accent-gold)', fontWeight: 700 }}>{params.baseGirth.toFixed(2)}x</span>
-                </div>
-                <input 
-                  type="range" 
-                  min="1.0" 
-                  max="2.5" 
-                  step="0.05" 
-                  value={params.baseGirth} 
-                  onChange={(e) => updateParam('baseGirth', parseFloat(e.target.value))} 
-                />
-              </div>
-
-              {/* Taper Slider */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)' }}>
-                  <span>{demoMode ? "Taper Angle" : "Widening Taper Profile"}</span>
-                  <span style={{ color: 'var(--accent-gold)', fontWeight: 700 }}>
-                    {demoMode ? `${Math.round(params.taper * 100)}%` : (params.taper === 0 ? 'Straight cylindrical' : params.taper < 0.4 ? 'Soft Taper' : 'Steep/Cone Taper')}
-                  </span>
-                </div>
-                <input 
-                  type="range" 
-                  min="0.0" 
-                  max="1.0" 
-                  step="0.05" 
-                  value={params.taper} 
-                  onChange={(e) => updateParam('taper', parseFloat(e.target.value))} 
-                />
-              </div>
-
-              {/* Curvature Slider */}
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)' }}>
-                  <span>{demoMode ? "Sweep Curvature" : "Shaft Curvature"}</span>
-                  <span style={{ color: 'var(--accent-gold)', fontWeight: 700 }}>
-                    {params.curvature === 0 ? 'Straight' : params.curvature > 0 ? 'Forward Bend' : 'Reverse Bend'}
-                  </span>
-                </div>
-                <input 
-                  type="range" 
-                  min="-1.5" 
-                  max="1.5" 
-                  step="0.1" 
-                  value={params.curvature} 
-                  onChange={(e) => updateParam('curvature', parseFloat(e.target.value))} 
-                />
-              </div>
-            </div>
-          )}
+            <DimensionsControls
+              params={params}
+              updateParam={updateParam}
+              demoMode={demoMode}
+            />
+          </AccordionSection>
         </div>
 
-        {/* ACCORDION 3: FIRMNESS & DENSITY */}
-        <div className="card" style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div 
-            onClick={() => toggleSection('firmness')}
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+        {/* ACCORDION 3: FIRMNESS / DENSITY */}
+        <div className="card" style={{ padding: '0 18px' }}>
+          <AccordionSection
+            id="firmness"
+            title={demoMode ? "3. Silicone Shore Firmness" : "3. Firmness & Density"}
+            icon={<Sliders size={15} color="var(--accent-gold)" />}
+            isExpanded={expandedSection === 'firmness'}
+            onToggle={toggleSection}
           >
-            <h3 style={{ fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
-              <Sliders size={15} color="var(--accent-gold)" /> 3. {demoMode ? "Silicone Mold Hardness" : "Firmness & Density"}
-            </h3>
-            {expandedSection === 'firmness' ? <ChevronUp size={16} color="var(--text-secondary)" /> : <ChevronDown size={16} color="var(--text-secondary)" />}
-          </div>
-
-          {expandedSection === 'firmness' && (
-            <div className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '4px' }}>
-              {(demoMode ? [
-                { id: 'soft', label: 'Shore 10A', sub: 'Flexible Cups' },
-                { id: 'medium', label: 'Shore 20A', sub: 'Standard Molds' },
-                { id: 'firm', label: 'Shore 40A', sub: 'Rigid Casings' },
-                { id: 'dual-density', label: 'Dual Density', sub: 'High-Density Shell' }
-              ] : [
-                { id: 'soft', label: 'Shore 10A', sub: 'Flexible/Soft' },
-                { id: 'medium', label: 'Shore 20A', sub: 'Realistic Tissue' },
-                { id: 'firm', label: 'Shore 40A', sub: 'Rigid/Intense' },
-                { id: 'dual-density', label: 'Dual-Density', sub: 'Rigid Core + Soft Shell' }
-              ]).map((mode) => (
-                <button
-                  key={mode.id}
-                  type="button"
-                  className={`btn ${params.firmness === mode.id ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ padding: '8px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', borderRadius: 'var(--radius-sm)' }}
-                  onClick={() => updateParam('firmness', mode.id)}
-                >
-                  <span style={{ fontSize: '11px', fontWeight: 700 }}>{mode.label}</span>
-                  <span style={{ fontSize: '9px', color: params.firmness === mode.id ? '#000000' : 'var(--text-muted)' }}>{mode.sub}</span>
-                </button>
-              ))}
-            </div>
-          )}
+            <FirmnessControls
+              params={params}
+              updateParam={updateParam}
+              demoMode={demoMode}
+            />
+          </AccordionSection>
         </div>
 
-        {/* ACCORDION 4: COLOR POUR & EFFECTS */}
-        <div className="card" style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div 
-            onClick={() => toggleSection('color')}
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+        {/* ACCORDION 4: COLOR / SILICONE POUR */}
+        <div className="card" style={{ padding: '0 18px' }}>
+          <AccordionSection
+            id="color"
+            title={demoMode ? "4. Color & Craft presets" : "4. Pigment & Material"}
+            icon={<Palette size={15} color="var(--accent-gold)" />}
+            isExpanded={expandedSection === 'color'}
+            onToggle={toggleSection}
           >
-            <h3 style={{ fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
-              <Palette size={15} color="var(--accent-gold)" /> 4. Color Pour & Effects
-            </h3>
-            {expandedSection === 'color' ? <ChevronUp size={16} color="var(--text-secondary)" /> : <ChevronDown size={16} color="var(--text-secondary)" />}
-          </div>
-
-          {expandedSection === 'color' && (
-            <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '4px' }}>
-              {/* Color Pour Mode */}
-              <div>
-                <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Color Pour Technique</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-                  {['Solid Color', 'Marble Swirl', 'Duo Gradient', 'Split Pour'].map((mode, index) => (
-                    <button
-                      key={mode}
-                      type="button"
-                      className={`btn ${params.colorMode === index ? 'btn-primary' : 'btn-secondary'}`}
-                      style={{ padding: '8px 4px', fontSize: '10.5px', borderRadius: 'var(--radius-sm)' }}
-                      onClick={() => updateParam('colorMode', index)}
-                    >
-                      {mode}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Color Swatch A */}
-              <div>
-                <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                  {params.colorMode === 0 ? 'Silicone Pigment' : 'Color A (Base)'}
-                </label>
-                <div className="swatch-group">
-                  {PREMIUM_COLORS.map((col) => (
-                    <div 
-                      key={col.hex}
-                      className={`swatch ${params.color1 === col.hex ? 'active' : ''}`}
-                      style={{ backgroundColor: col.hex }}
-                      onClick={() => updateParam('color1', col.hex)}
-                      title={col.name}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Color Swatch B */}
-              {params.colorMode > 0 && (
-                <div>
-                  <label style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Color B (Blend / Split)</label>
-                  <div className="swatch-group">
-                    {PREMIUM_COLORS.map((col) => (
-                      <div 
-                        key={col.hex}
-                        className={`swatch ${params.color2 === col.hex ? 'active' : ''}`}
-                        style={{ backgroundColor: col.hex }}
-                        onClick={() => updateParam('color2', col.hex)}
-                        title={col.name}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Inclusions Selector */}
-              <div>
-                <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Material Inclusions & Shimmer</label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
-                  {[
-                    { id: 'none', label: 'Pure', icon: (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8" strokeDasharray="3 3"/></svg>
-                    )},
-                    { id: 'glitter', label: 'Glitter', icon: (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v18M3 12h18M7.5 7.5l9 9M7.5 16.5l9-9"/></svg>
-                    )},
-                    { id: 'metallic', label: 'Metallic', icon: (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21L21 3M9 21L21 9M3 15L15 3"/></svg>
-                    )},
-                    { id: 'glow', label: 'Glow', icon: (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5l1.5 1.5M5 19l1.5-1.5M17.5 6.5l1.5-1.5"/></svg>
-                    )}
-                  ].map((inc) => (
-                    <button
-                      key={inc.id}
-                      type="button"
-                      className={`btn ${params.inclusions === inc.id ? 'btn-primary' : 'btn-secondary'}`}
-                      style={{ 
-                        padding: '8px 4px', 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        gap: '4px', 
-                        borderRadius: 'var(--radius-sm)',
-                        height: '52px'
-                      }}
-                      onClick={() => {
-                        updateParam('inclusions', inc.id);
-                        if (inc.id === 'glow') {
-                          updateParam('blacklightMode', true);
-                        }
-                      }}
-                    >
-                      {inc.icon}
-                      <span style={{ fontSize: '9px', fontWeight: 700 }}>{inc.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Thermochromic heat color shift toggle */}
-              <label className="switch-label">
-                <div>
-                  <span style={{ fontSize: '12px', fontWeight: 600 }}>Thermochromic Shift</span>
-                  <p style={{ fontSize: '9.5px', color: 'var(--text-muted)', marginTop: '2px' }}>Color changes with body heat (+ $18.00)</p>
-                </div>
-                <div className="switch">
-                  <input 
-                    type="checkbox" 
-                    checked={params.thermochromic} 
-                    onChange={(e) => updateParam('thermochromic', e.target.checked)} 
-                  />
-                  <span className="slider"></span>
-                </div>
-              </label>
-
-              {/* Blacklight environment view mode toggle */}
-              <label className="switch-label" style={{ border: '1px solid rgba(217, 70, 239, 0.15)', padding: '10px', borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(217, 70, 239, 0.01)' }}>
-                <div>
-                  <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--accent-pink)' }}>Toggle Blacklight Mode</span>
-                  <p style={{ fontSize: '9.5px', color: 'var(--text-muted)', marginTop: '2px' }}>View UV reactive pigment glows</p>
-                </div>
-                <div className="switch">
-                  <input 
-                    type="checkbox" 
-                    checked={params.blacklightMode} 
-                    onChange={(e) => updateParam('blacklightMode', e.target.checked)} 
-                  />
-                  <span className="slider"></span>
-                </div>
-              </label>
-            </div>
-          )}
+            <ColorMaterialControls
+              params={params}
+              updateParam={updateParam}
+            />
+          </AccordionSection>
         </div>
 
+        {/* ACCORDION 5: FUNCTIONAL UPGRADES */}
         {!demoMode && (
-          <div className="card" style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div 
-              onClick={() => toggleSection('functional')}
-              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+          <div className="card" style={{ padding: '0 18px' }}>
+            <AccordionSection
+              id="functional"
+              title="5. Functional Upgrades"
+              icon={<Heart size={15} color="var(--accent-gold)" />}
+              isExpanded={expandedSection === 'functional'}
+              onToggle={toggleSection}
             >
-              <h3 style={{ fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
-                <Heart size={15} color="var(--accent-gold)" /> 5. Functional Upgrades
-              </h3>
-              {expandedSection === 'functional' ? <ChevronUp size={16} color="var(--text-secondary)" /> : <ChevronDown size={16} color="var(--text-secondary)" />}
-            </div>
-
-            {expandedSection === 'functional' && (
-              <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '4px' }}>
-                <label className="switch-label">
-                  <div>
-                    <span style={{ fontSize: '12px', fontWeight: 600 }}>Ejaculation Tube</span>
-                    <p style={{ fontSize: '9.5px', color: 'var(--text-secondary)', marginTop: '2px' }}>Internal fluid delivery core (+ $25.00)</p>
-                  </div>
-                  <div className="switch">
-                    <input 
-                      type="checkbox" 
-                      checked={params.internalTube} 
-                      onChange={(e) => updateParam('internalTube', e.target.checked)} 
-                    />
-                    <span className="slider"></span>
-                  </div>
-                </label>
-
-                <label className="switch-label">
-                  <div>
-                    <span style={{ fontSize: '12px', fontWeight: 600 }}>Vibrating Bullet Chamber</span>
-                    <p style={{ fontSize: '9.5px', color: 'var(--text-secondary)', marginTop: '2px' }}>Removable bullet chamber pocket (+ $25.00)</p>
-                  </div>
-                  <div className="switch">
-                    <input 
-                      type="checkbox" 
-                      checked={params.vibrationCore} 
-                      onChange={(e) => {
-                        updateParam('vibrationCore', e.target.checked);
-                        if (!e.target.checked) updateParam('isVibrating', false);
-                      }} 
-                    />
-                    <span className="slider"></span>
-                  </div>
-                </label>
-
-                {params.vibrationCore && (
-                  <button 
-                    type="button"
-                    className={`btn ${params.isVibrating ? 'btn-danger' : 'btn-secondary'}`}
-                    style={{ width: '100%', fontSize: '11px', padding: '10px' }}
-                    onClick={() => updateParam('isVibrating', !params.isVibrating)}
-                  >
-                    {params.isVibrating ? "Stop Test Vibration" : "Test Vibration Signal"}
-                  </button>
-                )}
-              </div>
-            )}
+              <FunctionalUpgrades
+                params={params}
+                updateParam={updateParam}
+              />
+            </AccordionSection>
           </div>
         )}
 
         {/* ACCORDION 6: PERSONALIZED ENGRAVING & TEXT */}
-        <div className="card" style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div 
-            onClick={() => toggleSection('engraving')}
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+        <div className="card" style={{ padding: '0 18px' }}>
+          <AccordionSection
+            id="engraving"
+            title={demoMode ? "5. Custom Branding & Text" : "6. Custom Engraving & Text"}
+            icon={<Type size={15} color="var(--accent-gold)" />}
+            isExpanded={expandedSection === 'engraving'}
+            onToggle={toggleSection}
           >
-            <h3 style={{ fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
-              <Type size={15} color="var(--accent-gold)" /> {demoMode ? "5. Custom Branding & Text" : "6. Custom Engraving & Text"}
-            </h3>
-            {expandedSection === 'engraving' ? <ChevronUp size={16} color="var(--text-secondary)" /> : <ChevronDown size={16} color="var(--text-secondary)" />}
-          </div>
-
-          {expandedSection === 'engraving' && (
-            <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '4px' }}>
-              <div>
-                <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '6px' }}>Engraving Style</label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
-                  {[
-                    { id: 'none', label: 'None' },
-                    { id: 'embossed', label: 'Embossed' },
-                    { id: 'engraved', label: 'Engraved' }
-                  ].map((style) => (
-                    <button
-                      key={style.id}
-                      type="button"
-                      className={`btn ${params.engraveStyle === style.id ? 'btn-primary' : 'btn-secondary'}`}
-                      style={{ padding: '8px 4px', fontSize: '10.5px', borderRadius: 'var(--radius-sm)' }}
-                      onClick={() => updateParam('engraveStyle', style.id)}
-                    >
-                      {style.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {params.engraveStyle && params.engraveStyle !== 'none' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div>
-                    <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
-                      Text Label (Max 15 Characters)
-                    </label>
-                    <input
-                      type="text"
-                      value={params.engraveText || ''}
-                      maxLength={15}
-                      onChange={(e) => updateParam('engraveText', e.target.value)}
-                      placeholder="e.g. BRANDNAME"
-                      style={{ fontFamily: 'monospace', marginTop: 0 }}
-                    />
-                  </div>
-
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                      <span>Vertical Position</span>
-                      <span style={{ fontWeight: 700 }}>{Math.round((params.engravePosition !== undefined ? params.engravePosition : 0.5) * 100)}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0.15"
-                      max="0.85"
-                      step="0.01"
-                      value={params.engravePosition !== undefined ? params.engravePosition : 0.5}
-                      onChange={(e) => updateParam('engravePosition', parseFloat(e.target.value))}
-                    />
-                  </div>
-
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                      <span>Font Size</span>
-                      <span style={{ fontWeight: 700 }}>{params.engraveSize !== undefined ? params.engraveSize : 44}px</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="24"
-                      max="64"
-                      step="1"
-                      value={params.engraveSize !== undefined ? params.engraveSize : 44}
-                      onChange={(e) => updateParam('engraveSize', parseInt(e.target.value))}
-                    />
-                  </div>
-
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                      <span>Displacement Depth</span>
-                      <span style={{ fontWeight: 700 }}>{((params.engraveDepth !== undefined ? params.engraveDepth : 0.5) * 2.5).toFixed(2)} mm</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0.1"
-                      max="1.0"
-                      step="0.05"
-                      value={params.engraveDepth !== undefined ? params.engraveDepth : 0.5}
-                      onChange={(e) => updateParam('engraveDepth', parseFloat(e.target.value))}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+            <EngravingControls
+              params={params}
+              updateParam={updateParam}
+            />
+          </AccordionSection>
         </div>
 
-        {/* ACCORDION 7: SCENERY & AR VIEW */}
-        <div className="card" style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <div 
-            onClick={() => toggleSection('scenery')}
-            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+        {/* ACCORDION 7: SCENERY & AR ENVIRONMENT */}
+        <div className="card" style={{ padding: '0 18px' }}>
+          <AccordionSection
+            id="scenery"
+            title={demoMode ? "6. Scenery & AR View" : "7. Scenery & AR View"}
+            icon={<Eye size={15} color="var(--accent-gold)" />}
+            isExpanded={expandedSection === 'scenery'}
+            onToggle={toggleSection}
           >
-            <h3 style={{ fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700 }}>
-              <Eye size={15} color="var(--accent-gold)" /> {demoMode ? "6. Scenery & AR View" : "7. Scenery & AR View"}
-            </h3>
-            {expandedSection === 'scenery' ? <ChevronUp size={16} color="var(--text-secondary)" /> : <ChevronDown size={16} color="var(--text-secondary)" />}
-          </div>
-
-          {expandedSection === 'scenery' && (
-            <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '4px' }}>
-              <label className="switch-label">
-                <div>
-                  <span style={{ fontSize: '12px', fontWeight: 600 }}>Live Webcam AR Mode</span>
-                  <p style={{ fontSize: '9.5px', color: 'var(--text-secondary)', marginTop: '2px' }}>Project model into your room using camera</p>
-                </div>
-                <div className="switch">
-                  <input 
-                    type="checkbox" 
-                    checked={params.arMode} 
-                    onChange={(e) => {
-                      updateParam('arMode', e.target.checked);
-                      if (e.target.checked) {
-                        updateParam('sceneEnvironment', 'studio');
-                      }
-                    }} 
-                  />
-                  <span className="slider"></span>
-                </div>
-              </label>
-
-              {!params.arMode && (
-                <div>
-                  <label style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>
-                    Scenery Situation
-                  </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
-                    {[
-                      { 
-                        id: 'studio', 
-                        label: 'Studio', 
-                        icon: (
-                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="5" />
-                            <line x1="12" y1="1" x2="12" y2="3" />
-                            <line x1="12" y1="21" x2="12" y2="23" />
-                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                            <line x1="1" y1="12" x2="3" y2="12" />
-                            <line x1="21" y1="12" x2="23" y2="12" />
-                          </svg>
-                        )
-                      },
-                      { 
-                        id: 'shower', 
-                        label: 'Shower', 
-                        icon: (
-                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M4 4h16v2H4z" />
-                            <path d="M12 6v6" />
-                            <path d="M8 12h8v2H8z" />
-                          </svg>
-                        )
-                      },
-                      { 
-                        id: 'case', 
-                        label: 'Velvet Case', 
-                        icon: (
-                          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                            <line x1="3" y1="9" x2="21" y2="9" />
-                          </svg>
-                        )
-                      }
-                    ].map((env) => (
-                      <button
-                        key={env.id}
-                        type="button"
-                        className={`btn ${params.sceneEnvironment === env.id ? 'btn-primary' : 'btn-secondary'}`}
-                        style={{ 
-                          padding: '8px 4px', 
-                          fontSize: '11px', 
-                          borderRadius: 'var(--radius-sm)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}
-                        onClick={() => updateParam('sceneEnvironment', env.id)}
-                      >
-                        {env.icon}
-                        <span>{env.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+            <SceneryARControls
+              params={params}
+              updateParam={updateParam}
+            />
+          </AccordionSection>
         </div>
 
       </div>
 
       <hr style={{ borderColor: 'var(--border-color)', marginTop: 'auto' }} />
 
-      {/* Compare Scale toggle notice */}
-      <div style={{ marginBottom: '8px' }}>
-        <label className="switch-label">
-          <div>
-            <span style={{ fontSize: '12px', fontWeight: 600 }}>Compare Physical Scale</span>
-            <p style={{ fontSize: '9.5px', color: 'var(--text-secondary)', marginTop: '2px' }}>Overlay 5.8" smartphone next to model.</p>
-          </div>
-          <div className="switch">
-            <input 
-              type="checkbox" 
-              checked={params.showScaleRef} 
-              onChange={(e) => updateParam('showScaleRef', e.target.checked)} 
-            />
-            <span className="slider"></span>
-          </div>
-        </label>
-      </div>
-
-      {/* Pricing and Action Buttons */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Calculated Cost:</span>
-          <span style={{ fontSize: '26px', fontWeight: 700, color: 'var(--text-primary)', fontFamily: 'var(--font-serif)' }}>
-            ${currentPrice.toFixed(2)}
-          </span>
-        </div>
-
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button 
-            type="button"
-            className="btn btn-secondary" 
-            style={{ padding: '12px', borderRadius: 'var(--radius-md)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
-            onClick={handleShareToSocial}
-            title="Share Design to BAD Gallery"
-          >
-            <Share2 size={16} />
-          </button>
-          <button 
-            type="button"
-            className="btn btn-secondary" 
-            style={{ padding: '12px', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700 }}
-            onClick={handleExportSTL}
-            title="Export STL Schematic for Home 3D Printing"
-          >
-            <Layers size={16} /> Export STL
-          </button>
-          <button 
-            type="button"
-            className="btn btn-glow" 
-            style={{ padding: '12px', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700 }}
-            onClick={() => window.dispatchEvent(new CustomEvent('export-hires'))}
-            title="Export Hi-Res Render Spec Sheet Card"
-          >
-            <Camera size={16} /> Render
-          </button>
-          <button 
-            type="button"
-            className="btn btn-primary" 
-            style={{ flex: 1, padding: '12px', gap: '6px', borderRadius: 'var(--radius-md)', display: 'flex', justifyContent: 'center', alignItems: 'center', fontSize: '12px', fontWeight: 700 }}
-            onClick={handleAddToCart}
-          >
-            <ShoppingCart size={16} /> Add to Order
-          </button>
-        </div>
-
-        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '11px', marginTop: '4px' }}>
-          <ShieldCheck size={14} color="var(--accent-gold)" /> {demoMode ? "Food-Safe Platinum Silicone | Heat Resistant" : "Medical-Grade Platinum Silicone | Body Safe"}
-        </div>
-      </div>
+      <CartActions
+        params={params}
+        updateParam={updateParam}
+        currentPrice={currentPrice}
+        demoMode={demoMode}
+        onShareToSocial={handleShareToSocial}
+        onExportSTL={handleExportSTL}
+        onAddToCart={handleAddToCart}
+      />
     </div>
   );
 };

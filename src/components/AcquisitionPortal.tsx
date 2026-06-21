@@ -13,7 +13,8 @@ import {
   Video,
   Activity
 } from 'lucide-react';
-import { generateToySTL, generateCoreSTL, generateMoldHalfSTL } from '../utils/stlGenerator';
+import { downloadSTL } from '../utils/stlDownloader';
+import type { BuilderParams } from '../types';
 
 export const AcquisitionPortal: React.FC = () => {
   const [activePreset, setActivePreset] = useState<string>('flared');
@@ -65,7 +66,7 @@ export const AcquisitionPortal: React.FC = () => {
   ];
 
   // High-fidelity B2B/B2C Preset configurations for local STL compilation
-  const presets: Record<string, { name: string; desc: string; params: any }> = {
+  const presets: Record<string, { name: string; desc: string; params: BuilderParams }> = {
     flared: {
       name: "D2C Flared Suction Beast",
       desc: "Maximum girth, flared suction cup base, internal vibration core channel, engraved text. Perfect for high-pressure silicone pouring.",
@@ -177,33 +178,8 @@ export const AcquisitionPortal: React.FC = () => {
     setTimeout(() => {
       try {
         const { params, name } = presets[presetKey];
-        let content = '';
-        let fileSuffix = '';
-
-        if (type === 'product') {
-          content = generateToySTL(params);
-          fileSuffix = 'Product_Model';
-        } else if (type === 'core') {
-          content = generateCoreSTL(params);
-          fileSuffix = 'Rigid_Core';
-        } else if (type === 'mold_left') {
-          content = generateMoldHalfSTL(params, 'front');
-          fileSuffix = 'Left_Mold_Half';
-        } else if (type === 'mold_right') {
-          content = generateMoldHalfSTL(params, 'back');
-          fileSuffix = 'Right_Mold_Half';
-        }
-
-        const blob = new Blob([content], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
         const cleanName = name.replace(/\s+/g, '_');
-        link.href = url;
-        link.download = `${cleanName}_${fileSuffix}.stl`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        downloadSTL(params, type, cleanName);
       } catch (err) {
         console.error(err);
         alert('Failed compiling STL locally.');

@@ -12,35 +12,10 @@ import {
   Activity,
   Layers
 } from 'lucide-react';
-import { CustomToyMesh } from './ThreeCanvas';
-import { 
-  generateToySTL, 
-  generateCoreSTL, 
-  generateMoldHalfSTL
-} from '../utils/stlGenerator';
-import type { BuilderParams } from '../utils/stlGenerator';
-
-interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  isCustom?: boolean;
-  parameters?: any;
-  quantity: number;
-}
-
-interface OrderItem {
-  orderNumber: string;
-  customerName: string;
-  customerEmail: string;
-  customerAddress?: string;
-  customerCity?: string;
-  customerZip?: string;
-  items: CartItem[];
-  subtotal: number;
-  date: string;
-  status: string;
-}
+import { ToyModel } from './canvas/ToyModel';
+import { downloadSTL } from '../utils/stlDownloader';
+import type { OrderItem, OrderStatus } from '../types';
+import { STATUS_COLORS, STATUS_WORKFLOW } from '../constants/statusColors';
 
 interface AdminDashboardProps {
   orders: OrderItem[];
@@ -54,13 +29,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, setOrder
   const [moldBrandingText, setMoldBrandingText] = useState<string>('BAD');
 
   // Production Status List
-  const statusWorkflow = [
-    'Pending Mold',
-    'Printing',
-    'Silicone Pouring',
-    'Shaving/Curing',
-    'Ready for Shipment'
-  ];
+  const statusWorkflow = STATUS_WORKFLOW;
 
   // Calculate Aggregated Metrics
   const metrics = useMemo(() => {
@@ -103,7 +72,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, setOrder
     };
   }, [orders, batchMultiplier]);
 
-  const handleStatusChange = (orderNumber: string, nextStatus: string) => {
+  const handleStatusChange = (orderNumber: string, nextStatus: OrderStatus) => {
     setOrders((prev) => 
       prev.map((o) => o.orderNumber === orderNumber ? { ...o, status: nextStatus } : o)
     );
@@ -113,40 +82,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, setOrder
     setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
   };
 
-  // STL Download triggers
-  const downloadSTL = (params: BuilderParams, type: 'product' | 'core' | 'mold_left' | 'mold_right', orderNo: string) => {
-    try {
-      let content = '';
-      let fileSuffix = '';
 
-      if (type === 'product') {
-        content = generateToySTL(params);
-        fileSuffix = 'Product_Model';
-      } else if (type === 'core') {
-        content = generateCoreSTL(params);
-        fileSuffix = 'Rigid_Core';
-      } else if (type === 'mold_left') {
-        content = generateMoldHalfSTL(params, 'front');
-        fileSuffix = 'Left_Mold';
-      } else if (type === 'mold_right') {
-        content = generateMoldHalfSTL(params, 'back');
-        fileSuffix = 'Right_Mold';
-      }
-
-      const blob = new Blob([content], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${orderNo}_${fileSuffix}.stl`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error(err);
-      alert('Error building CAD STL schematic.');
-    }
-  };
 
   return (
     <div className="container animate-fade-in" style={{ padding: '40px 24px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
@@ -174,9 +110,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, setOrder
       {showConfigSettings && (
         <div className="card animate-fade-in" style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', padding: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
           <div>
-            <h4 style={{ fontSize: '14px', marginBottom: '12px' }}>Silicone Density Multiplier</h4>
+            <label htmlFor="density-multiplier" style={{ display: 'block', fontSize: '14px', marginBottom: '12px', fontWeight: 600, cursor: 'pointer' }}>Silicone Density Multiplier</label>
             <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px' }}>Adjusts volume estimation based on custom silicon formulations or batch overhead factors.</p>
             <input 
+              id="density-multiplier"
               type="range" 
               min="1.0" 
               max="2.0" 
@@ -192,9 +129,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, setOrder
             </div>
           </div>
           <div>
-            <h4 style={{ fontSize: '14px', marginBottom: '12px' }}>Mold Branding Emboss</h4>
+            <label htmlFor="branding-emboss" style={{ display: 'block', fontSize: '14px', marginBottom: '12px', fontWeight: 600, cursor: 'pointer' }}>Mold Branding Emboss</label>
             <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px' }}>Engraves customized text onto the split mold block STL exports for brand validation.</p>
             <input 
+              id="branding-emboss"
               type="text" 
               value={moldBrandingText}
               onChange={(e) => setMoldBrandingText(e.target.value)}
@@ -360,18 +298,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, setOrder
                             <div style={{ position: 'relative' }}>
                               <select
                                 value={order.status}
-                                onChange={(e) => handleStatusChange(order.orderNumber, e.target.value)}
+                                onChange={(e) => handleStatusChange(order.orderNumber, e.target.value as OrderStatus)}
                                 style={{
                                   width: '100%',
                                   padding: '6px 28px 6px 12px',
                                   borderRadius: 'var(--radius-sm)',
                                   backgroundColor: 'var(--bg-tertiary)',
                                   color: 
-                                    order.status === 'Pending Mold' ? '#f59e0b' :
-                                    order.status === 'Printing' ? '#3b82f6' :
-                                    order.status === 'Silicone Pouring' ? '#ec4899' :
-                                    order.status === 'Shaving/Curing' ? '#8b5cf6' :
-                                    '#10b981',
+                                   STATUS_COLORS[order.status],
                                   border: '1px solid var(--border-color)',
                                   fontWeight: 600,
                                   fontSize: '12px',
@@ -404,11 +338,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, setOrder
                                   height: '100%', 
                                   width: `${((currentStepIndex + 1) / statusWorkflow.length) * 100}%`,
                                   backgroundColor: 
-                                    order.status === 'Pending Mold' ? '#f59e0b' :
-                                    order.status === 'Printing' ? '#3b82f6' :
-                                    order.status === 'Silicone Pouring' ? '#ec4899' :
-                                    order.status === 'Shaving/Curing' ? '#8b5cf6' :
-                                    '#10b981',
+                                    STATUS_COLORS[order.status],
                                   transition: 'width 0.4s ease'
                                 }} 
                               />
@@ -567,13 +497,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, setOrder
                                   <div className="card" style={{ padding: '16px', backgroundColor: 'var(--bg-secondary)' }}>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                                       {order.items.map((item, idx) => {
-                                        if (!item.isCustom || !item.parameters) return null;
+                                        const params = item.parameters;
+                                        if (!item.isCustom || !params) return null;
                                         return (
                                           <React.Fragment key={idx}>
                                             <button
                                               type="button"
                                               className="btn btn-secondary"
-                                              onClick={() => downloadSTL(item.parameters, 'product', order.orderNumber)}
+                                              onClick={() => downloadSTL(params, 'product', order.orderNumber)}
                                               style={{ fontSize: '11px', padding: '10px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                                             >
                                               <Download size={13} /> Product Mesh (.stl)
@@ -582,10 +513,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, setOrder
                                             <button
                                               type="button"
                                               className="btn btn-secondary"
-                                              onClick={() => downloadSTL(item.parameters, 'core', order.orderNumber)}
+                                              onClick={() => downloadSTL(params, 'core', order.orderNumber)}
                                               style={{ fontSize: '11px', padding: '10px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-                                              disabled={item.parameters.firmness !== 'dual-density'}
-                                              title={item.parameters.firmness !== 'dual-density' ? 'Only available for Dual-Density items' : ''}
+                                              disabled={params.firmness !== 'dual-density'}
+                                              title={params.firmness !== 'dual-density' ? 'Only available for Dual-Density items' : ''}
                                             >
                                               <Layers size={13} /> Rigid Inner Core (.stl)
                                             </button>
@@ -593,7 +524,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, setOrder
                                             <button
                                               type="button"
                                               className="btn btn-primary"
-                                              onClick={() => downloadSTL(item.parameters, 'mold_left', order.orderNumber)}
+                                              onClick={() => downloadSTL(params, 'mold_left', order.orderNumber)}
                                               style={{ fontSize: '11px', padding: '10px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                                             >
                                               <Download size={13} /> Left Split Mold (.stl)
@@ -602,7 +533,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, setOrder
                                             <button
                                               type="button"
                                               className="btn btn-primary"
-                                              onClick={() => downloadSTL(item.parameters, 'mold_right', order.orderNumber)}
+                                              onClick={() => downloadSTL(params, 'mold_right', order.orderNumber)}
                                               style={{ fontSize: '11px', padding: '10px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                                             >
                                               <Download size={13} /> Right Split Mold (.stl)
@@ -633,7 +564,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, setOrder
                                     {order.items.some(i => i.isCustom && i.parameters) ? (
                                       (() => {
                                         const customItem = order.items.find(i => i.isCustom && i.parameters);
-                                        if (!customItem) return null;
+                                        if (!customItem || !customItem.parameters) return null;
+                                        const params = customItem.parameters;
                                         return (
                                           <Canvas
                                             camera={{ position: [0, 1.8, 8.0], fov: 40 }}
@@ -643,7 +575,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, setOrder
                                             <directionalLight position={[5, 7, 5]} intensity={1.2} />
                                             <directionalLight position={[-5, 3, -5]} intensity={0.6} color="#fda4af" />
                                             <Center>
-                                              <CustomToyMesh params={customItem.parameters} />
+                                              <ToyModel params={params} />
                                             </Center>
                                             <OrbitControls 
                                               enableZoom={true} 

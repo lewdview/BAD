@@ -226,7 +226,7 @@ export const PitchDeck: React.FC = () => {
 
               {/* 5. Factory */}
               <rect x="735" y="105" width="45" height="70" rx="10" fill="rgba(34, 197, 94, 0.08)" stroke="#4ade80" strokeWidth="1.5" />
-              <text x="7575" y="140" fill="#4ade80" fontSize="12" fontWeight="700" textAnchor="middle" fontFamily="var(--font-sans)">Shop</text>
+              <text x="757" y="140" fill="#4ade80" fontSize="12" fontWeight="700" textAnchor="middle" fontFamily="var(--font-sans)">Shop</text>
               <text x="757" y="156" fill="#4ade80" fontSize="12" fontWeight="700" textAnchor="middle" fontFamily="var(--font-sans)">Floor</text>
 
               {/* Database below */}

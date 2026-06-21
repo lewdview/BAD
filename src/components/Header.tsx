@@ -1,9 +1,11 @@
-import React, { useEffect } from 'react';
-import { ShoppingBag, EyeOff, Eye, Users, Hammer, Smartphone, TrendingUp, DollarSign } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ShoppingBag, EyeOff, Eye, Users, Hammer, Smartphone, TrendingUp, DollarSign, Menu, X } from 'lucide-react';
+
+import type { ActiveTab } from '../types';
 
 interface HeaderProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
+  activeTab: ActiveTab;
+  setActiveTab: (tab: ActiveTab) => void;
   cartCount: number;
   discretionMode: boolean;
   setDiscretionMode: (mode: boolean) => void;
@@ -22,6 +24,7 @@ export const Header: React.FC<HeaderProps> = ({
   setIsPOS,
   demoMode
 }) => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Synchronize document title and body class for discretion mode and demo mode
   useEffect(() => {
@@ -193,7 +196,7 @@ export const Header: React.FC<HeaderProps> = ({
               }}
               onClick={() => {
                 const newDemoMode = !demoMode;
-                let newHash = '';
+                let newHash: string;
                 if (newDemoMode) {
                   if (activeTab === 'builder') newHash = 'demo-builder';
                   else if (activeTab === 'social') newHash = 'demo-social';
@@ -222,6 +225,7 @@ export const Header: React.FC<HeaderProps> = ({
             }}
             onClick={toggleDiscretion}
             title="Toggle Panic / Discretion Mode"
+            aria-label={discretionMode ? "Revert Store from Discreet Mode" : "Switch to Discreet Mode"}
           >
             {discretionMode ? (
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -249,13 +253,123 @@ export const Header: React.FC<HeaderProps> = ({
                 height: '38px'
               }}
               onClick={() => setActiveTab('storefront')}
+              aria-label={`View shopping cart, contains ${cartCount} ${cartCount === 1 ? 'item' : 'items'}`}
             >
               <ShoppingBag size={16} />
               {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
             </button>
           )}
+
+          {/* Mobile hamburger menu toggle */}
+          {!discretionMode && (
+            <button 
+              className="mobile-menu-btn"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              aria-label="Toggle Navigation Menu"
+            >
+              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Mobile nav dropdown overlay */}
+      {isMobileMenuOpen && !discretionMode && (
+        <div className="mobile-nav-dropdown">
+          <ul className="mobile-nav-links">
+            <li>
+              <a 
+                href={demoMode ? "#demo" : "#storefront"} 
+                className={activeTab === 'storefront' ? 'active' : ''} 
+                onClick={() => {
+                  setActiveTab('storefront');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                Storefront
+              </a>
+            </li>
+            <li>
+              <a 
+                href={demoMode ? "#demo-builder" : "#builder"} 
+                className={activeTab === 'builder' ? 'active' : ''} 
+                onClick={() => {
+                  setActiveTab('builder');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                {demoMode ? "Mold Studio" : "BAD Builder"}
+              </a>
+            </li>
+            <li>
+              <a 
+                href={demoMode ? "#demo-social" : "#social"} 
+                className={activeTab === 'social' ? 'active' : ''} 
+                onClick={() => {
+                  setActiveTab('social');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                Social
+              </a>
+            </li>
+            <li>
+              <a 
+                href={demoMode ? "#demo-admin" : "#admin"} 
+                className={activeTab === 'admin' ? 'active' : ''} 
+                onClick={() => {
+                  setActiveTab('admin');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                Admin
+              </a>
+            </li>
+            <li>
+              <a 
+                href={demoMode ? "#demo-pitch" : "#pitch"} 
+                className={activeTab === 'pitch' ? 'active' : ''} 
+                onClick={() => {
+                  setActiveTab('pitch');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                Pitch
+              </a>
+            </li>
+            <li>
+              <a 
+                href={demoMode ? "#demo-acquisition" : "#acquisition"} 
+                className={activeTab === 'acquisition' ? 'active' : ''} 
+                onClick={() => {
+                  setActiveTab('acquisition');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                Acquisition
+              </a>
+            </li>
+            <li>
+              <button 
+                className={`btn ${isPOS ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ 
+                  padding: '8px 16px', 
+                  fontSize: '12px',
+                  width: '100%',
+                  marginTop: '8px'
+                }}
+                onClick={() => {
+                  setIsPOS(!isPOS);
+                  setActiveTab('storefront');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                <Smartphone size={13} style={{ marginRight: '6px' }} /> {isPOS ? "Exit POS Mode" : "POS Kiosk"}
+              </button>
+            </li>
+          </ul>
+        </div>
+      )}
     </header>
   );
 };
