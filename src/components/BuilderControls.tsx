@@ -35,6 +35,7 @@ interface BuilderParams {
   engravePosition?: number;
   engraveSize?: number;
   engraveDepth?: number;
+  isCore?: boolean;
 }
 
 interface BuilderControlsProps {

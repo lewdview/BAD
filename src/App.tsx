@@ -51,6 +51,7 @@ interface BuilderParams {
   engravePosition?: number; // 0.0 to 1.0
   engraveSize?: number;
   engraveDepth?: number;
+  isCore?: boolean;
 }
 
 interface OrderItem {

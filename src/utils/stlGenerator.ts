@@ -33,6 +33,7 @@ export interface BuilderParams {
   engravePosition?: number;
   engraveSize?: number;
   engraveDepth?: number;
+  isCore?: boolean;
 }
 
 // Helper: Calculate 3D normal vector of a triangle
@@ -62,6 +63,34 @@ export const getParametricVertex = (
   angle: number,
   textHeightmap?: { heightmap: Uint8Array; width: number; height: number } | null
 ): { x: number; y: number; z: number } => {
+  if (params.isCore) {
+    const length = params.length;
+    const R_core = params.baseGirth * 0.46;
+    
+    if (normY >= 0.15) {
+      const normY_shaft = (normY - 0.15) / 0.85;
+      const shaftParams: BuilderParams = {
+        ...params,
+        shaftGirth: params.shaftGirth * 0.46,
+        baseGirth: params.baseGirth * 0.46,
+        length: params.length * 0.88,
+        suctionCup: false,
+        baseType: 'flat',
+        isCore: false
+      };
+      return getParametricVertex(shaftParams, normY_shaft, angle, null);
+    } else {
+      const t = normY / 0.15;
+      const ySocketBottom = -0.5 * length - 0.4;
+      const yShaftBottom = -0.44 * length;
+      const yFinal = ySocketBottom * (1.0 - t) + yShaftBottom * t;
+      
+      const x = Math.cos(angle) * R_core;
+      const z = Math.sin(angle) * R_core;
+      return { x, y: yFinal, z };
+    }
+  }
+
   const yVal = normY - 0.5;
   
   const uShapeType = 
@@ -269,7 +298,6 @@ export const generateToySTL = (params: BuilderParams): string => {
   const vertices: { x: number; y: number; z: number }[] = [];
   const indices: number[][] = [];
   
-  const length = params.length;
   const curvature = params.curvature;
 
   // Generate heightmap once at start of export to prevent CPU thrashing
@@ -287,12 +315,14 @@ export const generateToySTL = (params: BuilderParams): string => {
     }
   }
 
+  const bottomY = vertices[0].y;
   const bottomCapIndex = vertices.length;
-  vertices.push({ x: 0, y: -0.5 * length, z: 0 });
+  vertices.push({ x: 0, y: bottomY, z: 0 });
   
+  const topY = vertices[heightSegments * radialSegments].y;
   const topCapIndex = vertices.length;
   const topBend = Math.pow(1.0, 3.0) * curvature * 1.9;
-  vertices.push({ x: topBend, y: 0.5 * length, z: 0 });
+  vertices.push({ x: topBend, y: topY, z: 0 });
 
   for (let y = 0; y < heightSegments; y++) {
     for (let x = 0; x < radialSegments; x++) {
@@ -347,10 +377,11 @@ export const generateCoreSTL = (params: BuilderParams): string => {
     ...params,
     shaftGirth: params.shaftGirth * 0.46, // Scaled down core
     baseGirth: params.baseGirth * 0.46,
-    length: params.length * 0.88, // Shorter to keep core fully encapsulated inside dildo tip
+    length: params.length, // Keep original length
     suctionCup: false,
     baseType: 'flat', // Flattened B2B injection base plug
-    engraveStyle: 'none' // Do not engrave initials on the rigid internal plug
+    engraveStyle: 'none', // Do not engrave initials on the rigid internal plug
+    isCore: true // Pass isCore flag
   };
   return generateToySTL(coreParams);
 };
@@ -398,7 +429,11 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
 
   // Dynamic bounds with a safe margin for backing mold block walls (0.6" / ~15mm thickness)
   const margin = 0.6;
-  const yMin = -0.5 * length - margin;
+  const hasCoreSocket = params.firmness === 'dual-density';
+  const socketDepth = 0.4;
+  const yMin_dildo_lowest = hasCoreSocket ? -0.5 * length - socketDepth : -0.5 * length;
+
+  const yMin = yMin_dildo_lowest - margin;
   const yMax = 0.5 * length + margin;
   const xMin = minDildoX - margin;
   const xMax = maxDildoX + margin;
@@ -436,18 +471,54 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
     }
   }
 
-  // Cap the bottom and top of the dildo inside the mold
   const bottomCenter = { x: 0, y: -0.5 * length, z: 0 };
   const topCenter = { x: Math.pow(1.0, 3.0) * curvature * 1.9, y: 0.5 * length, z: 0 };
 
-  for (let x = startX; x < endX; x++) {
-    const nextX = x + 1;
-    const p0 = dildoVertices[0][x];
-    const p1 = dildoVertices[0][nextX];
-    if (isFront) {
-      addFacet(bottomCenter, p0, p1);
-    } else {
-      addFacet(bottomCenter, p1, p0);
+  const R_core = params.baseGirth * 0.46;
+
+  if (hasCoreSocket) {
+    // Create a pocket/seating cylinder for the core base plug
+    const ySocketBottom = -0.5 * length - socketDepth;
+    const socketBottomCenter = { x: 0, y: ySocketBottom, z: 0 };
+
+    for (let x = startX; x < endX; x++) {
+      const nextX = x + 1;
+      const angle = (x / radialSegments) * Math.PI * 2;
+      const nextAngle = (nextX / radialSegments) * Math.PI * 2;
+
+      // Dildo base outer vertices
+      const p0 = dildoVertices[0][x];
+      const p1 = dildoVertices[0][nextX];
+
+      // Core base inner vertices at y = -0.5 * length
+      const c0 = { x: Math.cos(angle) * R_core, y: -0.5 * length, z: Math.sin(angle) * R_core };
+      const c1 = { x: Math.cos(nextAngle) * R_core, y: -0.5 * length, z: Math.sin(nextAngle) * R_core };
+
+      // Socket bottom vertices at y = ySocketBottom
+      const sb0 = { x: Math.cos(angle) * R_core, y: ySocketBottom, z: Math.sin(angle) * R_core };
+      const sb1 = { x: Math.cos(nextAngle) * R_core, y: ySocketBottom, z: Math.sin(nextAngle) * R_core };
+
+      // 1. Annulus ring cap (from core outer to dildo base outer)
+      // Facing +y (upwards into cavity)
+      addFacet(c0, p1, p0);
+      addFacet(c0, c1, p1);
+
+      // 2. Socket cylinder wall
+      // Facing inwards
+      addFacet(c0, sb0, sb1);
+      addFacet(c0, sb1, c1);
+
+      // 3. Socket bottom cap
+      // Facing +y (upwards into cavity)
+      addFacet(socketBottomCenter, sb1, sb0);
+    }
+  } else {
+    // Standard closed flat cap
+    for (let x = startX; x < endX; x++) {
+      const nextX = x + 1;
+      const p0 = dildoVertices[0][x];
+      const p1 = dildoVertices[0][nextX];
+      addFacet(bottomCenter, p1, p0); // Fixed normal direction to point +y consistently
     }
   }
 
