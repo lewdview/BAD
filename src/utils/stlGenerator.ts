@@ -157,9 +157,9 @@ export const generateToySTL = (params: BuilderParams): string => {
     const cz_balls = -0.5 * girth - 0.1;
     const cz_center = -0.6 * girth - 0.1;
     
-    const leftFacets = getSphereFacets(-0.55 * girth, -length / 2 + 0.15, cz_balls, 0.5 * girth);
-    const rightFacets = getSphereFacets(0.55 * girth, -length / 2 + 0.15, cz_balls, 0.5 * girth);
-    const centerFacets = getSphereFacets(0, -length / 2 + 0.10, cz_center, 0.5 * girth, 1.25, 1.15, 0.9);
+    const leftFacets = getSphereFacets(-0.55 * girth, -0.25 * length, cz_balls, 0.5 * girth);
+    const rightFacets = getSphereFacets(0.55 * girth, -0.25 * length, cz_balls, 0.5 * girth);
+    const centerFacets = getSphereFacets(0, -0.28 * length, cz_center, 0.5 * girth, 1.25, 1.15, 0.9);
     
     const appendFacets = (facetsList: { p1: Vec3; p2: Vec3; p3: Vec3 }[]) => {
       for (let i = 0; i < facetsList.length; i++) {
@@ -553,9 +553,9 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
     const cz_center = -0.6 * girth - 0.1;
     
     // We want reversed facets because the cavity faces inwards
-    const leftFacets = getSphereFacets(-0.55 * girth, -length / 2 + 0.15, cz_balls, 0.5 * girth, 1, 1, 1, true);
-    const rightFacets = getSphereFacets(0.55 * girth, -length / 2 + 0.15, cz_balls, 0.5 * girth, 1, 1, 1, true);
-    const centerFacets = getSphereFacets(0, -length / 2 + 0.10, cz_center, 0.5 * girth, 1.25, 1.15, 0.9, true);
+    const leftFacets = getSphereFacets(-0.55 * girth, -0.25 * length, cz_balls, 0.5 * girth, 1, 1, 1, true);
+    const rightFacets = getSphereFacets(0.55 * girth, -0.25 * length, cz_balls, 0.5 * girth, 1, 1, 1, true);
+    const centerFacets = getSphereFacets(0, -0.28 * length, cz_center, 0.5 * girth, 1.25, 1.15, 0.9, true);
     
     facets.push(...leftFacets, ...rightFacets, ...centerFacets);
   }

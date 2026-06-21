@@ -99,9 +99,9 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
   const outerUniforms = useMemo(() => createUniforms(0), []);
   const innerUniforms = useMemo(() => createUniforms(1), []);
   const tubeUniforms = useMemo(() => createUniforms(3), []);
-  const leftBallUniforms = useMemo(() => createUniforms(2, -0.55 * params.shaftGirth, -params.length / 2 + 0.15), []);
-  const rightBallUniforms = useMemo(() => createUniforms(2, 0.55 * params.shaftGirth, -params.length / 2 + 0.15), []);
-  const centerBallUniforms = useMemo(() => createUniforms(2, 0.0, -params.length / 2 + 0.10), []);
+  const leftBallUniforms = useMemo(() => createUniforms(2, -0.55 * params.shaftGirth, -0.25 * params.length), []);
+  const rightBallUniforms = useMemo(() => createUniforms(2, 0.55 * params.shaftGirth, -0.25 * params.length), []);
+  const centerBallUniforms = useMemo(() => createUniforms(2, 0.0, -0.28 * params.length), []);
 
   useEffect(() => {
     const update = (u: Record<string, THREE.IUniform>, material: THREE.ShaderMaterial | null, meshType: number, ballOffset = 0, ballYOffset = 0) => {
@@ -188,9 +188,9 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
     update(outerUniforms, outerMaterialRef.current, 0);
     update(innerUniforms, innerMaterialRef.current, 1);
     update(tubeUniforms, tubeMaterialRef.current, 3);
-    update(leftBallUniforms, leftBallMaterialRef.current, 2, -0.55 * params.shaftGirth, -params.length / 2 + 0.15);
-    update(rightBallUniforms, rightBallMaterialRef.current, 2, 0.55 * params.shaftGirth, -params.length / 2 + 0.15);
-    update(centerBallUniforms, centerBallMaterialRef.current, 2, 0.0, -params.length / 2 + 0.10);
+    update(leftBallUniforms, leftBallMaterialRef.current, 2, -0.55 * params.shaftGirth, -0.25 * params.length);
+    update(rightBallUniforms, rightBallMaterialRef.current, 2, 0.55 * params.shaftGirth, -0.25 * params.length);
+    update(centerBallUniforms, centerBallMaterialRef.current, 2, 0.0, -0.28 * params.length);
   }, [params, textureId, textTexture, outerUniforms, innerUniforms, tubeUniforms, leftBallUniforms, rightBallUniforms, centerBallUniforms]);
 
   const elapsedTimeRef = useRef<number>(0);
@@ -831,7 +831,7 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
         <>
           {/* Left Ball */}
           <mesh 
-            position={[-0.55 * params.shaftGirth, -params.length / 2 + 0.15, -0.5 * params.shaftGirth - 0.1]} 
+            position={[-0.55 * params.shaftGirth, -0.25 * params.length, -0.5 * params.shaftGirth - 0.1]} 
             castShadow 
             receiveShadow
           >
@@ -847,7 +847,7 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
 
           {/* Right Ball */}
           <mesh 
-            position={[0.55 * params.shaftGirth, -params.length / 2 + 0.15, -0.5 * params.shaftGirth - 0.1]} 
+            position={[0.55 * params.shaftGirth, -0.25 * params.length, -0.5 * params.shaftGirth - 0.1]} 
             castShadow 
             receiveShadow
           >
@@ -863,7 +863,7 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
 
           {/* Scrotal Sack Base Connector */}
           <mesh 
-            position={[0, -params.length / 2 + 0.10, -0.6 * params.shaftGirth - 0.1]} 
+            position={[0, -0.28 * params.length, -0.6 * params.shaftGirth - 0.1]} 
             scale={[1.25, 1.15, 0.9]}
             castShadow 
             receiveShadow
