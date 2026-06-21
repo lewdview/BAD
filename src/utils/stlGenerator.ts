@@ -2,6 +2,71 @@ import { generateTextHeightmap } from './textHeightmap';
 import type { BuilderParams, Vec3 } from '../types';
 import { getParametricVertex, isDegenerate, calcNormal } from './geometryCore';
 
+// Helper to generate sphere/ellipsoid facets for testicles/sack
+const getSphereFacets = (
+  cx: number,
+  cy: number,
+  cz: number,
+  r: number,
+  scaleX = 1,
+  scaleY = 1,
+  scaleZ = 1,
+  reverse = false
+): { p1: Vec3; p2: Vec3; p3: Vec3 }[] => {
+  const facets: { p1: Vec3; p2: Vec3; p3: Vec3 }[] = [];
+  const latSegments = 16;
+  const lonSegments = 16;
+  const sphereVerts: Vec3[] = [];
+
+  for (let lat = 0; lat <= latSegments; lat++) {
+    const theta = (lat * Math.PI) / latSegments;
+    const sinTheta = Math.sin(theta);
+    const cosTheta = Math.cos(theta);
+    
+    for (let lon = 0; lon <= lonSegments; lon++) {
+      const phi = (lon * 2 * Math.PI) / lonSegments;
+      const sinPhi = Math.sin(phi);
+      const cosPhi = Math.cos(phi);
+      
+      const x = cx + r * sinTheta * cosPhi * scaleX;
+      const y = cy + r * cosTheta * scaleY;
+      const z = cz + r * sinTheta * sinPhi * scaleZ;
+      
+      sphereVerts.push({ x, y, z });
+    }
+  }
+
+  const addTri = (v0: number, v1: number, v2: number) => {
+    const p1 = sphereVerts[v0];
+    const p2 = sphereVerts[v1];
+    const p3 = sphereVerts[v2];
+    if (!isDegenerate(p1, p2, p3)) {
+      facets.push({ p1, p2, p3 });
+    }
+  };
+
+  for (let lat = 0; lat < latSegments; lat++) {
+    for (let lon = 0; lon < lonSegments; lon++) {
+      const nextLon = lon + 1;
+      
+      const v0 = lat * (lonSegments + 1) + lon;
+      const v1 = lat * (lonSegments + 1) + nextLon;
+      const v2 = (lat + 1) * (lonSegments + 1) + lon;
+      const v3 = (lat + 1) * (lonSegments + 1) + nextLon;
+      
+      if (reverse) {
+        addTri(v0, v3, v1);
+        addTri(v0, v2, v3);
+      } else {
+        addTri(v0, v1, v3);
+        addTri(v0, v3, v2);
+      }
+    }
+  }
+
+  return facets;
+};
+
 // 1. STANDARD TOY STL GENERATOR
 export const generateToySTL = (params: BuilderParams): string => {
   const radialSegments = 32;
@@ -85,6 +150,36 @@ export const generateToySTL = (params: BuilderParams): string => {
     stl += `    endloop\n`;
     stl += `  endfacet\n`;
   }
+  
+  if (params.hasBalls) {
+    const girth = params.shaftGirth;
+    const length = params.length;
+    const cz_balls = -0.5 * girth - 0.1;
+    const cz_center = -0.6 * girth - 0.1;
+    
+    const leftFacets = getSphereFacets(-0.55 * girth, -length / 2 + 0.15, cz_balls, 0.5 * girth);
+    const rightFacets = getSphereFacets(0.55 * girth, -length / 2 + 0.15, cz_balls, 0.5 * girth);
+    const centerFacets = getSphereFacets(0, -length / 2 + 0.10, cz_center, 0.5 * girth, 1.25, 1.15, 0.9);
+    
+    const appendFacets = (facetsList: { p1: Vec3; p2: Vec3; p3: Vec3 }[]) => {
+      for (let i = 0; i < facetsList.length; i++) {
+        const f = facetsList[i];
+        const n = calcNormal(f.p1, f.p2, f.p3);
+        stl += `  facet normal ${n.x.toFixed(6)} ${n.y.toFixed(6)} ${n.z.toFixed(6)}\n`;
+        stl += `    outer loop\n`;
+        stl += `      vertex ${f.p1.x.toFixed(4)} ${f.p1.y.toFixed(4)} ${f.p1.z.toFixed(4)}\n`;
+        stl += `      vertex ${f.p2.x.toFixed(4)} ${f.p2.y.toFixed(4)} ${f.p2.z.toFixed(4)}\n`;
+        stl += `      vertex ${f.p3.x.toFixed(4)} ${f.p3.y.toFixed(4)} ${f.p3.z.toFixed(4)}\n`;
+        stl += `    endloop\n`;
+        stl += `  endfacet\n`;
+      }
+    };
+    
+    appendFacets(leftFacets);
+    appendFacets(rightFacets);
+    appendFacets(centerFacets);
+  }
+
   stl += "endsolid BAD_Custom_Product\n";
   return stl;
 };
@@ -167,6 +262,17 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
       const absZ = Math.abs(v.z);
       if (absZ > maxDildoZ) maxDildoZ = absZ;
     }
+  }
+
+  if (params.hasBalls) {
+    const girth = params.shaftGirth;
+    const minBallX = -1.05 * girth;
+    const maxBallX = 1.05 * girth;
+    const maxBallZ = 1.0 * girth + 0.1;
+    
+    if (minBallX < minDildoX) minDildoX = minBallX;
+    if (maxBallX > maxDildoX) maxDildoX = maxBallX;
+    if (maxBallZ > maxDildoZ) maxDildoZ = maxBallZ;
   }
 
   // Dynamic bounds with a safe margin for backing mold block walls (0.6" / ~15mm thickness)
@@ -438,6 +544,20 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
     addFacet(c010, c110, B_top[midTop]);
   } else {
     addFacet(c010, B_top[midTop], c110);
+  }
+
+  if (params.hasBalls && !isFront) {
+    const girth = params.shaftGirth;
+    const length = params.length;
+    const cz_balls = -0.5 * girth - 0.1;
+    const cz_center = -0.6 * girth - 0.1;
+    
+    // We want reversed facets because the cavity faces inwards
+    const leftFacets = getSphereFacets(-0.55 * girth, -length / 2 + 0.15, cz_balls, 0.5 * girth, 1, 1, 1, true);
+    const rightFacets = getSphereFacets(0.55 * girth, -length / 2 + 0.15, cz_balls, 0.5 * girth, 1, 1, 1, true);
+    const centerFacets = getSphereFacets(0, -length / 2 + 0.10, cz_center, 0.5 * girth, 1.25, 1.15, 0.9, true);
+    
+    facets.push(...leftFacets, ...rightFacets, ...centerFacets);
   }
 
   // Write out to STL
