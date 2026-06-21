@@ -393,6 +393,9 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
   
   const length = params.length;
   const curvature = params.curvature;
+  const hasCoreSocket = params.firmness === 'dual-density';
+  const socketDepth = 0.4;
+  const R_core = params.baseGirth * 0.46;
 
   // Generate heightmap once for the mold negative cut-out
   const textHeightmap = params.engraveStyle && params.engraveStyle !== 'none' && params.engraveText && params.engraveText.trim()
@@ -401,6 +404,28 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
 
   // Generate dildo profile vertices using shared helper
   const dildoVertices: { x: number; y: number; z: number }[][] = [];
+  
+  if (hasCoreSocket) {
+    const ySocketBottom = -0.5 * length - socketDepth;
+    const ySocketTop = -0.5 * length;
+    
+    // Ring 0: Socket bottom ring
+    const ring0: { x: number; y: number; z: number }[] = [];
+    for (let xIndex = 0; xIndex <= radialSegments; xIndex++) {
+      const angle = (xIndex / radialSegments) * Math.PI * 2;
+      ring0.push({ x: Math.cos(angle) * R_core, y: ySocketBottom, z: Math.sin(angle) * R_core });
+    }
+    dildoVertices.push(ring0);
+
+    // Ring 1: Socket top ring (inner edge of annulus)
+    const ring1: { x: number; y: number; z: number }[] = [];
+    for (let xIndex = 0; xIndex <= radialSegments; xIndex++) {
+      const angle = (xIndex / radialSegments) * Math.PI * 2;
+      ring1.push({ x: Math.cos(angle) * R_core, y: ySocketTop, z: Math.sin(angle) * R_core });
+    }
+    dildoVertices.push(ring1);
+  }
+
   for (let yIndex = 0; yIndex <= heightSegments; yIndex++) {
     const normY = yIndex / heightSegments;
     const ring: { x: number; y: number; z: number }[] = [];
@@ -417,7 +442,8 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
   let minDildoX = Infinity;
   let maxDildoZ = 0;
 
-  for (let y = 0; y <= heightSegments; y++) {
+  const numRings = dildoVertices.length;
+  for (let y = 0; y < numRings; y++) {
     for (let x = 0; x <= radialSegments; x++) {
       const v = dildoVertices[y][x];
       if (v.x > maxDildoX) maxDildoX = v.x;
@@ -429,12 +455,10 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
 
   // Dynamic bounds with a safe margin for backing mold block walls (0.6" / ~15mm thickness)
   const margin = 0.6;
-  const hasCoreSocket = params.firmness === 'dual-density';
-  const socketDepth = 0.4;
-  const yMin_dildo_lowest = hasCoreSocket ? -0.5 * length - socketDepth : -0.5 * length;
+  const yMin_dildo_lowest = dildoVertices[0][0].y;
 
   const yMin = yMin_dildo_lowest - margin;
-  const yMax = 0.5 * length + margin;
+  const yMax = dildoVertices[numRings - 1][0].y + margin;
   const xMin = minDildoX - margin;
   const xMax = maxDildoX + margin;
   const zMax = maxDildoZ + margin; // Box depth
@@ -452,7 +476,7 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
   const startX = isFront ? 0 : radialSegments / 2;
   const endX = isFront ? radialSegments / 2 : radialSegments;
 
-  for (let y = 0; y < heightSegments; y++) {
+  for (let y = 0; y < numRings - 1; y++) {
     for (let x = startX; x < endX; x++) {
       const nextX = x + 1;
       const p00 = dildoVertices[y][x];
@@ -471,61 +495,24 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
     }
   }
 
-  const bottomCenter = { x: 0, y: -0.5 * length, z: 0 };
-  const topCenter = { x: Math.pow(1.0, 3.0) * curvature * 1.9, y: 0.5 * length, z: 0 };
-
-  const R_core = params.baseGirth * 0.46;
-
-  if (hasCoreSocket) {
-    // Create a pocket/seating cylinder for the core base plug
-    const ySocketBottom = -0.5 * length - socketDepth;
-    const socketBottomCenter = { x: 0, y: ySocketBottom, z: 0 };
-
-    for (let x = startX; x < endX; x++) {
-      const nextX = x + 1;
-      const angle = (x / radialSegments) * Math.PI * 2;
-      const nextAngle = (nextX / radialSegments) * Math.PI * 2;
-
-      // Dildo base outer vertices
-      const p0 = dildoVertices[0][x];
-      const p1 = dildoVertices[0][nextX];
-
-      // Core base inner vertices at y = -0.5 * length
-      const c0 = { x: Math.cos(angle) * R_core, y: -0.5 * length, z: Math.sin(angle) * R_core };
-      const c1 = { x: Math.cos(nextAngle) * R_core, y: -0.5 * length, z: Math.sin(nextAngle) * R_core };
-
-      // Socket bottom vertices at y = ySocketBottom
-      const sb0 = { x: Math.cos(angle) * R_core, y: ySocketBottom, z: Math.sin(angle) * R_core };
-      const sb1 = { x: Math.cos(nextAngle) * R_core, y: ySocketBottom, z: Math.sin(nextAngle) * R_core };
-
-      // 1. Annulus ring cap (from core outer to dildo base outer)
-      // Facing +y (upwards into cavity)
-      addFacet(c0, p1, p0);
-      addFacet(c0, c1, p1);
-
-      // 2. Socket cylinder wall
-      // Facing inwards
-      addFacet(c0, sb0, sb1);
-      addFacet(c0, sb1, c1);
-
-      // 3. Socket bottom cap
-      // Facing +y (upwards into cavity)
-      addFacet(socketBottomCenter, sb1, sb0);
-    }
-  } else {
-    // Standard closed flat cap
-    for (let x = startX; x < endX; x++) {
-      const nextX = x + 1;
-      const p0 = dildoVertices[0][x];
-      const p1 = dildoVertices[0][nextX];
-      addFacet(bottomCenter, p1, p0); // Fixed normal direction to point +y consistently
+  // 100% Watertight flat caps closing the cavity bottom and top
+  const bottomCenter = { x: 0, y: dildoVertices[0][0].y, z: 0 };
+  for (let x = startX; x < endX; x++) {
+    const nextX = x + 1;
+    const p0 = dildoVertices[0][x];
+    const p1 = dildoVertices[0][nextX];
+    if (isFront) {
+      addFacet(bottomCenter, p0, p1);
+    } else {
+      addFacet(bottomCenter, p1, p0);
     }
   }
 
+  const topCenter = { x: Math.pow(1.0, 3.0) * curvature * 1.9, y: dildoVertices[numRings - 1][0].y, z: 0 };
   for (let x = startX; x < endX; x++) {
     const nextX = x + 1;
-    const p0 = dildoVertices[heightSegments][x];
-    const p1 = dildoVertices[heightSegments][nextX];
+    const p0 = dildoVertices[numRings - 1][x];
+    const p1 = dildoVertices[numRings - 1][nextX];
     if (isFront) {
       addFacet(topCenter, p1, p0);
     } else {
@@ -537,7 +524,7 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
   const zSign = isFront ? 1.0 : -1.0;
   const zBlockValue = zSign * zMax;
 
-  // Box corner vertices
+  // Box corner vertices for top and bottom flat walls
   const c000 = { x: xMin, y: yMin, z: 0 };
   const c100 = { x: xMax, y: yMin, z: 0 };
   const c010 = { x: xMin, y: yMax, z: 0 };
@@ -548,35 +535,7 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
   const c011 = { x: xMin, y: yMax, z: zBlockValue };
   const c111 = { x: xMax, y: yMax, z: zBlockValue };
 
-  // Flat outer faces of the box (standard triangulation)
-  // Backing wall (z = zBlockValue)
-  if (isFront) {
-    addFacet(c001, c101, c111);
-    addFacet(c001, c111, c011);
-  } else {
-    addFacet(c001, c111, c101);
-    addFacet(c001, c011, c111);
-  }
-
-  // Left wall (x = xMin)
-  if (isFront) {
-    addFacet(c000, c011, c001);
-    addFacet(c000, c010, c011);
-  } else {
-    addFacet(c000, c001, c011);
-    addFacet(c000, c011, c010);
-  }
-
-  // Right wall (x = xMax)
-  if (isFront) {
-    addFacet(c100, c101, c111);
-    addFacet(c100, c111, c110);
-  } else {
-    addFacet(c100, c111, c101);
-    addFacet(c100, c110, c111);
-  }
-
-  // Bottom wall (y = yMin)
+  // Bottom wall (y = yMin) - flat horizontal quad
   if (isFront) {
     addFacet(c000, c001, c101);
     addFacet(c000, c101, c100);
@@ -585,7 +544,7 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
     addFacet(c000, c100, c101);
   }
 
-  // Top wall (y = yMax)
+  // Top wall (y = yMax) - flat horizontal quad
   if (isFront) {
     addFacet(c010, c111, c011);
     addFacet(c010, c110, c111);
@@ -594,48 +553,99 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
     addFacet(c010, c111, c110);
   }
 
-  // Triangulate the flat split interface plane at z = 0
-  const yMin_dildo = dildoVertices[0][0].y;
-  const yMax_dildo = dildoVertices[heightSegments][0].y;
-
-  const startCornerX = isFront ? xMax : xMin;
-  const endCornerX = isFront ? xMin : xMax;
-
-  const S_startX = { x: startCornerX, y: yMin_dildo, z: 0 };
-  const S_endX = { x: endCornerX, y: yMin_dildo, z: 0 };
-
-  // 1. Bottom Zone Rectangle (y from yMin to yMin_dildo)
-  if (isFront) {
-    addFacet(c000, S_endX, S_startX);
-    addFacet(c000, S_startX, c100);
-  } else {
-    addFacet(c000, S_startX, S_endX);
-    addFacet(c000, c100, S_startX);
+  // Sliced Left, Right, and Backing walls to eliminate T-junctions
+  const y_coords: number[] = [yMin];
+  for (let y = 0; y < numRings; y++) {
+    y_coords.push(dildoVertices[y][0].y);
   }
+  y_coords.push(yMax);
 
-  // 2. Bottom Zone Quad Strip (transition at yMin_dildo)
-  for (let x = startX; x < endX; x++) {
-    const t0 = (x - startX) / (endX - startX);
-    const t1 = (x + 1 - startX) / (endX - startX);
-    const B_curr = { x: startCornerX + t0 * (endCornerX - startCornerX), y: yMin_dildo, z: 0 };
-    const B_next = { x: startCornerX + t1 * (endCornerX - startCornerX), y: yMin_dildo, z: 0 };
-    const D_curr = dildoVertices[0][x];
-    const D_next = dildoVertices[0][x + 1];
+  for (let i = 0; i < y_coords.length - 1; i++) {
+    const y0 = y_coords[i];
+    const y1 = y_coords[i + 1];
+    if (Math.abs(y0 - y1) < 1e-5) continue;
+
+    const lf0 = { x: xMin, y: y0, z: 0 };
+    const lb0 = { x: xMin, y: y0, z: zBlockValue };
+    const rb0 = { x: xMax, y: y0, z: zBlockValue };
+    const rf0 = { x: xMax, y: y0, z: 0 };
+
+    const lf1 = { x: xMin, y: y1, z: 0 };
+    const lb1 = { x: xMin, y: y1, z: zBlockValue };
+    const rb1 = { x: xMax, y: y1, z: zBlockValue };
+    const rf1 = { x: xMax, y: y1, z: 0 };
 
     if (isFront) {
-      addFacet(B_curr, D_curr, D_next);
-      addFacet(B_curr, D_next, B_next);
+      // Left wall (x = xMin)
+      addFacet(lf0, lb0, lb1);
+      addFacet(lf0, lb1, lf1);
+
+      // Backing wall (z = zBlockValue)
+      addFacet(lb0, rb0, rb1);
+      addFacet(lb0, rb1, lb1);
+
+      // Right wall (x = xMax)
+      addFacet(rb0, rf0, rf1);
+      addFacet(rb0, rf1, rb1);
     } else {
-      addFacet(B_curr, D_next, D_curr);
-      addFacet(B_curr, B_next, D_next);
+      // Left wall (x = xMin)
+      addFacet(lf0, lb1, lb0);
+      addFacet(lf0, lf1, lb1);
+
+      // Backing wall (z = zBlockValue)
+      addFacet(lb0, rb1, rb0);
+      addFacet(lb0, lb1, rb1);
+
+      // Right wall (x = xMax)
+      addFacet(rb0, rf1, rf0);
+      addFacet(rb0, rb1, rf1);
     }
   }
 
-  // 3. Middle Zone Left & Right Quad Strips
+  // Triangulate the flat split interface plane at z = 0
+  const yMin_dildo = dildoVertices[0][0].y;
+  const yMax_dildo = dildoVertices[numRings - 1][0].y;
+
+  // 1. Bottom Zone Rectangle (y from yMin to yMin_dildo)
+  const bottomXCoords = [
+    xMin,
+    dildoVertices[0][radialSegments / 2].x,
+    0,
+    dildoVertices[0][0].x,
+    xMax
+  ];
+  let midBottom = 2; // index of 0
+
+  const T_bot = bottomXCoords.map(x => ({ x, y: yMin_dildo, z: 0 }));
+  const M_bot = bottomXCoords.length - 1;
+
+  for (let j = 0; j < M_bot; j++) {
+    if (j < midBottom) {
+      if (isFront) {
+        addFacet(c000, T_bot[j], T_bot[j + 1]);
+      } else {
+        addFacet(c000, T_bot[j + 1], T_bot[j]);
+      }
+    } else {
+      if (isFront) {
+        addFacet(c100, T_bot[j], T_bot[j + 1]);
+      } else {
+        addFacet(c100, T_bot[j + 1], T_bot[j]);
+      }
+    }
+  }
+  // Bottom zone connection triangle
+  if (isFront) {
+    addFacet(c000, T_bot[midBottom], c100);
+  } else {
+    addFacet(c000, c100, T_bot[midBottom]);
+  }
+
+  // 2. Middle Zone Left & Right Quad Strips
   const leftIdx = 16;
   const rightIdx = 0;
 
-  for (let y = 0; y < heightSegments; y++) {
+  for (let y = 0; y < numRings - 1; y++) {
     const pLeft0 = dildoVertices[y][leftIdx];
     const pLeft1 = dildoVertices[y + 1][leftIdx];
     const pRight0 = dildoVertices[y][rightIdx];
@@ -643,6 +653,7 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
 
     const y0_coord = dildoVertices[y][0].y;
     const y1_coord = dildoVertices[y + 1][0].y;
+    const isDegenerateHeight = Math.abs(y0_coord - y1_coord) < 1e-5;
 
     const L_y = { x: xMin, y: y0_coord, z: 0 };
     const L_y1 = { x: xMin, y: y1_coord, z: 0 };
@@ -651,51 +662,64 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
 
     // Left interface connection
     if (isFront) {
-      addFacet(L_y, L_y1, pLeft1);
+      if (!isDegenerateHeight) {
+        addFacet(L_y, L_y1, pLeft1);
+      }
       addFacet(L_y, pLeft1, pLeft0);
     } else {
-      addFacet(L_y, pLeft1, L_y1);
+      if (!isDegenerateHeight) {
+        addFacet(L_y, pLeft1, L_y1);
+      }
       addFacet(L_y, pLeft0, pLeft1);
     }
 
     // Right interface connection
     if (isFront) {
       addFacet(pRight0, pRight1, R_y1);
-      addFacet(pRight0, R_y1, R_y);
+      if (!isDegenerateHeight) {
+        addFacet(pRight0, R_y1, R_y);
+      }
     } else {
       addFacet(pRight0, R_y1, pRight1);
-      addFacet(pRight0, R_y, R_y1);
+      if (!isDegenerateHeight) {
+        addFacet(pRight0, R_y, R_y1);
+      }
     }
   }
 
-  // 4. Top Zone Quad Strip (transition at yMax_dildo)
-  for (let x = startX; x < endX; x++) {
-    const t0 = (x - startX) / (endX - startX);
-    const t1 = (x + 1 - startX) / (endX - startX);
-    const T_curr = { x: startCornerX + t0 * (endCornerX - startCornerX), y: yMax_dildo, z: 0 };
-    const T_next = { x: startCornerX + t1 * (endCornerX - startCornerX), y: yMax_dildo, z: 0 };
-    const D_curr = dildoVertices[heightSegments][x];
-    const D_next = dildoVertices[heightSegments][x + 1];
+  // 3. Top Zone Rectangle (y from yMax_dildo to yMax)
+  const topXCoords = [
+    xMin,
+    dildoVertices[numRings - 1][radialSegments / 2].x,
+    topCenter.x,
+    dildoVertices[numRings - 1][0].x,
+    xMax
+  ];
+  let midTop = 2; // index of topCenter.x
 
-    if (isFront) {
-      addFacet(D_curr, T_curr, T_next);
-      addFacet(D_curr, T_next, D_next);
+  const B_top = topXCoords.map(x => ({ x, y: yMax_dildo, z: 0 }));
+  const M_top = topXCoords.length - 1;
+
+  for (let j = 0; j < M_top; j++) {
+    if (j < midTop) {
+      if (isFront) {
+        addFacet(c010, B_top[j + 1], B_top[j]);
+      } else {
+        addFacet(c010, B_top[j], B_top[j + 1]);
+      }
     } else {
-      addFacet(D_curr, T_next, T_curr);
-      addFacet(D_curr, D_next, T_next);
+      if (isFront) {
+        addFacet(c110, B_top[j + 1], B_top[j]);
+      } else {
+        addFacet(c110, B_top[j], B_top[j + 1]);
+      }
     }
   }
-
-  // 5. Top Zone Rectangle (y from yMax_dildo to yMax)
-  const S_top_startX = { x: startCornerX, y: yMax_dildo, z: 0 };
-  const S_top_endX = { x: endCornerX, y: yMax_dildo, z: 0 };
-
+  // Top zone connection triangle
   if (isFront) {
-    addFacet(S_top_endX, c010, c110);
-    addFacet(S_top_endX, c110, S_top_startX);
+    addFacet(c010, c110, B_top[midTop]);
   } else {
-    addFacet(S_top_endX, c110, c010);
-    addFacet(S_top_endX, S_top_startX, c110);
+    addFacet(c010, B_top[midTop], c110);
   }
 
   // Write out to STL
