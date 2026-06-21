@@ -102,7 +102,8 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
   const rightBallUniforms = useMemo(() => createUniforms(2, 0.55 * params.shaftGirth, -params.length / 2 + 0.15), []);
 
   useEffect(() => {
-    const update = (u: Record<string, THREE.IUniform>, meshType: number, ballOffset = 0, ballYOffset = 0) => {
+    const update = (u: Record<string, THREE.IUniform>, material: THREE.ShaderMaterial | null, meshType: number, ballOffset = 0, ballYOffset = 0) => {
+      // 1. Update local uniforms object reference
       u.uLength.value = params.length;
       u.uShaftGirth.value = params.shaftGirth;
       u.uBaseGirth.value = params.baseGirth;
@@ -139,13 +140,54 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
       u.uTextTexture.value = textTexture;
       u.uTextStyle.value = (!params.engraveStyle || params.engraveStyle === 'none') ? 0.0 : params.engraveStyle === 'embossed' ? 1.0 : 2.0;
       u.uTextDepth.value = params.engraveDepth !== undefined ? params.engraveDepth : 0.5;
+
+      // 2. Update active WebGL material instance uniforms directly
+      if (material) {
+        const mu = material.uniforms;
+        mu.uLength.value = params.length;
+        mu.uShaftGirth.value = params.shaftGirth;
+        mu.uBaseGirth.value = params.baseGirth;
+        mu.uCurvature.value = params.curvature;
+        mu.uSuctionCup.value = params.suctionCup ? 1.0 : 0.0;
+        mu.uGeometryStyle.value = params.baseGeometry === 'wave' ? 1.0 : params.baseGeometry === 'ergonomic' ? 2.0 : 0.0;
+        mu.uTextureStyle.value = textureId;
+        mu.uColor1.value.set(params.color1);
+        mu.uColor2.value.set(params.color2);
+        mu.uColorMode.value = params.colorMode;
+        mu.uVibration.value = params.isVibrating ? 1.0 : 0.0;
+        
+        mu.uMeshType.value = meshType;
+        mu.uShapeType.value = 
+          params.shapeType === 'classic' ? 0.0 : 
+          params.shapeType === 'realistic' ? 1.0 : 
+          params.shapeType === 'fantasy' ? 2.0 : 
+          params.shapeType === 'targeted' ? 3.0 : 
+          params.shapeType === 'candle' ? 4.0 : 
+          params.shapeType === 'soap' ? 5.0 : 
+          params.shapeType === 'kitchen' ? 6.0 : 7.0;
+        mu.uRealisticVeins.value = params.realisticVeins;
+        mu.uRealisticGlans.value = params.realisticGlans ? 1.0 : 0.0;
+        mu.uFantasyType.value = params.fantasyType === 'dragon' ? 0.0 : params.fantasyType === 'alien' ? 1.0 : 2.0;
+        mu.uBaseType.value = params.baseType === 'flared' ? 0.0 : params.baseType === 'flat' ? 1.0 : 2.0;
+        mu.uTaper.value = params.taper;
+        mu.uFirmness.value = params.firmness === 'soft' ? 0.0 : params.firmness === 'medium' ? 1.0 : params.firmness === 'firm' ? 2.0 : 3.0;
+        mu.uInclusions.value = params.inclusions === 'none' ? 0.0 : params.inclusions === 'glitter' ? 1.0 : params.inclusions === 'metallic' ? 2.0 : 3.0;
+        mu.uThermochromic.value = params.thermochromic ? 1.0 : 0.0;
+        mu.uBlacklightMode.value = params.blacklightMode ? 1.0 : 0.0;
+        mu.uBallOffset.value = ballOffset;
+        mu.uBallYOffset.value = ballYOffset;
+        mu.uAlpha.value = (meshType === 0 && params.firmness === 'dual-density') ? 0.55 : 1.0;
+        mu.uTextTexture.value = textTexture;
+        mu.uTextStyle.value = (!params.engraveStyle || params.engraveStyle === 'none') ? 0.0 : params.engraveStyle === 'embossed' ? 1.0 : 2.0;
+        mu.uTextDepth.value = params.engraveDepth !== undefined ? params.engraveDepth : 0.5;
+      }
     };
 
-    update(outerUniforms, 0);
-    update(innerUniforms, 1);
-    update(tubeUniforms, 3);
-    update(leftBallUniforms, 2, -0.55 * params.shaftGirth, -params.length / 2 + 0.15);
-    update(rightBallUniforms, 2, 0.55 * params.shaftGirth, -params.length / 2 + 0.15);
+    update(outerUniforms, outerMaterialRef.current, 0);
+    update(innerUniforms, innerMaterialRef.current, 1);
+    update(tubeUniforms, tubeMaterialRef.current, 3);
+    update(leftBallUniforms, leftBallMaterialRef.current, 2, -0.55 * params.shaftGirth, -params.length / 2 + 0.15);
+    update(rightBallUniforms, rightBallMaterialRef.current, 2, 0.55 * params.shaftGirth, -params.length / 2 + 0.15);
   }, [params, textureId, textTexture, outerUniforms, innerUniforms, tubeUniforms, leftBallUniforms, rightBallUniforms]);
 
   const elapsedTimeRef = useRef<number>(0);

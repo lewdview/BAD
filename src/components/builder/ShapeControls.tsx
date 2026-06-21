@@ -1,5 +1,6 @@
 import React from 'react';
 import type { BuilderParams, UpdateParamFn, ShapeType, FantasyType } from '../../types';
+import { SliderControl } from '../ui/SliderControl';
 
 interface ShapeControlsProps {
   params: BuilderParams;
@@ -82,20 +83,15 @@ export const ShapeControls: React.FC<ShapeControlsProps> = ({
           {params.shapeType === 'realistic' && (
             <div className="animate-fade-in" style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '14px', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', marginBottom: '14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <span style={{ fontSize: '10px', color: 'var(--accent-gold)', fontWeight: 700, letterSpacing: '0.05em' }}>REALISTIC CONTROLS</span>
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
-                  <span style={{ color: 'var(--text-secondary)' }}>Vein Prominence</span>
-                  <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>{Math.round(params.realisticVeins * 100)}%</span>
-                </div>
-                <input 
-                  type="range" 
-                  min="0.0" 
-                  max="1.0" 
-                  step="0.05" 
-                  value={params.realisticVeins} 
-                  onChange={(e) => updateParam('realisticVeins', parseFloat(e.target.value))} 
-                />
-              </div>
+              <SliderControl
+                label="Vein Prominence"
+                min={0.0}
+                max={1.0}
+                step={0.05}
+                value={params.realisticVeins}
+                onChange={(val) => updateParam('realisticVeins', val)}
+                formatValue={(val) => `${Math.round(val * 100)}%`}
+              />
 
               <label className="switch-label">
                 <span style={{ fontSize: '12px', fontWeight: 600 }}>Defined Glans Head</span>
