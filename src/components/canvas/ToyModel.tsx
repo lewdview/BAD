@@ -18,71 +18,35 @@ const getBallCoords = (params: {
   
   const theta = (ballAsymmetry * Math.PI) / 180;
   
-  // Original centers in XZ plane
-  // Left ball
-  const x0_L = -0.55 * girth;
-  const z0_L = -0.5 * girth - 0.1;
-  const y0_L = -0.25 * length;
+  // Center/Sack original coordinates in XZ plane
+  const x0 = 0.0;
+  const z0 = -0.6 * girth - 0.1;
+  const y0 = -0.28 * length;
   
-  // Right ball
-  const x0_R = 0.55 * girth;
-  const z0_R = -0.5 * girth - 0.1;
-  const y0_R = -0.25 * length;
-  
-  // Center sack
-  const x0_C = 0.0;
-  const z0_C = -0.6 * girth - 0.1;
-  const y0_C = -0.28 * length;
-  
-  // Radii/scales
-  const R_L = 0.5 * girth * ballSize;
-  const R_R = 0.5 * girth * ballSize;
-  const R_C = 0.5 * girth * ballSize;
-  const scaleZ_C = 0.9;
+  // Radii/scales (wider X, sagging Y, slightly flatter Z)
+  const R = 0.5 * girth * ballSize;
+  const scaleZ = 0.9;
   
   // Rotate around Y axis (origin (0,0) in XZ plane)
   const cosT = Math.cos(theta);
   const sinT = Math.sin(theta);
   
-  const x_rot_L = x0_L * cosT - z0_L * sinT;
-  const z_rot_L = x0_L * sinT + z0_L * cosT;
+  const x_rot = x0 * cosT - z0 * sinT;
+  const z_rot = x0 * sinT + z0 * cosT;
   
-  const x_rot_R = x0_R * cosT - z0_R * sinT;
-  const z_rot_R = x0_R * sinT + z0_R * cosT;
+  // Find maximum Z surface boundary (using scaled Z radius)
+  const zMax = z_rot + R * scaleZ;
   
-  const x_rot_C = x0_C * cosT - z0_C * sinT;
-  const z_rot_C = x0_C * sinT + z0_C * cosT;
-  
-  // Find maximum Z surface boundary
-  const zMax_L = z_rot_L + R_L;
-  const zMax_R = z_rot_R + R_R;
-  const zMax_C = z_rot_C + R_C * scaleZ_C;
-  
-  const zMax = Math.max(zMax_L, zMax_R, zMax_C);
-  
-  // If any part crosses z = 0, shift the entire assembly back
+  // If the scrotum crosses z = 0, shift it back
   const zShift = zMax > 0.0 ? zMax : 0.0;
   
   return {
-    left: {
-      x: x_rot_L,
-      y: y0_L,
-      z: z_rot_L - zShift,
-      r: R_L
-    },
-    right: {
-      x: x_rot_R,
-      y: y0_R,
-      z: z_rot_R - zShift,
-      r: R_R
-    },
-    center: {
-      x: x_rot_C,
-      y: y0_C,
-      z: z_rot_C - zShift,
-      r: R_C
-    },
-    theta
+    x: x_rot,
+    y: y0,
+    z: z_rot - zShift,
+    r: R,
+    theta,
+    zShift
   };
 };
 
@@ -96,12 +60,9 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
   const outerMaterialRef = useRef<THREE.ShaderMaterial>(null);
   const innerMaterialRef = useRef<THREE.ShaderMaterial>(null);
   const tubeMaterialRef = useRef<THREE.ShaderMaterial>(null);
-  const leftBallMaterialRef = useRef<THREE.ShaderMaterial>(null);
-  const rightBallMaterialRef = useRef<THREE.ShaderMaterial>(null);
-  const centerBallMaterialRef = useRef<THREE.ShaderMaterial>(null);
+  const ballMaterialRef = useRef<THREE.ShaderMaterial>(null);
   const groupRef = useRef<THREE.Group>(null);
 
-  const ballSize = params.ballSize !== undefined ? params.ballSize : 1.0;
   const ballCoords = useMemo(() => {
     return getBallCoords(params);
   }, [params.shaftGirth, params.length, params.ballSize, params.ballAsymmetry]);
@@ -185,9 +146,7 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
   const outerUniforms = useMemo(() => createUniforms(0), []);
   const innerUniforms = useMemo(() => createUniforms(1), []);
   const tubeUniforms = useMemo(() => createUniforms(3), []);
-  const leftBallUniforms = useMemo(() => createUniforms(2, -0.55 * params.shaftGirth, -0.25 * params.length), []);
-  const rightBallUniforms = useMemo(() => createUniforms(2, 0.55 * params.shaftGirth, -0.25 * params.length), []);
-  const centerBallUniforms = useMemo(() => createUniforms(2, 0.0, -0.28 * params.length), []);
+  const ballUniforms = useMemo(() => createUniforms(2, 0.0, -0.28 * params.length), []);
 
   useEffect(() => {
     const update = (u: Record<string, THREE.IUniform>, material: THREE.ShaderMaterial | null, meshType: number, ballOffset = 0, ballYOffset = 0) => {
@@ -274,10 +233,8 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
     update(outerUniforms, outerMaterialRef.current, 0);
     update(innerUniforms, innerMaterialRef.current, 1);
     update(tubeUniforms, tubeMaterialRef.current, 3);
-    update(leftBallUniforms, leftBallMaterialRef.current, 2, ballCoords.left.x, ballCoords.left.y);
-    update(rightBallUniforms, rightBallMaterialRef.current, 2, ballCoords.right.x, ballCoords.right.y);
-    update(centerBallUniforms, centerBallMaterialRef.current, 2, ballCoords.center.x, ballCoords.center.y);
-  }, [params, textureId, textTexture, outerUniforms, innerUniforms, tubeUniforms, leftBallUniforms, rightBallUniforms, centerBallUniforms, ballCoords]);
+    update(ballUniforms, ballMaterialRef.current, 2, ballCoords.x, ballCoords.y);
+  }, [params, textureId, textTexture, outerUniforms, innerUniforms, tubeUniforms, ballUniforms, ballCoords]);
 
   const elapsedTimeRef = useRef<number>(0);
 
@@ -289,9 +246,7 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
     outerUniforms.uTime.value = time;
     innerUniforms.uTime.value = time;
     tubeUniforms.uTime.value = time;
-    leftBallUniforms.uTime.value = time;
-    rightBallUniforms.uTime.value = time;
-    centerBallUniforms.uTime.value = time;
+    ballUniforms.uTime.value = time;
 
     if (groupRef.current && params.isVibrating) {
       const vibrationFreq = 95.0;
@@ -914,59 +869,22 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
 
       {/* Testicles Base (only rendered if hasBalls is true) */}
       {params.hasBalls && (
-        <>
-          {/* Left Ball */}
-          <mesh 
-            position={[ballCoords.left.x, ballCoords.left.y, ballCoords.left.z]} 
-            rotation={[0, ballCoords.theta, 0]}
-            castShadow 
-            receiveShadow
-          >
-            <sphereGeometry args={[0.5 * params.shaftGirth * ballSize, 32, 32]} />
-            <shaderMaterial
-              ref={leftBallMaterialRef}
-              vertexShader={vertexShader}
-              fragmentShader={fragmentShader}
-              uniforms={leftBallUniforms}
-              side={THREE.DoubleSide}
-            />
-          </mesh>
-
-          {/* Right Ball */}
-          <mesh 
-            position={[ballCoords.right.x, ballCoords.right.y, ballCoords.right.z]} 
-            rotation={[0, ballCoords.theta, 0]}
-            castShadow 
-            receiveShadow
-          >
-            <sphereGeometry args={[0.5 * params.shaftGirth * ballSize, 32, 32]} />
-            <shaderMaterial
-              ref={rightBallMaterialRef}
-              vertexShader={vertexShader}
-              fragmentShader={fragmentShader}
-              uniforms={rightBallUniforms}
-              side={THREE.DoubleSide}
-            />
-          </mesh>
-
-          {/* Scrotal Sack Base Connector */}
-          <mesh 
-            position={[ballCoords.center.x, ballCoords.center.y, ballCoords.center.z]} 
-            scale={[1.25, 1.15, 0.9]}
-            rotation={[0, ballCoords.theta, 0]}
-            castShadow 
-            receiveShadow
-          >
-            <sphereGeometry args={[0.5 * params.shaftGirth * ballSize, 32, 32]} />
-            <shaderMaterial
-              ref={centerBallMaterialRef}
-              vertexShader={vertexShader}
-              fragmentShader={fragmentShader}
-              uniforms={centerBallUniforms}
-              side={THREE.DoubleSide}
-            />
-          </mesh>
-        </>
+        <mesh 
+          position={[ballCoords.x, ballCoords.y, ballCoords.z]} 
+          scale={[1.35, 1.15, 0.9]}
+          rotation={[0, ballCoords.theta, 0]}
+          castShadow 
+          receiveShadow
+        >
+          <sphereGeometry args={[ballCoords.r, 32, 32]} />
+          <shaderMaterial
+            ref={ballMaterialRef}
+            vertexShader={vertexShader}
+            fragmentShader={fragmentShader}
+            uniforms={ballUniforms}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
       )}
 
       {/* Candle Wick (only rendered if shapeType is 'candle') */}
