@@ -10,33 +10,50 @@ const getBallCoords = (params: BuilderParams) => {
   
   const theta = (ballAsymmetry * Math.PI) / 180;
   
-  // Center/Sack original coordinates in XZ plane
-  const x0 = 0.0;
-  const z0 = -0.6 * girth - 0.1;
-  const y0 = -0.28 * length;
+  // Scrotum assembly base coordinates in XZ plane
+  // Original center of the entire scrotum assembly is at z = -0.55 * girth - 0.1
+  const z0 = -0.55 * girth - 0.1;
+  const y0 = -0.26 * length;
   
-  // Radii/scales (wider X, sagging Y, slightly flatter Z)
-  const R = 0.5 * girth * ballSize;
+  // Left and Right lobe offsets in X
+  const x0_L = -0.32 * girth;
+  const x0_R = 0.32 * girth;
+  
+  // Radii/scales (slightly taller in Y, flatter in Z for natural sag)
+  const R = 0.48 * girth * ballSize;
   const scaleZ = 0.9;
   
   // Rotate around Y axis (origin (0,0) in XZ plane)
   const cosT = Math.cos(theta);
   const sinT = Math.sin(theta);
   
-  const x_rot = x0 * cosT - z0 * sinT;
-  const z_rot = x0 * sinT + z0 * cosT;
+  const x_rot_L = x0_L * cosT - z0 * sinT;
+  const z_rot_L = x0_L * sinT + z0 * cosT;
   
-  // Find maximum Z surface boundary (using scaled Z radius)
-  const zMax = z_rot + R * scaleZ;
+  const x_rot_R = x0_R * cosT - z0 * sinT;
+  const z_rot_R = x0_R * sinT + z0 * cosT;
   
-  // If the scrotum crosses z = 0, shift it back
+  // Find maximum Z surface boundary of both lobes
+  const zMax_L = z_rot_L + R * scaleZ;
+  const zMax_R = z_rot_R + R * scaleZ;
+  const zMax = Math.max(zMax_L, zMax_R);
+  
+  // If either lobe crosses z = 0, shift the entire assembly back
   const zShift = zMax > 0.0 ? zMax : 0.0;
   
   return {
-    x: x_rot,
-    y: y0,
-    z: z_rot - zShift,
-    r: R,
+    left: {
+      x: x_rot_L,
+      y: y0,
+      z: z_rot_L - zShift,
+      r: R
+    },
+    right: {
+      x: x_rot_R,
+      y: y0,
+      z: z_rot_R - zShift,
+      r: R
+    },
     theta,
     zShift
   };
@@ -219,23 +236,33 @@ export const generateToySTL = (params: BuilderParams): string => {
     const length = params.length;
     const coords = getBallCoords(params);
     
-    const scrotumFacets = rotateAndShiftFacets(
-      getSphereFacets(0, -0.28 * length, -0.6 * girth - 0.1, coords.r, 1.35, 1.15, 0.9),
+    const leftFacets = rotateAndShiftFacets(
+      getSphereFacets(-0.32 * girth, -0.26 * length, -0.55 * girth - 0.1, coords.left.r, 1.0, 1.15, 0.9),
+      coords.theta,
+      coords.zShift
+    );
+    const rightFacets = rotateAndShiftFacets(
+      getSphereFacets(0.32 * girth, -0.26 * length, -0.55 * girth - 0.1, coords.right.r, 1.0, 1.15, 0.9),
       coords.theta,
       coords.zShift
     );
     
-    for (let i = 0; i < scrotumFacets.length; i++) {
-      const f = scrotumFacets[i];
-      const n = calcNormal(f.p1, f.p2, f.p3);
-      stl += `  facet normal ${n.x.toFixed(6)} ${n.y.toFixed(6)} ${n.z.toFixed(6)}\n`;
-      stl += `    outer loop\n`;
-      stl += `      vertex ${f.p1.x.toFixed(4)} ${f.p1.y.toFixed(4)} ${f.p1.z.toFixed(4)}\n`;
-      stl += `      vertex ${f.p2.x.toFixed(4)} ${f.p2.y.toFixed(4)} ${f.p2.z.toFixed(4)}\n`;
-      stl += `      vertex ${f.p3.x.toFixed(4)} ${f.p3.y.toFixed(4)} ${f.p3.z.toFixed(4)}\n`;
-      stl += `    endloop\n`;
-      stl += `  endfacet\n`;
-    }
+    const appendFacets = (facetsList: { p1: Vec3; p2: Vec3; p3: Vec3 }[]) => {
+      for (let i = 0; i < facetsList.length; i++) {
+        const f = facetsList[i];
+        const n = calcNormal(f.p1, f.p2, f.p3);
+        stl += `  facet normal ${n.x.toFixed(6)} ${n.y.toFixed(6)} ${n.z.toFixed(6)}\n`;
+        stl += `    outer loop\n`;
+        stl += `      vertex ${f.p1.x.toFixed(4)} ${f.p1.y.toFixed(4)} ${f.p1.z.toFixed(4)}\n`;
+        stl += `      vertex ${f.p2.x.toFixed(4)} ${f.p2.y.toFixed(4)} ${f.p2.z.toFixed(4)}\n`;
+        stl += `      vertex ${f.p3.x.toFixed(4)} ${f.p3.y.toFixed(4)} ${f.p3.z.toFixed(4)}\n`;
+        stl += `    endloop\n`;
+        stl += `  endfacet\n`;
+      }
+    };
+    
+    appendFacets(leftFacets);
+    appendFacets(rightFacets);
   }
 
   stl += "endsolid BAD_Custom_Product\n";
@@ -324,9 +351,18 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
 
   if (params.hasBalls) {
     const coords = getBallCoords(params);
-    const minBallX = coords.x - coords.r * 1.35;
-    const maxBallX = coords.x + coords.r * 1.35;
-    const maxBallZ = -(coords.z - coords.r * 0.9);
+    const minX_L = coords.left.x - coords.left.r;
+    const maxX_L = coords.left.x + coords.left.r;
+    const minX_R = coords.right.x - coords.right.r;
+    const maxX_R = coords.right.x + coords.right.r;
+    
+    const minBallX = Math.min(minX_L, minX_R);
+    const maxBallX = Math.max(maxX_L, maxX_R);
+    
+    const maxBallZ = Math.max(
+      -(coords.left.z - coords.left.r * 0.9),
+      -(coords.right.z - coords.right.r * 0.9)
+    );
     
     if (minBallX < minDildoX) minDildoX = minBallX;
     if (maxBallX > maxDildoX) maxDildoX = maxBallX;
@@ -610,13 +646,18 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
     const coords = getBallCoords(params);
     
     // We want reversed facets because the cavity faces inwards
-    const scrotumFacets = rotateAndShiftFacets(
-      getSphereFacets(0, -0.28 * length, -0.6 * girth - 0.1, coords.r, 1.35, 1.15, 0.9, true),
+    const leftFacets = rotateAndShiftFacets(
+      getSphereFacets(-0.32 * girth, -0.26 * length, -0.55 * girth - 0.1, coords.left.r, 1.0, 1.15, 0.9, true),
+      coords.theta,
+      coords.zShift
+    );
+    const rightFacets = rotateAndShiftFacets(
+      getSphereFacets(0.32 * girth, -0.26 * length, -0.55 * girth - 0.1, coords.right.r, 1.0, 1.15, 0.9, true),
       coords.theta,
       coords.zShift
     );
     
-    facets.push(...scrotumFacets);
+    facets.push(...leftFacets, ...rightFacets);
   }
 
   // Write out to STL
