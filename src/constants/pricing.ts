@@ -53,6 +53,7 @@ export function calculatePrice(params: BuilderParams, demoMode: boolean): number
     if (params.baseType === 'flared') price += 10.00;
     if (params.vibrationCore) price += 25.00;
     if (params.internalTube) price += 25.00;
+    if (params.hasOrifice) price += 35.00;
   }
 
   return Number(price.toFixed(2));

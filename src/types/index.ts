@@ -85,6 +85,9 @@ export interface BuilderParams {
   isCore?: boolean;
   ballSize?: number;
   ballAsymmetry?: number;
+  hasOrifice?: boolean;
+  orificeType?: 'vaginal' | 'anal' | 'pocket';
+  orificeDepth?: number;
 }
 
 // ── Cart & Commerce ───────────────────────────────────────────

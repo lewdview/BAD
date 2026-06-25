@@ -523,6 +523,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, setOrder
 
                                             <button
                                               type="button"
+                                              className="btn btn-secondary"
+                                              onClick={() => downloadSTL(params, 'orifice_plug', order.orderNumber)}
+                                              style={{ fontSize: '11px', padding: '10px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                                              disabled={!params.hasOrifice}
+                                              title={!params.hasOrifice ? 'Only available for items with a Molded Orifice Cavity' : ''}
+                                            >
+                                              <Layers size={13} /> Orifice Core Plug (.stl)
+                                            </button>
+
+                                            <button
+                                              type="button"
                                               className="btn btn-primary"
                                               onClick={() => downloadSTL(params, 'mold_left', order.orderNumber)}
                                               style={{ fontSize: '11px', padding: '10px 8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}

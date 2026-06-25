@@ -1,5 +1,4 @@
-import React from 'react';
-import type { BuilderParams, UpdateParamFn, ShapeType, FantasyType } from '../../types';
+import type { BuilderParams, UpdateParamFn, ShapeType, FantasyType, BaseType, TextureType } from '../../types';
 import { SliderControl } from '../ui/SliderControl';
 
 interface ShapeControlsProps {
@@ -145,8 +144,68 @@ export const ShapeControls: React.FC<ShapeControlsProps> = ({
               </div>
             </div>
           )}
+
         </div>
       )}
+
+      {/* Base Style Selection */}
+      <div style={{ marginTop: '14px', borderTop: '1px dashed var(--border-color)', paddingTop: '14px' }}>
+        <span style={{ fontSize: '10px', color: 'var(--accent-gold)', fontWeight: 700, display: 'block', marginBottom: '8px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+          Base Style
+        </span>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+          {[
+            { id: 'flared', label: 'Flared Cup' },
+            { id: 'flat', label: 'Flat B2B' },
+            { id: 'harness', label: 'Harness Collar' }
+          ].map((base) => (
+            <button
+              key={base.id}
+              type="button"
+              className={`btn ${params.baseType === base.id ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ 
+                padding: '8px 4px', 
+                fontSize: '10px', 
+                borderRadius: 'var(--radius-sm)',
+                fontWeight: 700
+              }}
+              onClick={() => updateParam('baseType', base.id as BaseType)}
+            >
+              {base.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Surface Texture Selection */}
+      <div style={{ marginTop: '14px', borderTop: '1px dashed var(--border-color)', paddingTop: '14px' }}>
+        <span style={{ fontSize: '10px', color: 'var(--accent-gold)', fontWeight: 700, display: 'block', marginBottom: '8px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+          Surface Texture
+        </span>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px' }}>
+          {[
+            { id: 'smooth', label: 'Smooth' },
+            { id: 'ribbed', label: 'Ribbed' },
+            { id: 'swirled', label: 'Swirl' },
+            { id: 'studded', label: 'Studded' }
+          ].map((tex) => (
+            <button
+              key={tex.id}
+              type="button"
+              className={`btn ${params.texture === tex.id ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ 
+                padding: '8px 2px', 
+                fontSize: '10px', 
+                borderRadius: 'var(--radius-sm)',
+                fontWeight: 700
+              }}
+              onClick={() => updateParam('texture', tex.id as TextureType)}
+            >
+              {tex.label}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

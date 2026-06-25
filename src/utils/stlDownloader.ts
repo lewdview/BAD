@@ -4,9 +4,9 @@
 // ─────────────────────────────────────────────────────────────
 
 import type { BuilderParams } from '../types';
-import { generateToySTL, generateCoreSTL, generateMoldHalfSTL } from './stlGenerator';
+import { generateToySTL, generateCoreSTL, generateMoldHalfSTL, generateOrificeCoreSTL } from './stlGenerator';
 
-export type STLExportType = 'product' | 'core' | 'mold_left' | 'mold_right';
+export type STLExportType = 'product' | 'core' | 'mold_left' | 'mold_right' | 'orifice_plug';
 
 /**
  * Generates and triggers download of an STL file.
@@ -30,6 +30,10 @@ export function downloadSTL(
     case 'core':
       content = generateCoreSTL(params);
       fileSuffix = 'core';
+      break;
+    case 'orifice_plug':
+      content = generateOrificeCoreSTL(params);
+      fileSuffix = 'orifice-plug';
       break;
     case 'mold_left':
       content = generateMoldHalfSTL(params, 'front');

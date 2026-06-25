@@ -157,7 +157,10 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
       uAlpha: { value: 1.0 },
       uTextTexture: { value: textTexture },
       uTextStyle: { value: (!params.engraveStyle || params.engraveStyle === 'none') ? 0.0 : params.engraveStyle === 'embossed' ? 1.0 : 2.0 },
-      uTextDepth: { value: params.engraveDepth !== undefined ? params.engraveDepth : 0.5 }
+      uTextDepth: { value: params.engraveDepth !== undefined ? params.engraveDepth : 0.5 },
+      uHasOrifice: { value: params.hasOrifice ? 1.0 : 0.0 },
+      uOrificeType: { value: params.orificeType === 'vaginal' ? 0.0 : params.orificeType === 'anal' ? 1.0 : 2.0 },
+      uOrificeDepth: { value: params.orificeDepth || 0.4 }
     };
   };
 
@@ -206,6 +209,9 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
       u.uTextTexture.value = textTexture;
       u.uTextStyle.value = (!params.engraveStyle || params.engraveStyle === 'none') ? 0.0 : params.engraveStyle === 'embossed' ? 1.0 : 2.0;
       u.uTextDepth.value = params.engraveDepth !== undefined ? params.engraveDepth : 0.5;
+      u.uHasOrifice.value = params.hasOrifice ? 1.0 : 0.0;
+      u.uOrificeType.value = params.orificeType === 'vaginal' ? 0.0 : params.orificeType === 'anal' ? 1.0 : 2.0;
+      u.uOrificeDepth.value = params.orificeDepth || 0.4;
 
       // 2. Update active WebGL material instance uniforms directly
       if (material) {
@@ -246,6 +252,9 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
         mu.uTextTexture.value = textTexture;
         mu.uTextStyle.value = (!params.engraveStyle || params.engraveStyle === 'none') ? 0.0 : params.engraveStyle === 'embossed' ? 1.0 : 2.0;
         mu.uTextDepth.value = params.engraveDepth !== undefined ? params.engraveDepth : 0.5;
+        mu.uHasOrifice.value = params.hasOrifice ? 1.0 : 0.0;
+        mu.uOrificeType.value = params.orificeType === 'vaginal' ? 0.0 : params.orificeType === 'anal' ? 1.0 : 2.0;
+        mu.uOrificeDepth.value = params.orificeDepth || 0.4;
       }
     };
 
@@ -304,6 +313,9 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
     uniform float uFantasyType;
     uniform float uBaseType;
     uniform float uTaper;
+    uniform float uHasOrifice;
+    uniform float uOrificeType;
+    uniform float uOrificeDepth;
 
     uniform sampler2D uTextTexture;
     uniform float uTextStyle;
@@ -324,148 +336,190 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
         return;
       }
 
-      // Base flare / Suction Cup / Harness ring / Flat Base
+      float normY_mapped = normY;
+      if (uMeshType == 1.0 && uHasOrifice > 0.5) {
+        float maxCoreHeight = 1.0 - uOrificeDepth - 0.08;
+        normY_mapped = normY * maxCoreHeight;
+        pos.y = normY_mapped - 0.5;
+      }
+
+      bool isOrificeCavity = false;
+      if (uHasOrifice > 0.5 && uMeshType != 1.0) {
+        float transitionNormY = 0.85;
+        if (normY < transitionNormY) {
+          normY_mapped = normY / transitionNormY;
+          pos.y = normY_mapped - 0.5;
+        } else {
+          isOrificeCavity = true;
+          float t_inner = (normY - transitionNormY) / (1.0 - transitionNormY);
+          pos.y = 0.5 - uOrificeDepth * t_inner;
+        }
+      }
+
+      float r_entrance = 0.16 * uShaftGirth;
       float shapeScale = uShaftGirth;
       
-      if (uShapeType < 3.5) {
-        // Apply base profile
-        if (normY < 0.25) {
-          float t = normY / 0.25;
-          if (uBaseType == 0.0) {
-            // Flared Suction Cup
-            shapeScale = mix(uBaseGirth, uShaftGirth, t);
-            if (uSuctionCup > 0.5 && normY < 0.1) {
-              float t2 = normY / 0.1;
-              float flare = pow(1.0 - t2, 2.2);
-              shapeScale = mix(uBaseGirth, uBaseGirth * 2.3, flare);
-            }
-          } else if (uBaseType == 1.0) {
-            // Flat base
-            shapeScale = uBaseGirth;
-          } else if (uBaseType == 2.0) {
-            // Harness collar
-            float groove = 0.0;
-            if (normY > 0.08 && normY < 0.22) {
-              float gt = (normY - 0.08) / 0.14;
-              groove = 0.22 * sin(gt * 3.14159);
-            }
-            shapeScale = mix(uBaseGirth, uShaftGirth, t) - groove * uShaftGirth;
-          }
-        } 
-        // Head curvature details (bulbous head & corona ridge)
-        else if (normY > 0.76) {
-          float t = (normY - 0.76) / 0.24;
-          float ridge = 0.0;
-          
-          if (uShapeType == 1.0 || uRealisticGlans > 0.5) {
-            // Realistic Glans
-            float angle = atan(pos.z, pos.x);
-            float cleft = 0.035 * cos(angle * 2.0);
-            if (t < 0.25) {
-              ridge = 0.18 * sin((t / 0.25) * 3.14159);
-            }
-            float dome = sqrt(1.0 - pow(t, 2.0));
-            shapeScale = (uShaftGirth + ridge + cleft) * dome;
-          } else {
-            // Classic Glans
-            if (t < 0.25) {
-              ridge = 0.14 * sin((t / 0.25) * 3.14159);
-            }
-            float dome = sqrt(1.0 - pow(t, 2.0));
-            shapeScale = (uShaftGirth + ridge) * dome;
-          }
-        }
-      }
-
-      // Taper (applied continuously across the main shaft body)
-      float taperScale = mix(1.0 + uTaper * 0.20, 1.0 - uTaper * 0.45, normY);
-      shapeScale *= taperScale;
-
-      // Apply custom text displacement
-      if (uTextStyle > 0.5) {
-        float textVal = texture2D(uTextTexture, uv).r;
-        float disp = 0.0;
-        if (uTextStyle == 1.0) {
-          disp = textVal * uTextDepth * 0.08;
-        } else if (uTextStyle == 2.0) {
-          disp = -textVal * uTextDepth * 0.08;
-        }
-        shapeScale += disp;
-      }
-
-      // Use Scenario shapes (Candle, Soap, Kitchenware, Collectible)
-      if (uShapeType == 4.0) {
-        // Candle: add longitudinal ridges, then apply spiral twist
-        float angle = atan(pos.z, pos.x);
-        shapeScale += 0.12 * sin(angle * 6.0);
-      } else if (uShapeType == 5.0) {
-        // Soap: square/rectangular block with chamfered look
-        float angle = atan(pos.z, pos.x);
-        float cos4 = cos(angle * 4.0);
-        shapeScale *= (1.0 - 0.16 * cos4);
-        if (normY < 0.15) {
-          shapeScale *= smoothstep(0.0, 1.0, normY / 0.15);
-        }
-        if (normY > 0.85) {
-          shapeScale *= smoothstep(0.0, 1.0, (1.0 - normY) / 0.15);
-        }
-      } else if (uShapeType == 6.0) {
-        // Kitchenware (Muffin baking cup)
-        float angle = atan(pos.z, pos.x);
-        shapeScale = uShaftGirth * (0.7 + normY * 0.9);
-        shapeScale += 0.07 * sin(angle * 18.0) * (0.2 + normY * 0.8);
-        if (normY < 0.1) {
-          shapeScale *= smoothstep(0.0, 1.0, normY / 0.1);
-        }
-      } else if (uShapeType == 7.0) {
-        // Collectible
-        float profile = 1.0;
-        if (normY < 0.45) {
-          profile = 1.25 - 0.5 * (normY / 0.45);
-        } else if (normY < 0.6) {
-          profile = 0.75;
+      if (isOrificeCavity) {
+        float t_inner = (normY - 0.85) / 0.15;
+        shapeScale = r_entrance * (1.0 - t_inner);
+        float factor = 1.0;
+        if (uOrificeType == 0.0) {
+          factor = 1.0 + 0.16 * sin(t_inner * 18.0) * (1.0 - t_inner);
+        } else if (uOrificeType == 1.0) {
+          factor = 1.0 + 0.22 * sin(t_inner * 28.0) * (1.0 - t_inner);
         } else {
-          float t = (normY - 0.6) / 0.4;
-          profile = 0.75 + 0.55 * sin(t * 3.14159);
+          factor = 1.0 + 0.12 * sin(t_inner * 12.0) * (1.0 - t_inner);
         }
-        shapeScale = uShaftGirth * profile;
-        
-        float angle = atan(pos.z, pos.x);
-        float octAngle = floor(angle * 8.0 / 6.28318 + 0.5) * 6.28318 / 8.0;
-        pos.x = cos(octAngle);
-        pos.z = sin(octAngle);
-      }
-      // Standard shape styles
-      else if (uShapeType == 2.0) {
-        // Fantasy geometries
-        if (normY >= 0.25 && normY <= 0.76) {
-          float angle = atan(pos.z, pos.x);
-          if (uFantasyType == 0.0) {
-            // Dragon: ridged nodes + scales
-            float dragonKnot = 0.14 * sin(pos.y * 2.5);
-            float scaleBump = 0.07 * cos(angle * 5.0 + pos.y * 9.0);
-            shapeScale += dragonKnot + scaleBump;
-          } else if (uFantasyType == 1.0) {
-            // Alien: egg nodes + ribs
-            float alienRidge = 0.16 * sin(pos.y * 3.5);
-            float alienBumps = 0.04 * sin(angle * 3.0 + pos.y * 2.0);
-            shapeScale += alienRidge + alienBumps;
-          } else if (uFantasyType == 2.0) {
-            // Tentacle: spiral rings
-            float spiral = sin(pos.y * 5.5 - angle * 2.0);
-            shapeScale += 0.12 * smoothstep(0.0, 1.0, spiral);
-          }
-        }
+        shapeScale *= factor;
       } else {
-        if (uGeometryStyle > 0.5 && uGeometryStyle < 1.5) {
-          // Wave
-          if (normY >= 0.25 && normY <= 0.76) {
-            shapeScale += sin((normY - 0.25) * 22.0) * 0.07;
+        if (uShapeType < 3.5) {
+          // Apply base profile
+          if (normY_mapped < 0.25) {
+            float t = normY_mapped / 0.25;
+            if (uBaseType == 0.0) {
+              // Flared Suction Cup
+              shapeScale = mix(uBaseGirth, uShaftGirth, t);
+              if (uSuctionCup > 0.5 && normY_mapped < 0.1) {
+                float t2 = normY_mapped / 0.1;
+                float flare = pow(1.0 - t2, 2.2);
+                shapeScale = mix(uBaseGirth, uBaseGirth * 2.3, flare);
+              }
+            } else if (uBaseType == 1.0) {
+              // Flat base
+              shapeScale = uBaseGirth;
+            } else if (uBaseType == 2.0) {
+              // Harness collar
+              float groove = 0.0;
+              if (normY_mapped > 0.08 && normY_mapped < 0.22) {
+                float gt = (normY_mapped - 0.08) / 0.14;
+                groove = 0.22 * sin(gt * 3.14159);
+              }
+              shapeScale = mix(uBaseGirth, uShaftGirth, t) - groove * uShaftGirth;
+            }
+          } 
+          // Head curvature details (bulbous head & corona ridge)
+          else if (normY_mapped > 0.76) {
+            float t = (normY_mapped - 0.76) / 0.24;
+            float ridge = 0.0;
+            
+            if (uShapeType == 1.0 || uRealisticGlans > 0.5) {
+              // Realistic Glans
+              float angle = atan(pos.z, pos.x);
+              float cleft = 0.035 * cos(angle * 2.0);
+              if (t < 0.25) {
+                ridge = 0.18 * sin((t / 0.25) * 3.14159);
+              }
+              float dome = sqrt(1.0 - pow(t, 2.0));
+              if (uHasOrifice > 0.5) {
+                shapeScale = mix(r_entrance, (uShaftGirth + ridge + cleft) * dome, 1.0 - pow(t, 4.0));
+              } else {
+                shapeScale = (uShaftGirth + ridge + cleft) * dome;
+              }
+            } else {
+              // Classic Glans
+              if (t < 0.25) {
+                ridge = 0.14 * sin((t / 0.25) * 3.14159);
+              }
+              float dome = sqrt(1.0 - pow(t, 2.0));
+              if (uHasOrifice > 0.5) {
+                shapeScale = mix(r_entrance, (uShaftGirth + ridge) * dome, 1.0 - pow(t, 4.0));
+              } else {
+                shapeScale = (uShaftGirth + ridge) * dome;
+              }
+            }
           }
-        } else if (uGeometryStyle > 1.5) {
-          // Ergonomic
-          if (normY > 0.4 && normY < 0.76) {
-            shapeScale -= sin((normY - 0.4) / 0.36 * 3.14159) * 0.14;
+        }
+
+        // Taper (applied continuously across the main shaft body)
+        float taperScale = mix(1.0 + uTaper * 0.20, 1.0 - uTaper * 0.45, normY_mapped);
+        shapeScale *= taperScale;
+
+        // Apply custom text displacement
+        if (uTextStyle > 0.5) {
+          float textVal = texture2D(uTextTexture, uv).r;
+          float disp = 0.0;
+          if (uTextStyle == 1.0) {
+            disp = textVal * uTextDepth * 0.08;
+          } else if (uTextStyle == 2.0) {
+            disp = -textVal * uTextDepth * 0.08;
+          }
+          shapeScale += disp;
+        }
+
+        // Use Scenario shapes (Candle, Soap, Kitchenware, Collectible)
+        if (uShapeType == 4.0) {
+          // Candle: add longitudinal ridges, then apply spiral twist
+          float angle = atan(pos.z, pos.x);
+          shapeScale += 0.12 * sin(angle * 6.0);
+        } else if (uShapeType == 5.0) {
+          // Soap: square/rectangular block with chamfered look
+          float angle = atan(pos.z, pos.x);
+          float cos4 = cos(angle * 4.0);
+          shapeScale *= (1.0 - 0.16 * cos4);
+          if (normY_mapped < 0.15) {
+            shapeScale *= smoothstep(0.0, 1.0, normY_mapped / 0.15);
+          }
+          if (normY_mapped > 0.85) {
+            shapeScale *= smoothstep(0.0, 1.0, (1.0 - normY_mapped) / 0.15);
+          }
+        } else if (uShapeType == 6.0) {
+          // Kitchenware (Muffin baking cup)
+          float angle = atan(pos.z, pos.x);
+          shapeScale = uShaftGirth * (0.7 + normY_mapped * 0.9);
+          shapeScale += 0.07 * sin(angle * 18.0) * (0.2 + normY_mapped * 0.8);
+          if (normY_mapped < 0.1) {
+            shapeScale *= smoothstep(0.0, 1.0, normY_mapped / 0.1);
+          }
+        } else if (uShapeType == 7.0) {
+          // Collectible
+          float profile = 1.0;
+          if (normY_mapped < 0.45) {
+            profile = 1.25 - 0.5 * (normY_mapped / 0.45);
+          } else if (normY_mapped < 0.6) {
+            profile = 0.75;
+          } else {
+            float t = (normY_mapped - 0.6) / 0.4;
+            profile = 0.75 + 0.55 * sin(t * 3.14159);
+          }
+          shapeScale = uShaftGirth * profile;
+          
+          float angle = atan(pos.z, pos.x);
+          float octAngle = floor(angle * 8.0 / 6.28318 + 0.5) * 6.28318 / 8.0;
+          pos.x = cos(octAngle);
+          pos.z = sin(octAngle);
+        }
+        // Standard shape styles
+        else if (uShapeType == 2.0) {
+          // Fantasy geometries
+          if (normY_mapped >= 0.25 && normY_mapped <= 0.76) {
+            float angle = atan(pos.z, pos.x);
+            if (uFantasyType == 0.0) {
+              // Dragon: ridged nodes + scales
+              float dragonKnot = 0.14 * sin(pos.y * 2.5);
+              float scaleBump = 0.07 * cos(angle * 5.0 + pos.y * 9.0);
+              shapeScale += dragonKnot + scaleBump;
+            } else if (uFantasyType == 1.0) {
+              // Alien: egg nodes + ribs
+              float alienRidge = 0.16 * sin(pos.y * 3.5);
+              float alienBumps = 0.04 * sin(angle * 3.0 + pos.y * 2.0);
+              shapeScale += alienRidge + alienBumps;
+            } else if (uFantasyType == 2.0) {
+              // Tentacle: spiral rings
+              float spiral = sin(pos.y * 5.5 - angle * 2.0);
+              shapeScale += 0.12 * smoothstep(0.0, 1.0, spiral);
+            }
+          }
+        } else {
+          if (uGeometryStyle > 0.5 && uGeometryStyle < 1.5) {
+            // Wave
+            if (normY_mapped >= 0.25 && normY_mapped <= 0.76) {
+              shapeScale += sin((normY_mapped - 0.25) * 22.0) * 0.07;
+            }
+          } else if (uGeometryStyle > 1.5) {
+            // Ergonomic
+            if (normY_mapped > 0.4 && normY_mapped < 0.76) {
+              shapeScale -= sin((normY_mapped - 0.4) / 0.36 * 3.14159) * 0.14;
+            }
           }
         }
       }
@@ -474,8 +528,8 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
       if (uMeshType == 1.0) {
         // Inner Core: stop slightly below tip to stay internal
         float innerScale = 0.46;
-        if (normY > 0.82) {
-          float cap = (1.0 - normY) / 0.18;
+        if (normY_mapped > 0.82) {
+          float cap = (1.0 - normY_mapped) / 0.18;
           innerScale *= cap;
         }
         shapeScale *= innerScale;
@@ -489,8 +543,8 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
       pos.z *= shapeScale;
 
       // Twist twist for Candle
-      if (uShapeType == 4.0) {
-        float theta = normY * 3.14159 * 2.0; 
+      if (!isOrificeCavity && uShapeType == 4.0) {
+        float theta = normY_mapped * 3.14159 * 2.0; 
         float c = cos(theta);
         float s = sin(theta);
         float rx = pos.x * c - pos.z * s;
@@ -499,16 +553,18 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
         pos.z = rz;
       }
 
+      float normY_physical = pos.y + 0.5;
+
       // Oval flat-head shaping for ergonomic curve / targeted
-      if ((uGeometryStyle > 1.5 || uShapeType == 3.0) && normY > 0.6) {
-        float flatFactor = (normY - 0.6) / 0.4;
+      if ((uGeometryStyle > 1.5 || uShapeType == 3.0) && normY_physical > 0.6) {
+        float flatFactor = (normY_physical - 0.6) / 0.4;
         pos.z *= (1.0 - flatFactor * 0.28);
         pos.x *= (1.0 + flatFactor * 0.18);
       }
 
       // Curvature bend along X
-      if (normY > 0.25) {
-        float curveT = (normY - 0.25) / 0.75;
+      if (normY_physical > 0.25) {
+        float curveT = (normY_physical - 0.25) / 0.75;
         pos.x += pow(curveT, 3.0) * uCurvature * 1.9;
       }
 

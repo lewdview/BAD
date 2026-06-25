@@ -84,7 +84,10 @@ function App() {
     engraveSize: 44,
     engraveDepth: 0.5,
     ballSize: 1.0,
-    ballAsymmetry: 0.0
+    ballAsymmetry: 0.0,
+    hasOrifice: false,
+    orificeType: 'vaginal',
+    orificeDepth: 0.4
   });
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
