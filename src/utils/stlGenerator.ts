@@ -11,8 +11,8 @@ const getBallCoords = (params: BuilderParams) => {
   const theta = (ballAsymmetry * Math.PI) / 180;
   
   // Scrotum assembly base coordinates in XZ plane
-  // Original center of the entire scrotum assembly is at z = -0.55 * girth - 0.1
-  const z0 = -0.55 * girth - 0.1;
+  // Adjusted center to push the scrotum further outside the shaft
+  const z0 = -0.95 * girth - 0.2;
   const y0 = -0.26 * length;
   
   // Left and Right lobe offsets in X
