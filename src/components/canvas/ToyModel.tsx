@@ -148,7 +148,14 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
         params.shapeType === 'kitchen' ? 6.0 : 7.0 
       },
       uRealisticVeins: { value: params.realisticVeins },
-      uRealisticGlans: { value: params.realisticGlans ? 1.0 : 0.0 },
+      uHeadType: { value: 
+        params.headType === 'classic' ? 0.0 : 
+        params.headType === 'realistic' ? 1.0 : 
+        params.headType === 'bulbous' ? 2.0 : 
+        params.headType === 'tapered' ? 3.0 : 
+        params.headType === 'alien' ? 4.0 : 5.0 
+      },
+      uHeadScale: { value: params.headScale !== undefined ? params.headScale : 1.0 },
       uFantasyType: { value: params.fantasyType === 'dragon' ? 0.0 : params.fantasyType === 'alien' ? 1.0 : 2.0 },
       uBaseType: { value: params.baseType === 'flared' ? 0.0 : params.baseType === 'flat' ? 1.0 : 2.0 },
       uTaper: { value: params.taper },
@@ -199,7 +206,13 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
         params.shapeType === 'soap' ? 5.0 : 
         params.shapeType === 'kitchen' ? 6.0 : 7.0;
       u.uRealisticVeins.value = params.realisticVeins;
-      u.uRealisticGlans.value = params.realisticGlans ? 1.0 : 0.0;
+      u.uHeadType.value = 
+        params.headType === 'classic' ? 0.0 : 
+        params.headType === 'realistic' ? 1.0 : 
+        params.headType === 'bulbous' ? 2.0 : 
+        params.headType === 'tapered' ? 3.0 : 
+        params.headType === 'alien' ? 4.0 : 5.0;
+      u.uHeadScale.value = params.headScale !== undefined ? params.headScale : 1.0;
       u.uFantasyType.value = params.fantasyType === 'dragon' ? 0.0 : params.fantasyType === 'alien' ? 1.0 : 2.0;
       u.uBaseType.value = params.baseType === 'flared' ? 0.0 : params.baseType === 'flat' ? 1.0 : 2.0;
       u.uTaper.value = params.taper;
@@ -242,7 +255,13 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
           params.shapeType === 'soap' ? 5.0 : 
           params.shapeType === 'kitchen' ? 6.0 : 7.0;
         mu.uRealisticVeins.value = params.realisticVeins;
-        mu.uRealisticGlans.value = params.realisticGlans ? 1.0 : 0.0;
+        mu.uHeadType.value = 
+          params.headType === 'classic' ? 0.0 : 
+          params.headType === 'realistic' ? 1.0 : 
+          params.headType === 'bulbous' ? 2.0 : 
+          params.headType === 'tapered' ? 3.0 : 
+          params.headType === 'alien' ? 4.0 : 5.0;
+        mu.uHeadScale.value = params.headScale !== undefined ? params.headScale : 1.0;
         mu.uFantasyType.value = params.fantasyType === 'dragon' ? 0.0 : params.fantasyType === 'alien' ? 1.0 : 2.0;
         mu.uBaseType.value = params.baseType === 'flared' ? 0.0 : params.baseType === 'flat' ? 1.0 : 2.0;
         mu.uTaper.value = params.taper;
@@ -313,7 +332,8 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
     uniform float uMeshType;
     uniform float uShapeType;
     uniform float uRealisticVeins;
-    uniform float uRealisticGlans;
+    uniform float uHeadType;
+    uniform float uHeadScale;
     uniform float uFantasyType;
     uniform float uBaseType;
     uniform float uTaper;
@@ -401,35 +421,47 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
               shapeScale = mix(uBaseGirth, uShaftGirth, t) - groove * uShaftGirth;
             }
           } 
-          // Head curvature details (bulbous head & corona ridge)
+          // Head curvature details
           else if (normY_mapped > 0.76) {
             float t = (normY_mapped - 0.76) / 0.24;
             float ridge = 0.0;
+            float dome = sqrt(max(0.0, 1.0 - pow(t, 2.0)));
+            float headRadius = uShaftGirth;
             
-            if (uShapeType == 1.0 || uRealisticGlans > 0.5) {
-              // Realistic Glans
+            if (uHeadType == 0.0) { // classic
+              if (t < 0.25) ridge = 0.14 * sin((t / 0.25) * 3.14159);
+              headRadius = (uShaftGirth + ridge) * dome;
+            } else if (uHeadType == 1.0) { // realistic
               float angle = atan(pos.z, pos.x);
               float cleft = 0.035 * cos(angle * 2.0);
-              if (t < 0.25) {
-                ridge = 0.18 * sin((t / 0.25) * 3.14159);
-              }
-              float dome = sqrt(1.0 - pow(t, 2.0));
-              if (uHasOrifice > 0.5) {
-                shapeScale = mix(r_entrance, (uShaftGirth + ridge + cleft) * dome, 1.0 - pow(t, 4.0));
-              } else {
-                shapeScale = (uShaftGirth + ridge + cleft) * dome;
-              }
+              if (t < 0.25) ridge = 0.18 * sin((t / 0.25) * 3.14159);
+              headRadius = (uShaftGirth + ridge + cleft) * dome;
+            } else if (uHeadType == 2.0) { // bulbous
+              float bulb = 0.35 * uShaftGirth * sin(t * 3.14159 * 0.75);
+              if (t < 0.2) ridge = 0.08 * uShaftGirth * sin((t / 0.2) * 3.14159);
+              headRadius = (uShaftGirth * 1.1 + ridge + bulb) * dome;
+            } else if (uHeadType == 3.0) { // tapered
+              headRadius = uShaftGirth * dome * (1.0 - t * 0.35);
+            } else if (uHeadType == 4.0) { // alien
+              float alienRidge = 0.0;
+              if (t < 0.25) alienRidge = 0.16 * uShaftGirth * sin((t / 0.25) * 3.14159);
+              else if (t > 0.4 && t < 0.65) alienRidge = 0.12 * uShaftGirth * sin(((t - 0.4) / 0.25) * 3.14159);
+              headRadius = (uShaftGirth + alienRidge) * dome;
+            } else if (uHeadType == 5.0) { // dragon
+              float dragonRidge = 0.0;
+              if (t < 0.3) dragonRidge = 0.18 * uShaftGirth * sin((t / 0.3) * 3.14159);
+              float segment = 0.08 * uShaftGirth * sin(t * 3.14159 * 3.0);
+              headRadius = (uShaftGirth + dragonRidge + segment) * dome;
+            }
+            
+            float scaleBlend = clamp((t - 0.0) / 0.25, 0.0, 1.0);
+            scaleBlend = scaleBlend * scaleBlend * (3.0 - 2.0 * scaleBlend);
+            float currentScale = mix(1.0, uHeadScale, scaleBlend);
+            
+            if (uHasOrifice > 0.5) {
+              shapeScale = mix(r_entrance, headRadius * currentScale, 1.0 - pow(t, 4.0));
             } else {
-              // Classic Glans
-              if (t < 0.25) {
-                ridge = 0.14 * sin((t / 0.25) * 3.14159);
-              }
-              float dome = sqrt(1.0 - pow(t, 2.0));
-              if (uHasOrifice > 0.5) {
-                shapeScale = mix(r_entrance, (uShaftGirth + ridge) * dome, 1.0 - pow(t, 4.0));
-              } else {
-                shapeScale = (uShaftGirth + ridge) * dome;
-              }
+              shapeScale = headRadius * currentScale;
             }
           }
         }
@@ -566,14 +598,21 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
         pos.x *= (1.0 + flatFactor * 0.18);
       }
 
-      // Curvature bend along X
+      // Curvature bend along X with tangent rotation to prevent shearing
+      float bentY_offset = 0.0;
       if (normY_physical > 0.25) {
         float curveT = (normY_physical - 0.25) / 0.75;
-        pos.x += pow(curveT, 3.0) * uCurvature * 1.9;
+        float slope = 4.0 * curveT * curveT * uCurvature * 1.9;
+        float denom = sqrt(1.0 + slope * slope);
+        float cosT = 1.0 / denom;
+        float sinT = -slope / denom;
+        
+        bentY_offset = pos.x * sinT;
+        pos.x = pos.x * cosT + pow(curveT, 3.0) * uCurvature * 1.9;
       }
 
-      // Scale height
-      pos.y *= uLength;
+      // Scale height and apply relative Y bending offset
+      pos.y = pos.y * uLength + bentY_offset;
 
       // Live vibration micro-ripple
       if (uVibration > 0.5) {

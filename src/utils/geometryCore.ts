@@ -156,30 +156,44 @@ export const getParametricVertex = (
       // Head curvature details (bulbous head & corona ridge)
       else if (virtualNormY > 0.76) {
         const t = (virtualNormY - 0.76) / 0.24;
+        let headRadius = params.shaftGirth;
         let ridge = 0.0;
-        if (uShapeType === 1.0 || params.realisticGlans) {
-          // Realistic Glans
+        const dome = Math.sqrt(Math.max(0, 1.0 - Math.pow(t, 2.0)));
+        
+        const headType = params.headType || 'classic';
+        if (headType === 'classic') {
+          if (t < 0.25) ridge = 0.14 * Math.sin((t / 0.25) * Math.PI);
+          headRadius = (params.shaftGirth + ridge) * dome;
+        } else if (headType === 'realistic') {
           const cleft = 0.035 * Math.cos(angle * 2.0);
-          if (t < 0.25) {
-            ridge = 0.18 * Math.sin((t / 0.25) * Math.PI);
-          }
-          const dome = Math.sqrt(1.0 - Math.pow(t, 2.0));
-          if (hasOrifice) {
-            shapeScale = mix(r_entrance, (params.shaftGirth + ridge + cleft) * dome, 1.0 - Math.pow(t, 4.0));
-          } else {
-            shapeScale = (params.shaftGirth + ridge + cleft) * dome;
-          }
+          if (t < 0.25) ridge = 0.18 * Math.sin((t / 0.25) * Math.PI);
+          headRadius = (params.shaftGirth + ridge + cleft) * dome;
+        } else if (headType === 'bulbous') {
+          const bulb = 0.35 * params.shaftGirth * Math.sin(t * Math.PI * 0.75);
+          if (t < 0.2) ridge = 0.08 * params.shaftGirth * Math.sin((t / 0.2) * Math.PI);
+          headRadius = (params.shaftGirth * 1.1 + ridge + bulb) * dome;
+        } else if (headType === 'tapered') {
+          headRadius = params.shaftGirth * dome * (1.0 - t * 0.35);
+        } else if (headType === 'alien') {
+          let alienRidge = 0.0;
+          if (t < 0.25) alienRidge = 0.16 * params.shaftGirth * Math.sin((t / 0.25) * Math.PI);
+          else if (t > 0.4 && t < 0.65) alienRidge = 0.12 * params.shaftGirth * Math.sin(((t - 0.4) / 0.25) * Math.PI);
+          headRadius = (params.shaftGirth + alienRidge) * dome;
+        } else if (headType === 'dragon') {
+          let dragonRidge = 0.0;
+          if (t < 0.3) dragonRidge = 0.18 * params.shaftGirth * Math.sin((t / 0.3) * Math.PI);
+          const segment = 0.08 * params.shaftGirth * Math.sin(t * Math.PI * 3.0);
+          headRadius = (params.shaftGirth + dragonRidge + segment) * dome;
+        }
+        
+        const scaleBlend = smoothstep(0.0, 0.25, t);
+        const headScale = params.headScale !== undefined ? params.headScale : 1.0;
+        const currentScale = mix(1.0, headScale, scaleBlend);
+        
+        if (hasOrifice) {
+          shapeScale = mix(r_entrance, headRadius * currentScale, 1.0 - Math.pow(t, 4.0));
         } else {
-          // Classic Glans
-          if (t < 0.25) {
-            ridge = 0.14 * Math.sin((t / 0.25) * Math.PI);
-          }
-          const dome = Math.sqrt(1.0 - Math.pow(t, 2.0));
-          if (hasOrifice) {
-            shapeScale = mix(r_entrance, (params.shaftGirth + ridge) * dome, 1.0 - Math.pow(t, 4.0));
-          } else {
-            shapeScale = (params.shaftGirth + ridge) * dome;
-          }
+          shapeScale = headRadius * currentScale;
         }
       }
     }
@@ -309,15 +323,22 @@ export const getParametricVertex = (
     x *= (1.0 + flatFactor * 0.18);
   }
 
-  // Curvature bend along X
+  // Curvature bend along X with tangent rotation to prevent shearing
   let bentX = x;
+  let bentY_offset = 0;
   if (normY_physical > 0.25) {
     const curveT = (normY_physical - 0.25) / 0.75;
-    bentX += Math.pow(curveT, 3.0) * params.curvature * 1.9;
+    const slope = 4.0 * curveT * curveT * params.curvature * 1.9;
+    const denom = Math.sqrt(1.0 + slope * slope);
+    const cosT = 1.0 / denom;
+    const sinT = -slope / denom;
+    
+    bentY_offset = x * sinT;
+    bentX = x * cosT + Math.pow(curveT, 3.0) * params.curvature * 1.9;
   }
 
-  // Scale height
-  const yFinal = yVal * params.length;
+  // Scale height and apply relative Y bending offset
+  const yFinal = yVal * params.length + bentY_offset;
 
   return { x: bentX, y: yFinal, z };
 };

@@ -33,6 +33,8 @@ export type ShapeType =
   | 'kitchen'
   | 'collectible';
 
+export type HeadType = 'classic' | 'realistic' | 'bulbous' | 'tapered' | 'alien' | 'dragon';
+
 export type FantasyType = 'dragon' | 'alien' | 'tentacle';
 
 export type BaseType = 'flared' | 'flat' | 'harness';
@@ -64,8 +66,9 @@ export interface BuilderParams {
   isVibrating: boolean;
   showScaleRef: boolean;
   shapeType: ShapeType;
+  headType: HeadType;
+  headScale: number;
   realisticVeins: number;
-  realisticGlans: boolean;
   hasBalls: boolean;
   fantasyType: FantasyType;
   baseType: BaseType;
@@ -159,6 +162,7 @@ export interface Vec3 {
 
 export type BuilderSection =
   | 'shape'
+  | 'head'
   | 'dimensions'
   | 'firmness'
   | 'color'

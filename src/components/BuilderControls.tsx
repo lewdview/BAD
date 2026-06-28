@@ -1,11 +1,12 @@
 import React, { useMemo, useRef, useEffect } from 'react';
-import { Sparkles, Layers, Ruler, Sliders, Palette, Heart, Type, Eye } from 'lucide-react';
+import { Sparkles, Layers, Ruler, Sliders, Palette, Heart, Type, Eye, Circle } from 'lucide-react';
 import { generateToySTL } from '../utils/stlGenerator';
 import type { BuilderParams, CartItem, UpdateParamFn } from '../types';
 
 import { calculatePrice } from '../constants/pricing';
 import { AccordionSection } from './ui/AccordionSection';
 import { ShapeControls } from './builder/ShapeControls';
+import { HeadControls } from './builder/HeadControls';
 import { DimensionsControls } from './builder/DimensionsControls';
 import { FirmnessControls } from './builder/FirmnessControls';
 import { ColorMaterialControls } from './builder/ColorMaterialControls';
@@ -433,11 +434,29 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
           </AccordionSection>
         </div>
 
+        {/* ACCORDION 1.5: HEAD SETTINGS */}
+        {!demoMode && (
+          <div className="card" style={{ padding: '0 18px' }}>
+            <AccordionSection
+              id="head"
+              title="2. Head & Tip Styling"
+              icon={<Circle size={15} color="var(--accent-gold)" />}
+              isExpanded={expandedSection === 'head'}
+              onToggle={toggleSection}
+            >
+              <HeadControls
+                params={params}
+                updateParam={updateParam}
+              />
+            </AccordionSection>
+          </div>
+        )}
+
         {/* ACCORDION 2: DIMENSIONS / CURVES */}
         <div className="card" style={{ padding: '0 18px' }}>
           <AccordionSection
             id="dimensions"
-            title={demoMode ? "2. Volumetrics" : "2. Dimensions & Curves"}
+            title={demoMode ? "3. Volumetrics" : "3. Dimensions & Curves"}
             icon={<Ruler size={15} color="var(--accent-gold)" />}
             isExpanded={expandedSection === 'dimensions'}
             onToggle={toggleSection}
@@ -455,7 +474,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
           <div className="card" style={{ padding: '0 18px' }}>
             <AccordionSection
               id="testicles"
-              title="3. Testicles & Sack"
+              title="4. Testicles & Sack"
               icon={<Sparkles size={15} color="var(--accent-gold)" />}
               isExpanded={expandedSection === 'testicles'}
               onToggle={toggleSection}
@@ -472,7 +491,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
         <div className="card" style={{ padding: '0 18px' }}>
           <AccordionSection
             id="firmness"
-            title={demoMode ? "3. Silicone Shore Firmness" : "4. Firmness & Density"}
+            title={demoMode ? "4. Silicone Shore Firmness" : "5. Firmness & Density"}
             icon={<Sliders size={15} color="var(--accent-gold)" />}
             isExpanded={expandedSection === 'firmness'}
             onToggle={toggleSection}
@@ -489,7 +508,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
         <div className="card" style={{ padding: '0 18px' }}>
           <AccordionSection
             id="color"
-            title={demoMode ? "4. Color & Craft presets" : "5. Pigment & Material"}
+            title={demoMode ? "5. Color & Craft presets" : "6. Pigment & Material"}
             icon={<Palette size={15} color="var(--accent-gold)" />}
             isExpanded={expandedSection === 'color'}
             onToggle={toggleSection}
@@ -506,7 +525,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
           <div className="card" style={{ padding: '0 18px' }}>
             <AccordionSection
               id="functional"
-              title="6. Functional Upgrades"
+              title="7. Functional Upgrades"
               icon={<Heart size={15} color="var(--accent-gold)" />}
               isExpanded={expandedSection === 'functional'}
               onToggle={toggleSection}
@@ -523,7 +542,7 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
         <div className="card" style={{ padding: '0 18px' }}>
           <AccordionSection
             id="engraving"
-            title={demoMode ? "5. Custom Branding & Text" : "7. Custom Engraving & Text"}
+            title={demoMode ? "6. Custom Branding & Text" : "8. Custom Engraving & Text"}
             icon={<Type size={15} color="var(--accent-gold)" />}
             isExpanded={expandedSection === 'engraving'}
             onToggle={toggleSection}
@@ -535,11 +554,11 @@ export const BuilderControls: React.FC<BuilderControlsProps> = ({
           </AccordionSection>
         </div>
 
-        {/* ACCORDION 7: SCENERY & AR ENVIRONMENT */}
+        {/* ACCORDION 8: SCENERY & AR ENVIRONMENT */}
         <div className="card" style={{ padding: '0 18px' }}>
           <AccordionSection
             id="scenery"
-            title={demoMode ? "6. Scenery & AR View" : "8. Scenery & AR View"}
+            title={demoMode ? "7. Scenery & AR View" : "9. Scenery & AR View"}
             icon={<Eye size={15} color="var(--accent-gold)" />}
             isExpanded={expandedSection === 'scenery'}
             onToggle={toggleSection}

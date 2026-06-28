@@ -21,8 +21,12 @@ export function calculatePrice(params: BuilderParams, demoMode: boolean): number
     }
     if (params.shapeType === 'realistic') {
       price += params.realisticVeins * 10.00;
-      if (params.realisticGlans) price += 8.00;
-      if (params.hasBalls) price += 20.00;
+    }
+    if (params.headType && params.headType !== 'classic') {
+      price += 8.00;
+    }
+    if (params.hasBalls) {
+      price += 20.00;
     }
   } else {
     if (params.shapeType === 'collectible') {

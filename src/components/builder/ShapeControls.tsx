@@ -92,17 +92,6 @@ export const ShapeControls: React.FC<ShapeControlsProps> = ({
                 formatValue={(val) => `${Math.round(val * 100)}%`}
               />
 
-              <label className="switch-label">
-                <span style={{ fontSize: '12px', fontWeight: 600 }}>Defined Glans Head</span>
-                <div className="switch">
-                  <input 
-                    type="checkbox" 
-                    checked={params.realisticGlans} 
-                    onChange={(e) => updateParam('realisticGlans', e.target.checked)} 
-                  />
-                  <span className="slider"></span>
-                </div>
-              </label>
             </div>
           )}
 
