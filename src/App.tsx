@@ -52,32 +52,32 @@ function App() {
   // 3D Builder Parametric parameters
   const [builderParams, setBuilderParams] = useState<BuilderParams>({
     baseGeometry: 'classic',
-    length: 7.5,
-    shaftGirth: 1.35,
-    baseGirth: 1.60,
-    curvature: 0.3,
+    length: 7.2,
+    shaftGirth: 1.30,
+    baseGirth: 1.55,
+    curvature: 0.1,
     curvatureAngle: 0,
-    texture: 'swirled',
+    texture: 'smooth',
     suctionCup: true,
     vibrationCore: false,
-    colorMode: 2, // Gradient
-    color1: '#ff007f', // Hot Pink
-    color2: '#00e5ff', // Cyan
+    colorMode: 0, // Solid
+    color1: '#14b8a6', // Deep translucent teal/cyan
+    color2: '#2dd4bf', // Lighter translucent teal/cyan core
     isVibrating: false,
     showScaleRef: false,
-    shapeType: 'fantasy',
-    headType: 'dragon',
-    headScale: 1.1,
-    realisticVeins: 0.0,
+    shapeType: 'realistic',
+    headType: 'realistic',
+    headScale: 1.0,
+    realisticVeins: 0.65, // Shows veins and skin folds
     hasBalls: true,
     fantasyType: 'dragon',
     baseType: 'flared',
-    taper: 0.1,
+    taper: 0.08,
     firmness: 'dual-density',
-    inclusions: 'glitter',
-    thermochromic: true,
+    inclusions: 'none',
+    thermochromic: false,
     internalTube: false,
-    blacklightMode: true,
+    blacklightMode: false,
     arMode: false,
     sceneEnvironment: 'studio',
     engraveText: '',
@@ -85,8 +85,8 @@ function App() {
     engravePosition: 0.5,
     engraveSize: 44,
     engraveDepth: 0.5,
-    ballSize: 1.2,
-    ballAsymmetry: 0.1,
+    ballSize: 0.85, // Snug, compact balls
+    ballAsymmetry: 0.0,
     hasOrifice: false,
     orificeType: 'vaginal',
     orificeDepth: 0.4

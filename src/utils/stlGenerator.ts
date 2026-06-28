@@ -13,15 +13,15 @@ const getBallCoords = (params: BuilderParams) => {
   const theta = (ballAsymmetry * Math.PI) / 180;
   
   // Scrotum assembly base coordinates in XZ plane
-  // Adjusted center to push the scrotum further outside the shaft
-  const z0 = -0.95 * girth - 0.2;
+  // Snug scrotum positioning against the shaft, sitting on the base flange
+  const z0 = -0.52 * girth - 0.08;
   
   // Left and Right lobe offsets in X
-  const x0_L = -0.32 * girth;
-  const x0_R = 0.32 * girth;
+  const x0_L = -0.28 * girth;
+  const x0_R = 0.28 * girth;
   
   // Radii/scales (slightly taller in Y, flatter in Z for natural sag)
-  const R = 0.60 * girth * ballSize; // Increased base size
+  const R = 0.48 * girth * ballSize; // Balanced base size
   const scaleZ = 0.9;
   const scaleY = 1.15;
   

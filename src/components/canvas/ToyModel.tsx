@@ -22,15 +22,15 @@ const getBallCoords = (params: {
   
   const theta = (ballAsymmetry * Math.PI) / 180;
   
-  // Adjusted center to push the scrotum further outside the shaft
-  const z0 = -0.95 * girth - 0.2;
+  // Snug scrotum positioning against the shaft, sitting on the base flange
+  const z0 = -0.52 * girth - 0.08;
   
   // Left and Right lobe offsets in X
-  const x0_L = -0.32 * girth;
-  const x0_R = 0.32 * girth;
+  const x0_L = -0.28 * girth;
+  const x0_R = 0.28 * girth;
   
   // Radii/scales (slightly taller in Y, flatter in Z for natural sag)
-  const R = 0.60 * girth * ballSize; // Increased base size
+  const R = 0.48 * girth * ballSize; // Balanced base size
   const scaleZ = 0.9;
   const scaleY = 1.15;
   
@@ -794,27 +794,43 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params, demoMode }) => {
       return 0.0;
     }
 
-    // Organic Veins bump function
-    float getVeinsBump(vec3 pos, float normY, float shapeType, float realisticVeins) {
-      if (shapeType < 0.5 || shapeType > 1.5 || realisticVeins < 0.05) return 0.0;
-      if (normY <= 0.2 || normY >= 0.8) return 0.0;
+    // Organic wrinkly skin folds and veins for Realistic style
+    float getRealisticSkinBump(vec3 pos, float normY, float realisticVeins, float meshType) {
+      if (realisticVeins < 0.05) return 0.0;
       
-      float fade = smoothstep(0.2, 0.3, normY) * (1.0 - smoothstep(0.74, 0.8, normY));
+      // Face/Glans of the head should be smoother, so we fade out at the very tip of the shaft
+      float fade = 1.0;
+      if (meshType < 0.5 && normY > 0.85) {
+        fade = smoothstep(1.0, 0.85, normY);
+      }
       
-      // Two organic winding veins using 3D noise
-      float n1 = noise3(pos * vec3(1.6, 1.3, 1.6) + vec3(1.2, 3.4, 0.5));
-      float vein1 = smoothstep(0.62, 0.67, n1) * (1.0 - smoothstep(0.67, 0.72, n1)) * 4.0;
+      // Horizontal skin wrinkles / folds
+      // Stretched along Y axis (so pos.y frequency is higher)
+      float foldsNoise = noise3(pos * vec3(1.5, 6.5, 1.5) + vec3(1.2, pos.y * 3.0, 0.5));
+      float wrinkles = (foldsNoise - 0.5) * 0.045;
       
-      float n2 = noise3(pos * vec3(1.4, 1.5, 1.4) + vec3(-2.0, -1.0, 4.0));
-      float vein2 = smoothstep(0.60, 0.65, n2) * (1.0 - smoothstep(0.65, 0.70, n2)) * 4.0;
+      // Micro-texture pores/creases
+      float microPores = (noise3(pos * 28.0) - 0.5) * 0.012;
       
-      return max(vein1, vein2) * 0.022 * realisticVeins * fade;
+      // Veins
+      float n1 = noise3(pos * vec3(1.5, 1.2, 1.5) + vec3(2.5, 4.1, 0.8));
+      float vein1 = smoothstep(0.60, 0.65, n1) * (1.0 - smoothstep(0.65, 0.70, n1)) * 4.0;
+      
+      float n2 = noise3(pos * vec3(1.3, 1.4, 1.3) + vec3(-3.0, -2.0, 5.0));
+      float vein2 = smoothstep(0.58, 0.63, n2) * (1.0 - smoothstep(0.63, 0.68, n2)) * 4.0;
+      
+      float veins = max(vein1, vein2) * 0.024;
+      
+      return (wrinkles + microPores + veins) * realisticVeins * fade;
     }
 
-    float getCombinedBump(vec3 pos, float normY, int textureStyle, float shapeType, float realisticVeins) {
+    float getCombinedBump(vec3 pos, float normY, int textureStyle, float shapeType, float realisticVeins, float meshType) {
       float b = getBump(pos, normY, textureStyle);
-      float v = getVeinsBump(pos, normY, shapeType, realisticVeins);
-      return b + v;
+      if (shapeType > 0.5 && shapeType < 1.5) {
+        float r = getRealisticSkinBump(pos, normY, realisticVeins, meshType);
+        return b + r;
+      }
+      return b;
     }
 
     void main() {
@@ -839,15 +855,15 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params, demoMode }) => {
       }
 
       // 1. PROCEDURAL BUMP MAPPING via Finite Differences
-      float bumpCenter = getCombinedBump(adjPos, normY, uTextureStyle, uShapeType, uRealisticVeins);
+      float bumpCenter = getCombinedBump(adjPos, normY, uTextureStyle, uShapeType, uRealisticVeins, uMeshType);
       
       vec3 up = vec3(0.0, 1.0, 0.0);
       vec3 tangent = normalize(cross(normalVec, up));
       vec3 bitangent = cross(normalVec, tangent);
       
       float eps = 0.015;
-      float bumpT = getCombinedBump(adjPos + tangent * eps, normY, uTextureStyle, uShapeType, uRealisticVeins);
-      float bumpB = getCombinedBump(adjPos + bitangent * eps, normY, uTextureStyle, uShapeType, uRealisticVeins);
+      float bumpT = getCombinedBump(adjPos + tangent * eps, normY, uTextureStyle, uShapeType, uRealisticVeins, uMeshType);
+      float bumpB = getCombinedBump(adjPos + bitangent * eps, normY, uTextureStyle, uShapeType, uRealisticVeins, uMeshType);
       
       float gradT = (bumpT - bumpCenter) / eps;
       float gradB = (bumpB - bumpCenter) / eps;
@@ -879,6 +895,13 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params, demoMode }) => {
         } else if (uTextureStyle == 3) {
           float normalizedBump = bumpCenter / (0.08 * smoothstep(0.22, 0.28, normY) * (1.0 - smoothstep(0.72, 0.78, normY)) + 0.0001);
           ao = mix(0.65, 1.0, smoothstep(0.0, 0.4, normalizedBump));
+        }
+      }
+      
+      // Add AO for realistic skin folds/wrinkles
+      if (uShapeType > 0.5 && uShapeType < 1.5 && uRealisticVeins > 0.05) {
+        if (bumpCenter < 0.0) {
+          ao = min(ao, mix(0.62, 1.0, smoothstep(-0.045, 0.0, bumpCenter)));
         }
       }
       
@@ -1002,7 +1025,15 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params, demoMode }) => {
         }
       }
 
-      gl_FragColor = vec4(finalColor, uAlpha);
+      float finalAlpha = uAlpha;
+      if (uAlpha < 0.95) {
+        // Fresnel opacity: edges are more opaque, center is more transparent
+        finalAlpha = mix(uAlpha * 0.35, 0.92, fresnel);
+        // Specular opacity boost: specular highlights on the outer surface are opaque
+        finalAlpha = max(finalAlpha, max(specularTotal.r, envColor.r) * 1.25);
+      }
+
+      gl_FragColor = vec4(finalColor, finalAlpha);
     }
   `;
 
