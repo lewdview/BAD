@@ -21,7 +21,7 @@ export const ShapeControls: React.FC<ShapeControlsProps> = ({
               { id: 'candle', label: 'Spiral Candle' },
               { id: 'soap', label: 'Honeycomb Soap' },
               { id: 'kitchen', label: 'Baking Cup' },
-              { id: 'collectible', label: 'Chibi Base' }
+              { id: 'collectible', label: 'Chibi Figurine' }
             ].map((scenario) => (
               <button
                 key={scenario.id}

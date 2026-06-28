@@ -247,113 +247,10 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
   const rightBallUniforms = useMemo(() => createUniforms(2, 0.32 * params.shaftGirth, -0.26 * params.length), []);
 
   useEffect(() => {
-    const update = (u: Record<string, THREE.IUniform>, material: THREE.ShaderMaterial | null, meshType: number, ballOffset = 0, ballYOffset = 0) => {
-      // 1. Update local uniforms object reference
-      u.uLength.value = params.length;
-      u.uShaftGirth.value = params.shaftGirth;
-      u.uBaseGirth.value = params.baseGirth;
-      u.uCurvature.value = params.curvature;
-      u.uCurvatureAngle.value = params.curvatureAngle || 0;
-      u.uSuctionCup.value = params.suctionCup ? 1.0 : 0.0;
-      u.uGeometryStyle.value = params.baseGeometry === 'wave' ? 1.0 : params.baseGeometry === 'ergonomic' ? 2.0 : 0.0;
-      u.uTextureStyle.value = textureId;
-      u.uColor1.value.set(params.color1);
-      u.uColor2.value.set(params.color2);
-      u.uColorMode.value = params.colorMode;
-      u.uVibration.value = params.isVibrating ? 1.0 : 0.0;
-      
-      u.uMeshType.value = meshType;
-      u.uShapeType.value = 
-        params.shapeType === 'classic' ? 0.0 : 
-        params.shapeType === 'realistic' ? 1.0 : 
-        params.shapeType === 'fantasy' ? 2.0 : 
-        params.shapeType === 'targeted' ? 3.0 : 
-        params.shapeType === 'candle' ? 4.0 : 
-        params.shapeType === 'soap' ? 5.0 : 
-        params.shapeType === 'kitchen' ? 6.0 : 7.0;
-      u.uRealisticVeins.value = params.realisticVeins;
-      u.uHeadType.value = 
-        params.headType === 'classic' ? 0.0 : 
-        params.headType === 'realistic' ? 1.0 : 
-        params.headType === 'bulbous' ? 2.0 : 
-        params.headType === 'tapered' ? 3.0 : 
-        params.headType === 'alien' ? 4.0 : 5.0;
-      u.uHeadScale.value = params.headScale !== undefined ? params.headScale : 1.0;
-      u.uFantasyType.value = params.fantasyType === 'dragon' ? 0.0 : params.fantasyType === 'alien' ? 1.0 : 2.0;
-      u.uBaseType.value = params.baseType === 'flared' ? 0.0 : params.baseType === 'flat' ? 1.0 : 2.0;
-      u.uTaper.value = params.taper;
-      u.uFirmness.value = params.firmness === 'soft' ? 0.0 : params.firmness === 'medium' ? 1.0 : params.firmness === 'firm' ? 2.0 : 3.0;
-      u.uInclusions.value = params.inclusions === 'none' ? 0.0 : params.inclusions === 'glitter' ? 1.0 : params.inclusions === 'metallic' ? 2.0 : 3.0;
-      u.uThermochromic.value = params.thermochromic ? 1.0 : 0.0;
-      u.uBlacklightMode.value = params.blacklightMode ? 1.0 : 0.0;
-      u.uBallOffset.value = ballOffset;
-      u.uBallYOffset.value = ballYOffset;
-      u.uAlpha.value = (meshType === 0 && params.firmness === 'dual-density') ? 0.55 : 1.0;
-      u.uTextTexture.value = textTexture;
-      u.uTextStyle.value = (!params.engraveStyle || params.engraveStyle === 'none') ? 0.0 : params.engraveStyle === 'embossed' ? 1.0 : 2.0;
-      u.uTextDepth.value = params.engraveDepth !== undefined ? params.engraveDepth : 0.5;
-      u.uHasOrifice.value = params.hasOrifice ? 1.0 : 0.0;
-      u.uOrificeType.value = params.orificeType === 'vaginal' ? 0.0 : params.orificeType === 'anal' ? 1.0 : 2.0;
-      u.uOrificeDepth.value = params.orificeDepth || 0.4;
-
-      // 2. Update active WebGL material instance uniforms directly
-      if (material) {
-        const mu = material.uniforms;
-        mu.uLength.value = params.length;
-        mu.uShaftGirth.value = params.shaftGirth;
-        mu.uBaseGirth.value = params.baseGirth;
-        mu.uCurvature.value = params.curvature;
-        mu.uCurvatureAngle.value = params.curvatureAngle || 0;
-        mu.uSuctionCup.value = params.suctionCup ? 1.0 : 0.0;
-        mu.uGeometryStyle.value = params.baseGeometry === 'wave' ? 1.0 : params.baseGeometry === 'ergonomic' ? 2.0 : 0.0;
-        mu.uTextureStyle.value = textureId;
-        mu.uColor1.value.set(params.color1);
-        mu.uColor2.value.set(params.color2);
-        mu.uColorMode.value = params.colorMode;
-        mu.uVibration.value = params.isVibrating ? 1.0 : 0.0;
-        
-        mu.uMeshType.value = meshType;
-        mu.uShapeType.value = 
-          params.shapeType === 'classic' ? 0.0 : 
-          params.shapeType === 'realistic' ? 1.0 : 
-          params.shapeType === 'fantasy' ? 2.0 : 
-          params.shapeType === 'targeted' ? 3.0 : 
-          params.shapeType === 'candle' ? 4.0 : 
-          params.shapeType === 'soap' ? 5.0 : 
-          params.shapeType === 'kitchen' ? 6.0 : 7.0;
-        mu.uRealisticVeins.value = params.realisticVeins;
-        mu.uHeadType.value = 
-          params.headType === 'classic' ? 0.0 : 
-          params.headType === 'realistic' ? 1.0 : 
-          params.headType === 'bulbous' ? 2.0 : 
-          params.headType === 'tapered' ? 3.0 : 
-          params.headType === 'alien' ? 4.0 : 5.0;
-        mu.uHeadScale.value = params.headScale !== undefined ? params.headScale : 1.0;
-        mu.uFantasyType.value = params.fantasyType === 'dragon' ? 0.0 : params.fantasyType === 'alien' ? 1.0 : 2.0;
-        mu.uBaseType.value = params.baseType === 'flared' ? 0.0 : params.baseType === 'flat' ? 1.0 : 2.0;
-        mu.uTaper.value = params.taper;
-        mu.uFirmness.value = params.firmness === 'soft' ? 0.0 : params.firmness === 'medium' ? 1.0 : params.firmness === 'firm' ? 2.0 : 3.0;
-        mu.uInclusions.value = params.inclusions === 'none' ? 0.0 : params.inclusions === 'glitter' ? 1.0 : params.inclusions === 'metallic' ? 2.0 : 3.0;
-        mu.uThermochromic.value = params.thermochromic ? 1.0 : 0.0;
-        mu.uBlacklightMode.value = params.blacklightMode ? 1.0 : 0.0;
-        mu.uBallOffset.value = ballOffset;
-        mu.uBallYOffset.value = ballYOffset;
-        mu.uAlpha.value = (meshType === 0 && params.firmness === 'dual-density') ? 0.55 : 1.0;
-        mu.uTextTexture.value = textTexture;
-        mu.uTextStyle.value = (!params.engraveStyle || params.engraveStyle === 'none') ? 0.0 : params.engraveStyle === 'embossed' ? 1.0 : 2.0;
-        mu.uTextDepth.value = params.engraveDepth !== undefined ? params.engraveDepth : 0.5;
-        mu.uHasOrifice.value = params.hasOrifice ? 1.0 : 0.0;
-        mu.uOrificeType.value = params.orificeType === 'vaginal' ? 0.0 : params.orificeType === 'anal' ? 1.0 : 2.0;
-        mu.uOrificeDepth.value = params.orificeDepth || 0.4;
-      }
+    return () => {
+      textTexture.dispose();
     };
-
-    update(outerUniforms, outerMaterialRef.current, 0);
-    update(innerUniforms, innerMaterialRef.current, 1);
-    update(tubeUniforms, tubeMaterialRef.current, 3);
-    update(leftBallUniforms, leftBallMaterialRef.current, 2, ballCoords.left.x, ballCoords.left.y);
-    update(rightBallUniforms, rightBallMaterialRef.current, 2, ballCoords.right.x, ballCoords.right.y);
-  }, [params, textureId, textTexture, outerUniforms, innerUniforms, tubeUniforms, leftBallUniforms, rightBallUniforms, ballCoords]);
+  }, [textTexture]);
 
   const elapsedTimeRef = useRef<number>(0);
 
@@ -361,13 +258,6 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
     elapsedTimeRef.current += delta;
     const time = elapsedTimeRef.current;
     
-    // Only update uTime on every frame
-    outerUniforms.uTime.value = time;
-    innerUniforms.uTime.value = time;
-    tubeUniforms.uTime.value = time;
-    leftBallUniforms.uTime.value = time;
-    rightBallUniforms.uTime.value = time;
-
     if (groupRef.current && params.isVibrating) {
       const vibrationFreq = 95.0;
       const vibrationAmp = 0.004;
@@ -379,6 +269,64 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
     } else if (groupRef.current) {
       groupRef.current.position.set(0, 0, 0);
     }
+
+    const updateMaterial = (material: THREE.ShaderMaterial | null, meshType: number, ballOffset = 0, ballYOffset = 0) => {
+      if (!material) return;
+      const mu = material.uniforms;
+      mu.uTime.value = time;
+      mu.uLength.value = params.length;
+      mu.uShaftGirth.value = params.shaftGirth;
+      mu.uBaseGirth.value = params.baseGirth;
+      mu.uCurvature.value = params.curvature;
+      mu.uCurvatureAngle.value = params.curvatureAngle || 0;
+      mu.uSuctionCup.value = params.suctionCup ? 1.0 : 0.0;
+      mu.uGeometryStyle.value = params.baseGeometry === 'wave' ? 1.0 : params.baseGeometry === 'ergonomic' ? 2.0 : 0.0;
+      mu.uTextureStyle.value = textureId;
+      mu.uColor1.value.set(params.color1);
+      mu.uColor2.value.set(params.color2);
+      mu.uColorMode.value = params.colorMode;
+      mu.uVibration.value = params.isVibrating ? 1.0 : 0.0;
+      
+      mu.uMeshType.value = meshType;
+      mu.uShapeType.value = 
+        params.shapeType === 'classic' ? 0.0 : 
+        params.shapeType === 'realistic' ? 1.0 : 
+        params.shapeType === 'fantasy' ? 2.0 : 
+        params.shapeType === 'targeted' ? 3.0 : 
+        params.shapeType === 'candle' ? 4.0 : 
+        params.shapeType === 'soap' ? 5.0 : 
+        params.shapeType === 'kitchen' ? 6.0 : 7.0;
+      mu.uRealisticVeins.value = params.realisticVeins;
+      mu.uHeadType.value = 
+        params.headType === 'classic' ? 0.0 : 
+        params.headType === 'realistic' ? 1.0 : 
+        params.headType === 'bulbous' ? 2.0 : 
+        params.headType === 'tapered' ? 3.0 : 
+        params.headType === 'alien' ? 4.0 : 5.0;
+      mu.uHeadScale.value = params.headScale !== undefined ? params.headScale : 1.0;
+      mu.uFantasyType.value = params.fantasyType === 'dragon' ? 0.0 : params.fantasyType === 'alien' ? 1.0 : 2.0;
+      mu.uBaseType.value = params.baseType === 'flared' ? 0.0 : params.baseType === 'flat' ? 1.0 : 2.0;
+      mu.uTaper.value = params.taper;
+      mu.uFirmness.value = params.firmness === 'soft' ? 0.0 : params.firmness === 'medium' ? 1.0 : params.firmness === 'firm' ? 2.0 : 3.0;
+      mu.uInclusions.value = params.inclusions === 'none' ? 0.0 : params.inclusions === 'glitter' ? 1.0 : params.inclusions === 'metallic' ? 2.0 : 3.0;
+      mu.uThermochromic.value = params.thermochromic ? 1.0 : 0.0;
+      mu.uBlacklightMode.value = params.blacklightMode ? 1.0 : 0.0;
+      mu.uBallOffset.value = ballOffset;
+      mu.uBallYOffset.value = ballYOffset;
+      mu.uAlpha.value = (meshType === 0 && params.firmness === 'dual-density') ? 0.55 : 1.0;
+      mu.uTextTexture.value = textTexture;
+      mu.uTextStyle.value = (!params.engraveStyle || params.engraveStyle === 'none') ? 0.0 : params.engraveStyle === 'embossed' ? 1.0 : 2.0;
+      mu.uTextDepth.value = params.engraveDepth !== undefined ? params.engraveDepth : 0.5;
+      mu.uHasOrifice.value = params.hasOrifice ? 1.0 : 0.0;
+      mu.uOrificeType.value = params.orificeType === 'vaginal' ? 0.0 : params.orificeType === 'anal' ? 1.0 : 2.0;
+      mu.uOrificeDepth.value = params.orificeDepth || 0.4;
+    };
+
+    updateMaterial(outerMaterialRef.current, 0);
+    updateMaterial(innerMaterialRef.current, 1);
+    updateMaterial(tubeMaterialRef.current, 3);
+    updateMaterial(leftBallMaterialRef.current, 2, ballCoords.left.x, ballCoords.left.y);
+    updateMaterial(rightBallMaterialRef.current, 2, ballCoords.right.x, ballCoords.right.y);
   });
 
   const vertexShader = `
@@ -419,7 +367,7 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
       vec3 pos = position; // base cylinder is height 1.0, so y goes from -0.5 to 0.5
       float normY = pos.y + 0.5;
 
-      if (uMeshType == 2.0) {
+      if (uMeshType > 1.5 && uMeshType < 2.5) {
         // Balls: keep local sphere coordinates, do not bend or taper
         vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
         vViewPosition = -mvPosition.xyz;
@@ -429,14 +377,14 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
       }
 
       float normY_mapped = normY;
-      if (uMeshType == 1.0 && uHasOrifice > 0.5) {
+      if (uMeshType > 0.5 && uMeshType < 1.5 && uHasOrifice > 0.5) {
         float maxCoreHeight = 1.0 - uOrificeDepth - 0.08;
         normY_mapped = normY * maxCoreHeight;
         pos.y = normY_mapped - 0.5;
       }
 
       bool isOrificeCavity = false;
-      if (uHasOrifice > 0.5 && uMeshType != 1.0) {
+      if (uHasOrifice > 0.5 && (uMeshType < 0.5 || uMeshType > 1.5)) {
         float transitionNormY = 0.85;
         if (normY < transitionNormY) {
           normY_mapped = normY / transitionNormY;
@@ -575,23 +523,60 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
             shapeScale *= smoothstep(0.0, 1.0, normY_mapped / 0.1);
           }
         } else if (uShapeType == 7.0) {
-          // Collectible
-          float profile = 1.0;
-          if (normY_mapped < 0.45) {
-            profile = 1.25 - 0.5 * (normY_mapped / 0.45);
-          } else if (normY_mapped < 0.6) {
-            profile = 0.75;
-          } else {
-            float t = (normY_mapped - 0.6) / 0.4;
-            profile = 0.75 + 0.55 * sin(t * 3.14159);
-          }
-          shapeScale = uShaftGirth * profile;
+          // Full-blown Chibi figurine mold!
+          // 1. Base Stand: normY_mapped < 0.2
+          // 2. Chibi Body: 0.2 <= normY_mapped < 0.55
+          // 3. Chibi Head: 0.55 <= normY_mapped <= 1.0
           
           float angle = atan(pos.z, pos.x);
-          float octAngle = floor(angle * 8.0 / 6.28318 + 0.5) * 6.28318 / 8.0;
-          pos.x = cos(octAngle);
-          pos.z = sin(octAngle);
+          float profile = 1.0;
+          float featureOffset = 0.0;
+          
+          if (normY_mapped < 0.2) {
+            // Base plate (slightly beveled octagonal base)
+            float t = normY_mapped / 0.2;
+            profile = 1.4 - 0.2 * t;
+            // Make it slightly octagonal for a nice display stand look
+            float oct = 0.04 * cos(angle * 8.0);
+            profile += oct;
+          } else if (normY_mapped < 0.55) {
+            // Body section (waist is narrow, arms protrude at the sides)
+            float t = (normY_mapped - 0.2) / 0.35; // 0 to 1
+            // Tapered torso
+            profile = 1.0 - 0.3 * sin(t * 3.14159);
+            
+            // Stubby chibi arms protruding outwards at the left/right sides (angle = 0 and Math.PI)
+            float armProtrusion = 0.18 * pow(sin(t * 3.14159), 1.5) * max(0.0, cos(angle * 2.0));
+            featureOffset += armProtrusion;
+          } else {
+            // Spherical Head!
+            float t = (normY_mapped - 0.55) / 0.45; // 0 to 1
+            // Spherical profile:
+            float headRadiusFactor = 1.25;
+            profile = headRadiusFactor * sqrt(max(0.0, 1.0 - pow(t * 2.0 - 1.0, 2.0)));
+            
+            // Add cute rounded ears (like a bear or cat) at the top sides of the head
+            if (t > 0.7 && t < 0.95) {
+              float earT = (t - 0.7) / 0.25;
+              float earAngleFactor = max(0.0, cos(angle * 4.0 - 3.14159));
+              float earProtrusion = 0.22 * sin(earT * 3.14159) * earAngleFactor;
+              featureOffset += earProtrusion;
+            }
+            
+            // Add a cute little face/nose protrusion on the front (angle = -PI/2)
+            if (t > 0.3 && t < 0.6) {
+              float faceT = (t - 0.3) / 0.3;
+              float frontFactor = max(0.0, -sin(angle)); // Peaks at angle = -PI/2 (3PI/2)
+              float noseProtrusion = 0.08 * sin(faceT * 3.14159) * pow(frontFactor, 4.0);
+              featureOffset += noseProtrusion;
+            }
+          }
+          
+          shapeScale = uShaftGirth * (profile + featureOffset);
+          pos.x = cos(angle);
+          pos.z = sin(angle);
         }
+
         // Standard shape styles
         else if (uShapeType == 2.0) {
           // Fantasy geometries
@@ -629,7 +614,7 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
       }
 
       // Apply inner core scaling
-      if (uMeshType == 1.0) {
+      if (uMeshType > 0.5 && uMeshType < 1.5) {
         // Inner Core: stop slightly below tip to stay internal
         float innerScale = 0.46;
         if (normY_mapped > 0.82) {
@@ -639,7 +624,7 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
         shapeScale *= innerScale;
       }
       // Apply internal tube scaling
-      else if (uMeshType == 3.0) {
+      else if (uMeshType > 2.5 && uMeshType < 3.5) {
         shapeScale *= 0.06;
       }
 
@@ -726,7 +711,6 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
     uniform float uMeshType;
     uniform float uShapeType;
     uniform float uRealisticVeins;
-    uniform float uRealisticGlans;
     uniform float uFantasyType;
     uniform float uBaseType;
     uniform float uTaper;
@@ -834,7 +818,7 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
     }
 
     void main() {
-      if (uMeshType == 3.0) {
+      if (uMeshType > 2.5 && uMeshType < 3.5) {
         // Ejaculation Tube: opaque milk white
         gl_FragColor = vec4(0.96, 0.96, 0.98, 0.92);
         return;
@@ -848,7 +832,7 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
 
       // Adjust coordinate system if this is a ball mesh
       vec3 adjPos = vPosition;
-      if (uMeshType == 2.0) {
+      if (uMeshType > 1.5 && uMeshType < 2.5) {
         adjPos.x += uBallOffset;
         adjPos.y += uBallYOffset;
         normY = (adjPos.y + (uLength / 2.0)) / uLength;
@@ -904,7 +888,7 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
       // 3. MATERIAL COLOR (Solid / Liquid Marbled / Gradient / Split Pour)
       vec3 baseColor = uColor1;
 
-      if (uMeshType == 1.0) {
+      if (uMeshType > 0.5 && uMeshType < 1.5) {
         // Inner Core: slightly more saturated and solid
         baseColor = mix(uColor1 * 1.1, vec3(1.0), 0.15);
       } else {
@@ -928,7 +912,7 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
       }
 
       // Thermochromic Heat shift (flowing from tip)
-      if (uThermochromic > 0.5 && uMeshType != 1.0) {
+      if (uThermochromic > 0.5 && (uMeshType < 0.5 || uMeshType > 1.5)) {
         float heatFactor = smoothstep(0.55, 0.95, normY + sin(uTime * 1.4) * 0.04);
         vec3 heatColor = vec3(0.96, 0.25, 0.45); // vibrant thermo-pink
         baseColor = mix(baseColor, heatColor, heatFactor);

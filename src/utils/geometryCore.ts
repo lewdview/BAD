@@ -249,21 +249,56 @@ export const getParametricVertex = (
         shapeScale *= smoothstep(0.0, 1.0, virtualNormY / 0.1);
       }
     } else if (uShapeType === 7.0) {
-      // Collectible
-      let profile: number;
-      if (virtualNormY < 0.45) {
-        profile = 1.25 - 0.5 * (virtualNormY / 0.45);
-      } else if (virtualNormY < 0.6) {
-        profile = 0.75;
-      } else {
-        const t = (virtualNormY - 0.6) / 0.4;
-        profile = 0.75 + 0.55 * Math.sin(t * Math.PI);
-      }
-      shapeScale = params.shaftGirth * profile;
+      // Full-blown Chibi figurine mold!
+      // Let's divide into:
+      // 1. Base Stand: virtualNormY < 0.2
+      // 2. Chibi Body: 0.2 <= virtualNormY < 0.55
+      // 3. Chibi Head: 0.55 <= virtualNormY <= 1.0
       
-      const octAngle = Math.floor(angle * 8.0 / (Math.PI * 2) + 0.5) * (Math.PI * 2) / 8.0;
-      basePos.x = Math.cos(octAngle);
-      basePos.z = Math.sin(octAngle);
+      let profile: number;
+      let featureOffset = 0.0;
+      
+      if (virtualNormY < 0.2) {
+        // Base plate (slightly beveled octagonal base)
+        const t = virtualNormY / 0.2;
+        profile = 1.4 - 0.2 * t;
+        // Make it slightly octagonal for a nice display stand look
+        const oct = 0.04 * Math.cos(angle * 8.0);
+        profile += oct;
+      } else if (virtualNormY < 0.55) {
+        // Body section (waist is narrow, arms protrude at the sides)
+        const t = (virtualNormY - 0.2) / 0.35; // 0 to 1
+        // Tapered torso
+        profile = 1.0 - 0.3 * Math.sin(t * Math.PI);
+        
+        // Stubby chibi arms protruding outwards at the left/right sides (angle = 0 and Math.PI)
+        const armProtrusion = 0.18 * Math.pow(Math.sin(t * Math.PI), 1.5) * Math.max(0.0, Math.cos(angle * 2.0));
+        featureOffset += armProtrusion;
+      } else {
+        // Spherical Head!
+        const t = (virtualNormY - 0.55) / 0.45; // 0 to 1
+        // Spherical profile:
+        const headRadiusFactor = 1.25;
+        profile = headRadiusFactor * Math.sqrt(Math.max(0.0, 1.0 - Math.pow(t * 2.0 - 1.0, 2.0)));
+        
+        // Add cute rounded ears (like a bear or cat) at the top sides of the head
+        if (t > 0.7 && t < 0.95) {
+          const earT = (t - 0.7) / 0.25;
+          const earAngleFactor = Math.max(0.0, Math.cos(angle * 4.0 - Math.PI));
+          const earProtrusion = 0.22 * Math.sin(earT * Math.PI) * earAngleFactor;
+          featureOffset += earProtrusion;
+        }
+        
+        // Add a cute little face/nose protrusion on the front (angle = -PI/2)
+        if (t > 0.3 && t < 0.6) {
+          const faceT = (t - 0.3) / 0.3;
+          const frontFactor = Math.max(0.0, -Math.sin(angle)); // Peaks at angle = -PI/2 (3PI/2)
+          const noseProtrusion = 0.08 * Math.sin(faceT * Math.PI) * Math.pow(frontFactor, 4.0);
+          featureOffset += noseProtrusion;
+        }
+      }
+      
+      shapeScale = params.shaftGirth * (profile + featureOffset);
     }
     // Standard shape styles
     else if (uShapeType === 2.0) {

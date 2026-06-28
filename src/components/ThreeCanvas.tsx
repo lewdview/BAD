@@ -210,7 +210,7 @@ const ScreenshotTaker: React.FC<{ params: BuilderParams; demoMode: boolean }> = 
           if (craftShape === 'CANDLE') craftShape = 'SPIRAL PILLAR CANDLE';
           else if (craftShape === 'SOAP') craftShape = 'HONEYCOMB SOAP MOLD';
           else if (craftShape === 'KITCHEN') craftShape = 'SILICONE BAKING CUP';
-          else if (craftShape === 'COLLECTIBLE') craftShape = 'CHIBI FIGURINE BASE';
+          else if (craftShape === 'COLLECTIBLE') craftShape = 'CHIBI FIGURINE MOLD';
 
           drawColValue('USE SCENARIO', craftShape, 130, colY + 50);
           drawColValue('SURFACE TEXTURE', params.texture.toUpperCase(), 130, colY + 50 + rowH);
