@@ -140,7 +140,7 @@ interface ToyModelProps {
   demoMode?: boolean;
 }
 
-export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
+export const ToyModel: React.FC<ToyModelProps> = ({ params, demoMode }) => {
   const meshRef = useRef<THREE.Mesh>(null);
   const outerMaterialRef = useRef<THREE.ShaderMaterial>(null);
   const innerMaterialRef = useRef<THREE.ShaderMaterial>(null);
@@ -1052,8 +1052,8 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
         </mesh>
       )}
 
-      {/* Testicles Base (only rendered if hasBalls is true) */}
-      {params.hasBalls && (
+      {/* Testicles Base (only rendered if hasBalls is true and NOT in demoMode) */}
+      {params.hasBalls && !demoMode && (
         <>
           {/* Left Lobe */}
           <mesh 

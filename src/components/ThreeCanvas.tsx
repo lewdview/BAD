@@ -391,7 +391,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ params, demoMode }) =>
 
         {/* Studio floor projection grid */}
         {params.sceneEnvironment === 'studio' && !params.arMode && (
-          <CustomGridHelper length={params.length} />
+          <CustomGridHelper length={params.length} demoMode={demoMode} />
         )}
 
         <OrbitControls 

@@ -224,6 +224,7 @@ export const generateToySTL = (params: BuilderParams): string => {
   const indices: number[][] = [];
   
   const curvature = params.curvature;
+  const isDemoShape = ['candle', 'soap', 'kitchen', 'collectible'].includes(params.shapeType);
 
   // Generate heightmap once at start of export to prevent CPU thrashing
   const textHeightmap = params.engraveStyle && params.engraveStyle !== 'none' && params.engraveText && params.engraveText.trim()
@@ -299,7 +300,7 @@ export const generateToySTL = (params: BuilderParams): string => {
     stl += `  endfacet\n`;
   }
   
-  if (params.hasBalls) {
+  if (params.hasBalls && !isDemoShape) {
     const coords = getBallCoords(params);
     
     const leftFacets = rotateAndShiftFacets(
@@ -457,6 +458,7 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
   const hasCoreSocket = params.firmness === 'dual-density';
   const socketDepth = 0.4;
   const R_core = params.baseGirth * 0.46;
+  const isDemoShape = ['candle', 'soap', 'kitchen', 'collectible'].includes(params.shapeType);
 
   // Generate heightmap once for the mold negative cut-out
   const textHeightmap = params.engraveStyle && params.engraveStyle !== 'none' && params.engraveText && params.engraveText.trim()
@@ -514,7 +516,7 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
     }
   }
 
-  if (params.hasBalls) {
+  if (params.hasBalls && !isDemoShape) {
     const coords = getBallCoords(params);
     const minX_L = coords.left.x - coords.left.r;
     const maxX_L = coords.left.x + coords.left.r;
@@ -805,7 +807,7 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
     addFacet(c010, B_top[midTop], c110);
   }
 
-  if (params.hasBalls && !isFront) {
+  if (params.hasBalls && !isDemoShape && !isFront) {
     const coords = getBallCoords(params);
     
     // We want reversed facets because the cavity faces inwards

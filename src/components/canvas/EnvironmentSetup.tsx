@@ -156,21 +156,24 @@ export const LuxuryCaseEnvironment: React.FC<{ length: number; shaftGirth: numbe
   );
 };
 
-export const CustomGridHelper: React.FC<{ length: number }> = ({ length }) => {
+export const CustomGridHelper: React.FC<{ length: number; demoMode: boolean }> = ({ length, demoMode }) => {
   const gridRef = useRef<THREE.GridHelper>(null);
   
   useEffect(() => {
     if (gridRef.current) {
       const material = gridRef.current.material as THREE.LineBasicMaterial;
       material.transparent = true;
-      material.opacity = 0.08;
+      material.opacity = demoMode ? 0.12 : 0.08;
     }
-  }, []);
+  }, [demoMode]);
+
+  const gridColor = demoMode ? '#000000' : '#ffffff';
 
   return (
     <gridHelper 
       ref={gridRef}
-      args={[18, 18, '#ffffff', '#ffffff']} 
+      key={demoMode ? 'black-grid' : 'white-grid'}
+      args={[18, 18, gridColor, gridColor]} 
       position={[0, -length / 2 - 0.3, 0]} 
     />
   );
