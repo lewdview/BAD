@@ -323,8 +323,16 @@ export const getParametricVertex = (
     x *= (1.0 + flatFactor * 0.18);
   }
 
+  const phi = ((params.curvatureAngle || 0) * Math.PI) / 180;
+  const cosP = Math.cos(phi);
+  const sinP = Math.sin(phi);
+
+  // Rotate to align with the bend axis (negative rotation)
+  const x_rot = x * cosP + z * sinP;
+  const z_rot = -x * sinP + z * cosP;
+
   // Curvature bend along X with tangent rotation to prevent shearing
-  let bentX = x;
+  let bentX_rot = x_rot;
   let bentY_offset = 0;
   if (normY_physical > 0.25) {
     const curveT = (normY_physical - 0.25) / 0.75;
@@ -333,12 +341,16 @@ export const getParametricVertex = (
     const cosT = 1.0 / denom;
     const sinT = -slope / denom;
     
-    bentY_offset = x * sinT;
-    bentX = x * cosT + Math.pow(curveT, 3.0) * params.curvature * 1.9;
+    bentY_offset = x_rot * sinT;
+    bentX_rot = x_rot * cosT + Math.pow(curveT, 3.0) * params.curvature * 1.9;
   }
+
+  // Rotate back to original space (positive rotation)
+  const bentX = bentX_rot * cosP - z_rot * sinP;
+  const bentZ = bentX_rot * sinP + z_rot * cosP;
 
   // Scale height and apply relative Y bending offset
   const yFinal = yVal * params.length + bentY_offset;
 
-  return { x: bentX, y: yFinal, z };
+  return { x: bentX, y: yFinal, z: bentZ };
 };

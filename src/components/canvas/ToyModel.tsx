@@ -10,15 +10,18 @@ const getBallCoords = (params: {
   length: number;
   ballSize?: number;
   ballAsymmetry?: number;
+  curvature?: number;
+  curvatureAngle?: number;
 }) => {
   const girth = params.shaftGirth;
   const length = params.length;
   const ballSize = params.ballSize !== undefined ? params.ballSize : 1.0;
   const ballAsymmetry = params.ballAsymmetry !== undefined ? params.ballAsymmetry : 0.0;
+  const curvature = params.curvature !== undefined ? params.curvature : 0.0;
+  const curvatureAngle = params.curvatureAngle !== undefined ? params.curvatureAngle : 0.0;
   
   const theta = (ballAsymmetry * Math.PI) / 180;
   
-  // Scrotum assembly base coordinates in XZ plane
   // Adjusted center to push the scrotum further outside the shaft
   const z0 = -0.95 * girth - 0.2;
   
@@ -35,16 +38,77 @@ const getBallCoords = (params: {
   const targetBottomY = -0.47 * length;
   const y0 = targetBottomY + R * scaleY;
   
-  // Rotate around Y axis (origin (0,0) in XZ plane)
+  // Rotate around Y axis (origin (0,0) in XZ plane) for asymmetry
   const cosT = Math.cos(theta);
   const sinT = Math.sin(theta);
   
-  const x_rot_L = x0_L * cosT - z0 * sinT;
-  const z_rot_L = x0_L * sinT + z0 * cosT;
+  let x_rot_L = x0_L * cosT - z0 * sinT;
+  let z_rot_L = x0_L * sinT + z0 * cosT;
   
-  const x_rot_R = x0_R * cosT - z0 * sinT;
-  const z_rot_R = x0_R * sinT + z0 * cosT;
+  let x_rot_R = x0_R * cosT - z0 * sinT;
+  let z_rot_R = x0_R * sinT + z0 * cosT;
   
+  let y_L = y0;
+  let y_R = y0;
+
+  // Apply 360 bend to the left ball coordinate at y0
+  {
+    const phi = (curvatureAngle * Math.PI) / 180;
+    const cosP = Math.cos(phi);
+    const sinP = Math.sin(phi);
+
+    // Rotate to align with bend axis
+    const x_rot_align = x_rot_L * cosP + z_rot_L * sinP;
+    const z_rot_align = -x_rot_L * sinP + z_rot_L * cosP;
+
+    let bentX_rot = x_rot_align;
+    let bentY_offset = 0;
+    const normY_physical = (y0 / length) + 0.5;
+    if (normY_physical > 0.25) {
+      const curveT = (normY_physical - 0.25) / 0.75;
+      const slope = 4.0 * curveT * curveT * curvature * 1.9;
+      const denom = Math.sqrt(1.0 + slope * slope);
+      const cosT_bend = 1.0 / denom;
+      const sinT_bend = -slope / denom;
+      
+      bentY_offset = x_rot_align * sinT_bend;
+      bentX_rot = x_rot_align * cosT_bend + Math.pow(curveT, 3.0) * curvature * 1.9;
+    }
+
+    x_rot_L = bentX_rot * cosP - z_rot_align * sinP;
+    z_rot_L = bentX_rot * sinP + z_rot_align * cosP;
+    y_L += bentY_offset;
+  }
+
+  // Apply 360 bend to the right ball coordinate at y0
+  {
+    const phi = (curvatureAngle * Math.PI) / 180;
+    const cosP = Math.cos(phi);
+    const sinP = Math.sin(phi);
+
+    // Rotate to align with bend axis
+    const x_rot_align = x_rot_R * cosP + z_rot_R * sinP;
+    const z_rot_align = -x_rot_R * sinP + z_rot_R * cosP;
+
+    let bentX_rot = x_rot_align;
+    let bentY_offset = 0;
+    const normY_physical = (y0 / length) + 0.5;
+    if (normY_physical > 0.25) {
+      const curveT = (normY_physical - 0.25) / 0.75;
+      const slope = 4.0 * curveT * curveT * curvature * 1.9;
+      const denom = Math.sqrt(1.0 + slope * slope);
+      const cosT_bend = 1.0 / denom;
+      const sinT_bend = -slope / denom;
+      
+      bentY_offset = x_rot_align * sinT_bend;
+      bentX_rot = x_rot_align * cosT_bend + Math.pow(curveT, 3.0) * curvature * 1.9;
+    }
+
+    x_rot_R = bentX_rot * cosP - z_rot_align * sinP;
+    z_rot_R = bentX_rot * sinP + z_rot_align * cosP;
+    y_R += bentY_offset;
+  }
+
   // Find maximum Z surface boundary of both lobes
   const zMax_L = z_rot_L + R * scaleZ;
   const zMax_R = z_rot_R + R * scaleZ;
@@ -56,13 +120,13 @@ const getBallCoords = (params: {
   return {
     left: {
       x: x_rot_L,
-      y: y0,
+      y: y_L,
       z: z_rot_L - zShift,
       r: R
     },
     right: {
       x: x_rot_R,
-      y: y0,
+      y: y_R,
       z: z_rot_R - zShift,
       r: R
     },
@@ -87,7 +151,7 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
 
   const ballCoords = useMemo(() => {
     return getBallCoords(params);
-  }, [params.shaftGirth, params.length, params.ballSize, params.ballAsymmetry]);
+  }, [params.shaftGirth, params.length, params.ballSize, params.ballAsymmetry, params.curvature, params.curvatureAngle]);
 
   // Generate offscreen text heightmap
   const textHeightmap = useMemo(() => {
@@ -127,6 +191,7 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
       uShaftGirth: { value: params.shaftGirth },
       uBaseGirth: { value: params.baseGirth },
       uCurvature: { value: params.curvature },
+      uCurvatureAngle: { value: params.curvatureAngle || 0 },
       uSuctionCup: { value: params.suctionCup ? 1.0 : 0.0 },
       uGeometryStyle: { value: params.baseGeometry === 'wave' ? 1.0 : params.baseGeometry === 'ergonomic' ? 2.0 : 0.0 },
       uTextureStyle: { value: textureId },
@@ -188,6 +253,7 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
       u.uShaftGirth.value = params.shaftGirth;
       u.uBaseGirth.value = params.baseGirth;
       u.uCurvature.value = params.curvature;
+      u.uCurvatureAngle.value = params.curvatureAngle || 0;
       u.uSuctionCup.value = params.suctionCup ? 1.0 : 0.0;
       u.uGeometryStyle.value = params.baseGeometry === 'wave' ? 1.0 : params.baseGeometry === 'ergonomic' ? 2.0 : 0.0;
       u.uTextureStyle.value = textureId;
@@ -237,6 +303,7 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
         mu.uShaftGirth.value = params.shaftGirth;
         mu.uBaseGirth.value = params.baseGirth;
         mu.uCurvature.value = params.curvature;
+        mu.uCurvatureAngle.value = params.curvatureAngle || 0;
         mu.uSuctionCup.value = params.suctionCup ? 1.0 : 0.0;
         mu.uGeometryStyle.value = params.baseGeometry === 'wave' ? 1.0 : params.baseGeometry === 'ergonomic' ? 2.0 : 0.0;
         mu.uTextureStyle.value = textureId;
@@ -324,6 +391,7 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
     uniform float uShaftGirth;
     uniform float uBaseGirth;
     uniform float uCurvature;
+    uniform float uCurvatureAngle;
     uniform float uSuctionCup;
     uniform float uGeometryStyle;
     uniform float uVibration;
@@ -600,6 +668,15 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
 
       // Curvature bend along X with tangent rotation to prevent shearing
       float bentY_offset = 0.0;
+      float phi = (uCurvatureAngle * 3.14159) / 180.0;
+      float cosP = cos(phi);
+      float sinP = sin(phi);
+
+      // Rotate to align with the bend axis (negative rotation)
+      float x_rot = pos.x * cosP + pos.z * sinP;
+      float z_rot = -pos.x * sinP + pos.z * cosP;
+
+      float bentX_rot = x_rot;
       if (normY_physical > 0.25) {
         float curveT = (normY_physical - 0.25) / 0.75;
         float slope = 4.0 * curveT * curveT * uCurvature * 1.9;
@@ -607,9 +684,13 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params }) => {
         float cosT = 1.0 / denom;
         float sinT = -slope / denom;
         
-        bentY_offset = pos.x * sinT;
-        pos.x = pos.x * cosT + pow(curveT, 3.0) * uCurvature * 1.9;
+        bentY_offset = x_rot * sinT;
+        bentX_rot = x_rot * cosT + pow(curveT, 3.0) * uCurvature * 1.9;
       }
+
+      // Rotate back to original space (positive rotation)
+      pos.x = bentX_rot * cosP - z_rot * sinP;
+      pos.z = bentX_rot * sinP + z_rot * cosP;
 
       // Scale height and apply relative Y bending offset
       pos.y = pos.y * uLength + bentY_offset;

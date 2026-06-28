@@ -57,6 +57,7 @@ export interface BuilderParams {
   shaftGirth: number;
   baseGirth: number;
   curvature: number;
+  curvatureAngle?: number;
   texture: TextureType;
   suctionCup: boolean;
   vibrationCore: boolean;

@@ -69,6 +69,23 @@ export const DimensionsControls: React.FC<DimensionsControlsProps> = ({
         onChange={(val) => updateParam('curvature', val)}
         formatValue={(val) => val === 0 ? 'Straight' : val > 0 ? 'Forward Bend' : 'Reverse Bend'}
       />
+
+      {/* Curvature Angle Slider (Bend Direction) */}
+      <SliderControl
+        label="Bend Direction (360°)"
+        min={0}
+        max={360}
+        step={5}
+        value={params.curvatureAngle || 0}
+        onChange={(val) => updateParam('curvatureAngle', val)}
+        formatValue={(val) => {
+          if (val === 0 || val === 360) return "Forward (0°)";
+          if (val === 90) return "Right (90°)";
+          if (val === 180) return "Backward (180°)";
+          if (val === 270) return "Left (270°)";
+          return `${val}°`;
+        }}
+      />
     </div>
   );
 };

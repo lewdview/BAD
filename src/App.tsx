@@ -56,6 +56,7 @@ function App() {
     shaftGirth: 1.35,
     baseGirth: 1.60,
     curvature: 0.3,
+    curvatureAngle: 0,
     texture: 'swirled',
     suctionCup: true,
     vibrationCore: false,
