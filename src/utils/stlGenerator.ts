@@ -13,15 +13,21 @@ const getBallCoords = (params: BuilderParams) => {
   // Scrotum assembly base coordinates in XZ plane
   // Adjusted center to push the scrotum further outside the shaft
   const z0 = -0.95 * girth - 0.2;
-  const y0 = -0.26 * length;
   
   // Left and Right lobe offsets in X
   const x0_L = -0.32 * girth;
   const x0_R = 0.32 * girth;
   
   // Radii/scales (slightly taller in Y, flatter in Z for natural sag)
-  const R = 0.48 * girth * ballSize;
+  const R = 0.60 * girth * ballSize; // Increased base size
   const scaleZ = 0.9;
+  const scaleY = 1.15;
+  
+  // Hang balls down to the base flange
+  const targetBottomY = -0.47 * length;
+  const y0 = targetBottomY + R * scaleY;
+  
+
   
   // Rotate around Y axis (origin (0,0) in XZ plane)
   const cosT = Math.cos(theta);
@@ -55,7 +61,8 @@ const getBallCoords = (params: BuilderParams) => {
       r: R
     },
     theta,
-    zShift
+    zShift,
+    base: { x0_L, x0_R, y0, z0 }
   };
 };
 
@@ -232,17 +239,15 @@ export const generateToySTL = (params: BuilderParams): string => {
   }
   
   if (params.hasBalls) {
-    const girth = params.shaftGirth;
-    const length = params.length;
     const coords = getBallCoords(params);
     
     const leftFacets = rotateAndShiftFacets(
-      getSphereFacets(-0.32 * girth, -0.26 * length, -0.55 * girth - 0.1, coords.left.r, 1.0, 1.15, 0.9),
+      getSphereFacets(coords.base.x0_L, coords.base.y0, coords.base.z0, coords.left.r, 1.0, 1.15, 0.9),
       coords.theta,
       coords.zShift
     );
     const rightFacets = rotateAndShiftFacets(
-      getSphereFacets(0.32 * girth, -0.26 * length, -0.55 * girth - 0.1, coords.right.r, 1.0, 1.15, 0.9),
+      getSphereFacets(coords.base.x0_R, coords.base.y0, coords.base.z0, coords.right.r, 1.0, 1.15, 0.9),
       coords.theta,
       coords.zShift
     );
@@ -740,18 +745,16 @@ export const generateMoldHalfSTL = (params: BuilderParams, side: 'front' | 'back
   }
 
   if (params.hasBalls && !isFront) {
-    const girth = params.shaftGirth;
-    const length = params.length;
     const coords = getBallCoords(params);
     
     // We want reversed facets because the cavity faces inwards
     const leftFacets = rotateAndShiftFacets(
-      getSphereFacets(-0.32 * girth, -0.26 * length, -0.55 * girth - 0.1, coords.left.r, 1.0, 1.15, 0.9, true),
+      getSphereFacets(coords.base.x0_L, coords.base.y0, coords.base.z0, coords.left.r, 1.0, 1.15, 0.9, true),
       coords.theta,
       coords.zShift
     );
     const rightFacets = rotateAndShiftFacets(
-      getSphereFacets(0.32 * girth, -0.26 * length, -0.55 * girth - 0.1, coords.right.r, 1.0, 1.15, 0.9, true),
+      getSphereFacets(coords.base.x0_R, coords.base.y0, coords.base.z0, coords.right.r, 1.0, 1.15, 0.9, true),
       coords.theta,
       coords.zShift
     );

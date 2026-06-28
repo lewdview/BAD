@@ -21,15 +21,19 @@ const getBallCoords = (params: {
   // Scrotum assembly base coordinates in XZ plane
   // Adjusted center to push the scrotum further outside the shaft
   const z0 = -0.95 * girth - 0.2;
-  const y0 = -0.26 * length;
   
   // Left and Right lobe offsets in X
   const x0_L = -0.32 * girth;
   const x0_R = 0.32 * girth;
   
   // Radii/scales (slightly taller in Y, flatter in Z for natural sag)
-  const R = 0.48 * girth * ballSize;
+  const R = 0.60 * girth * ballSize; // Increased base size
   const scaleZ = 0.9;
+  const scaleY = 1.15;
+  
+  // Hang balls down to the base flange
+  const targetBottomY = -0.47 * length;
+  const y0 = targetBottomY + R * scaleY;
   
   // Rotate around Y axis (origin (0,0) in XZ plane)
   const cosT = Math.cos(theta);
