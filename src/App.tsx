@@ -52,30 +52,30 @@ function App() {
   // 3D Builder Parametric parameters
   const [builderParams, setBuilderParams] = useState<BuilderParams>({
     baseGeometry: 'classic',
-    length: 6.0,
-    shaftGirth: 1.20,
-    baseGirth: 1.40,
-    curvature: 0.2,
-    texture: 'smooth',
+    length: 7.5,
+    shaftGirth: 1.35,
+    baseGirth: 1.60,
+    curvature: 0.3,
+    texture: 'swirled',
     suctionCup: true,
     vibrationCore: false,
-    colorMode: 1, // Default to Marble
-    color1: '#a62b2b', // Crimson Kiss
-    color2: '#d4af37', // Satin Gold
+    colorMode: 2, // Gradient
+    color1: '#ff007f', // Hot Pink
+    color2: '#00e5ff', // Cyan
     isVibrating: false,
     showScaleRef: false,
-    shapeType: 'classic',
+    shapeType: 'fantasy',
     realisticVeins: 0.0,
     realisticGlans: false,
-    hasBalls: false,
+    hasBalls: true,
     fantasyType: 'dragon',
     baseType: 'flared',
-    taper: 0.0,
-    firmness: 'medium',
-    inclusions: 'none',
-    thermochromic: false,
+    taper: 0.1,
+    firmness: 'dual-density',
+    inclusions: 'glitter',
+    thermochromic: true,
     internalTube: false,
-    blacklightMode: false,
+    blacklightMode: true,
     arMode: false,
     sceneEnvironment: 'studio',
     engraveText: '',
@@ -83,8 +83,8 @@ function App() {
     engravePosition: 0.5,
     engraveSize: 44,
     engraveDepth: 0.5,
-    ballSize: 1.0,
-    ballAsymmetry: 0.0,
+    ballSize: 1.2,
+    ballAsymmetry: 0.1,
     hasOrifice: false,
     orificeType: 'vaginal',
     orificeDepth: 0.4
