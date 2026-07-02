@@ -58,8 +58,8 @@ const getBallCoords = (params: {
     const sinP = Math.sin(phi);
 
     // Rotate to align with bend axis
-    const x_rot_align = x_rot_L * cosP + z_rot_L * sinP;
-    const z_rot_align = -x_rot_L * sinP + z_rot_L * cosP;
+    const x_rot_align = x_rot_L * sinP + z_rot_L * cosP;
+    const z_rot_align = -x_rot_L * cosP + z_rot_L * sinP;
 
     let bentX_rot = x_rot_align;
     let bentY_offset = 0;
@@ -75,8 +75,8 @@ const getBallCoords = (params: {
       bentX_rot = x_rot_align * cosT_bend + Math.pow(curveT, 3.0) * curvature * 1.9;
     }
 
-    x_rot_L = bentX_rot * cosP - z_rot_align * sinP;
-    z_rot_L = bentX_rot * sinP + z_rot_align * cosP;
+    x_rot_L = bentX_rot * sinP - z_rot_align * cosP;
+    z_rot_L = bentX_rot * cosP + z_rot_align * sinP;
     y_L += bentY_offset;
   }
 
@@ -87,8 +87,8 @@ const getBallCoords = (params: {
     const sinP = Math.sin(phi);
 
     // Rotate to align with bend axis
-    const x_rot_align = x_rot_R * cosP + z_rot_R * sinP;
-    const z_rot_align = -x_rot_R * sinP + z_rot_R * cosP;
+    const x_rot_align = x_rot_R * sinP + z_rot_R * cosP;
+    const z_rot_align = -x_rot_R * cosP + z_rot_R * sinP;
 
     let bentX_rot = x_rot_align;
     let bentY_offset = 0;
@@ -104,8 +104,8 @@ const getBallCoords = (params: {
       bentX_rot = x_rot_align * cosT_bend + Math.pow(curveT, 3.0) * curvature * 1.9;
     }
 
-    x_rot_R = bentX_rot * cosP - z_rot_align * sinP;
-    z_rot_R = bentX_rot * sinP + z_rot_align * cosP;
+    x_rot_R = bentX_rot * sinP - z_rot_align * cosP;
+    z_rot_R = bentX_rot * cosP + z_rot_align * sinP;
     y_R += bentY_offset;
   }
 
@@ -658,8 +658,8 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params, demoMode }) => {
       float sinP = sin(phi);
 
       // Rotate to align with the bend axis (negative rotation)
-      float x_rot = pos.x * cosP + pos.z * sinP;
-      float z_rot = -pos.x * sinP + pos.z * cosP;
+      float x_rot = pos.x * sinP + pos.z * cosP;
+      float z_rot = -pos.x * cosP + pos.z * sinP;
 
       float bentX_rot = x_rot;
       if (normY_physical > 0.25) {
@@ -674,8 +674,8 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params, demoMode }) => {
       }
 
       // Rotate back to original space (positive rotation)
-      pos.x = bentX_rot * cosP - z_rot * sinP;
-      pos.z = bentX_rot * sinP + z_rot * cosP;
+      pos.x = bentX_rot * sinP - z_rot * cosP;
+      pos.z = bentX_rot * cosP + z_rot * sinP;
 
       // Scale height and apply relative Y bending offset
       pos.y = pos.y * uLength + bentY_offset;
