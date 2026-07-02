@@ -1035,10 +1035,22 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params, demoMode }) => {
 
       float finalAlpha = uAlpha;
       if (uAlpha < 0.95) {
-        // Fresnel opacity: edges are more opaque, center is more transparent
-        finalAlpha = mix(uAlpha * 0.35, 0.92, fresnel);
-        // Specular opacity boost: specular highlights on the outer surface are opaque
-        finalAlpha = max(finalAlpha, max(specularTotal.r, envColor.r) * 1.25);
+        // Jelly silicone translucency: vibrant color saturation boost
+        float lum = dot(finalColor, vec3(0.299, 0.587, 0.114));
+        finalColor = mix(vec3(lum), finalColor, 1.6); // Boost saturation for jelly depth
+        finalColor = max(finalColor, vec3(0.0));
+
+        // Fresnel opacity: glassy edges are fully opaque, center shows through
+        float edgeOpacity = pow(fresnel, 0.8) * 0.85;
+        float bodyOpacity = uAlpha * 0.55;
+        finalAlpha = bodyOpacity + edgeOpacity;
+        finalAlpha = clamp(finalAlpha, 0.0, 1.0);
+
+        // Specular highlights punch through as fully opaque
+        float specBrightness = max(specularTotal.r, max(specularTotal.g, specularTotal.b));
+        finalAlpha = max(finalAlpha, specBrightness * 2.0);
+        finalAlpha = max(finalAlpha, max(envColor.r, envColor.g) * 1.5);
+        finalAlpha = clamp(finalAlpha, 0.0, 1.0);
       }
 
       gl_FragColor = vec4(finalColor, finalAlpha);
@@ -1056,7 +1068,7 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params, demoMode }) => {
           fragmentShader={fragmentShader}
           uniforms={outerUniforms}
           transparent={true}
-          depthWrite={false}
+          depthWrite={true}
           side={THREE.DoubleSide}
         />
       </mesh>
@@ -1109,7 +1121,7 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params, demoMode }) => {
               fragmentShader={fragmentShader}
               uniforms={leftBallUniforms}
               transparent={true}
-              depthWrite={false}
+              depthWrite={true}
               side={THREE.DoubleSide}
             />
           </mesh>
@@ -1129,7 +1141,7 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params, demoMode }) => {
               fragmentShader={fragmentShader}
               uniforms={rightBallUniforms}
               transparent={true}
-              depthWrite={false}
+              depthWrite={true}
               side={THREE.DoubleSide}
             />
           </mesh>
