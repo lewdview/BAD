@@ -859,8 +859,12 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params, demoMode }) => {
       // 1. PROCEDURAL BUMP MAPPING via Finite Differences
       float bumpCenter = getCombinedBump(adjPos, normY, uTextureStyle, uShapeType, uRealisticVeins, uMeshType);
       
-      vec3 up = vec3(0.0, 1.0, 0.0);
-      vec3 tangent = normalize(cross(normalVec, up));
+      vec3 tangent = vec3(0.0);
+      if (abs(normalVec.y) < 0.99) {
+        tangent = normalize(cross(normalVec, vec3(0.0, 1.0, 0.0)));
+      } else {
+        tangent = normalize(cross(normalVec, vec3(1.0, 0.0, 0.0)));
+      }
       vec3 bitangent = cross(normalVec, tangent);
       
       float eps = 0.015;

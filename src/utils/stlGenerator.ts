@@ -344,6 +344,7 @@ export const generateCoreSTL = (params: BuilderParams): string => {
     suctionCup: false,
     baseType: 'flat', // Flattened B2B injection base plug
     engraveStyle: 'none', // Do not engrave initials on the rigid internal plug
+    hasBalls: false, // The rigid inner core plug does NOT have the scrotum
     isCore: true // Pass isCore flag
   };
   return generateToySTL(coreParams);
