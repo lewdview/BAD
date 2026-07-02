@@ -363,7 +363,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ params, demoMode }) =>
       {params.arMode && <WebcamFeed />}
 
       <Canvas
-        camera={{ position: [3.5, 1.8, 7.2], fov: 40 }}
+        camera={{ position: [0, 1.8, 8.0], fov: 40 }}
         shadows={{ type: THREE.PCFShadowMap }}
         gl={{ preserveDrawingBuffer: true }}
         style={{ position: 'relative', zIndex: 1, background: 'transparent' }}

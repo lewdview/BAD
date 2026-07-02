@@ -363,8 +363,8 @@ export const getParametricVertex = (
   const sinP = Math.sin(phi);
 
   // Rotate to align with the bend axis (negative rotation)
-  const x_rot = x * sinP + z * cosP;
-  const z_rot = -x * cosP + z * sinP;
+  const x_rot = x * cosP + z * sinP;
+  const z_rot = -x * sinP + z * cosP;
 
   // Curvature bend along X with tangent rotation to prevent shearing
   let bentX_rot = x_rot;
@@ -381,8 +381,8 @@ export const getParametricVertex = (
   }
 
   // Rotate back to original space (positive rotation)
-  const bentX = bentX_rot * sinP - z_rot * cosP;
-  const bentZ = bentX_rot * cosP + z_rot * sinP;
+  const bentX = bentX_rot * cosP - z_rot * sinP;
+  const bentZ = bentX_rot * sinP + z_rot * cosP;
 
   // Scale height and apply relative Y bending offset
   const yFinal = yVal * params.length + bentY_offset;

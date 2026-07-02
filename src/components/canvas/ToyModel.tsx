@@ -23,7 +23,7 @@ const getBallCoords = (params: {
   const theta = (ballAsymmetry * Math.PI) / 180;
   
   // Snug scrotum positioning against the shaft, sitting on the base flange
-  const z0 = -0.52 * girth - 0.08;
+  const z0 = 0.52 * girth + 0.08;
   
   // Left and Right lobe offsets in X
   const x0_L = -0.28 * girth;
@@ -58,8 +58,8 @@ const getBallCoords = (params: {
     const sinP = Math.sin(phi);
 
     // Rotate to align with bend axis
-    const x_rot_align = x_rot_L * sinP + z_rot_L * cosP;
-    const z_rot_align = -x_rot_L * cosP + z_rot_L * sinP;
+    const x_rot_align = x_rot_L * cosP + z_rot_L * sinP;
+    const z_rot_align = -x_rot_L * sinP + z_rot_L * cosP;
 
     let bentX_rot = x_rot_align;
     let bentY_offset = 0;
@@ -75,8 +75,8 @@ const getBallCoords = (params: {
       bentX_rot = x_rot_align * cosT_bend + Math.pow(curveT, 3.0) * curvature * 1.9;
     }
 
-    x_rot_L = bentX_rot * sinP - z_rot_align * cosP;
-    z_rot_L = bentX_rot * cosP + z_rot_align * sinP;
+    x_rot_L = bentX_rot * cosP - z_rot_align * sinP;
+    z_rot_L = bentX_rot * sinP + z_rot_align * cosP;
     y_L += bentY_offset;
   }
 
@@ -87,8 +87,8 @@ const getBallCoords = (params: {
     const sinP = Math.sin(phi);
 
     // Rotate to align with bend axis
-    const x_rot_align = x_rot_R * sinP + z_rot_R * cosP;
-    const z_rot_align = -x_rot_R * cosP + z_rot_R * sinP;
+    const x_rot_align = x_rot_R * cosP + z_rot_R * sinP;
+    const z_rot_align = -x_rot_R * sinP + z_rot_R * cosP;
 
     let bentX_rot = x_rot_align;
     let bentY_offset = 0;
@@ -104,30 +104,30 @@ const getBallCoords = (params: {
       bentX_rot = x_rot_align * cosT_bend + Math.pow(curveT, 3.0) * curvature * 1.9;
     }
 
-    x_rot_R = bentX_rot * sinP - z_rot_align * cosP;
-    z_rot_R = bentX_rot * cosP + z_rot_align * sinP;
+    x_rot_R = bentX_rot * cosP - z_rot_align * sinP;
+    z_rot_R = bentX_rot * sinP + z_rot_align * cosP;
     y_R += bentY_offset;
   }
 
-  // Find maximum Z surface boundary of both lobes
-  const zMax_L = z_rot_L + R * scaleZ;
-  const zMax_R = z_rot_R + R * scaleZ;
-  const zMax = Math.max(zMax_L, zMax_R);
+  // Find minimum Z surface boundary of both lobes (balls are at +Z, prevent crossing into shaft)
+  const zMin_L = z_rot_L - R * scaleZ;
+  const zMin_R = z_rot_R - R * scaleZ;
+  const zMin = Math.min(zMin_L, zMin_R);
   
-  // If either lobe crosses z = 0, shift the entire assembly back
-  const zShift = zMax > 0.0 ? zMax : 0.0;
+  // If either lobe crosses z = 0, shift the entire assembly forward
+  const zShift = zMin < 0.0 ? -zMin : 0.0;
   
   return {
     left: {
       x: x_rot_L,
       y: y_L,
-      z: z_rot_L - zShift,
+      z: z_rot_L + zShift,
       r: R
     },
     right: {
       x: x_rot_R,
       y: y_R,
-      z: z_rot_R - zShift,
+      z: z_rot_R + zShift,
       r: R
     },
     theta,
@@ -660,8 +660,8 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params, demoMode }) => {
       float sinP = sin(phi);
 
       // Rotate to align with the bend axis (negative rotation)
-      float x_rot = pos.x * sinP + pos.z * cosP;
-      float z_rot = -pos.x * cosP + pos.z * sinP;
+      float x_rot = pos.x * cosP + pos.z * sinP;
+      float z_rot = -pos.x * sinP + pos.z * cosP;
 
       float bentX_rot = x_rot;
       if (normY_physical > 0.25) {
@@ -676,8 +676,8 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params, demoMode }) => {
       }
 
       // Rotate back to original space (positive rotation)
-      pos.x = bentX_rot * sinP - z_rot * cosP;
-      pos.z = bentX_rot * cosP + z_rot * sinP;
+      pos.x = bentX_rot * cosP - z_rot * sinP;
+      pos.z = bentX_rot * sinP + z_rot * cosP;
 
       // Scale height and apply relative Y bending offset
       pos.y = pos.y * uLength + bentY_offset;
@@ -912,7 +912,9 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params, demoMode }) => {
       }
       
       float baseTransition = smoothstep(0.0, 0.18, normY);
-      ao *= mix(0.6, 1.0, baseTransition);
+      if (uMeshType < 1.5 || uMeshType > 2.5) {
+        ao *= mix(0.6, 1.0, baseTransition);
+      }
 
       // 3. MATERIAL COLOR (Solid / Liquid Marbled / Gradient / Split Pour)
       vec3 baseColor = uColor1;

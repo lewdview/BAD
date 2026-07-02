@@ -14,7 +14,7 @@ const getBallCoords = (params: BuilderParams) => {
   
   // Scrotum assembly base coordinates in XZ plane
   // Snug scrotum positioning against the shaft, sitting on the base flange
-  const z0 = -0.52 * girth - 0.08;
+  const z0 = 0.52 * girth + 0.08;
   
   // Left and Right lobe offsets in X
   const x0_L = -0.28 * girth;
@@ -49,8 +49,8 @@ const getBallCoords = (params: BuilderParams) => {
     const sinP = Math.sin(phi);
 
     // Rotate to align with bend axis
-    const x_rot_align = x_rot_L * sinP + z_rot_L * cosP;
-    const z_rot_align = -x_rot_L * cosP + z_rot_L * sinP;
+    const x_rot_align = x_rot_L * cosP + z_rot_L * sinP;
+    const z_rot_align = -x_rot_L * sinP + z_rot_L * cosP;
 
     let bentX_rot = x_rot_align;
     let bentY_offset = 0;
@@ -66,8 +66,8 @@ const getBallCoords = (params: BuilderParams) => {
       bentX_rot = x_rot_align * cosT_bend + Math.pow(curveT, 3.0) * curvature * 1.9;
     }
 
-    x_rot_L = bentX_rot * sinP - z_rot_align * cosP;
-    z_rot_L = bentX_rot * cosP + z_rot_align * sinP;
+    x_rot_L = bentX_rot * cosP - z_rot_align * sinP;
+    z_rot_L = bentX_rot * sinP + z_rot_align * cosP;
     y_L += bentY_offset;
   }
 
@@ -78,8 +78,8 @@ const getBallCoords = (params: BuilderParams) => {
     const sinP = Math.sin(phi);
 
     // Rotate to align with bend axis
-    const x_rot_align = x_rot_R * sinP + z_rot_R * cosP;
-    const z_rot_align = -x_rot_R * cosP + z_rot_R * sinP;
+    const x_rot_align = x_rot_R * cosP + z_rot_R * sinP;
+    const z_rot_align = -x_rot_R * sinP + z_rot_R * cosP;
 
     let bentX_rot = x_rot_align;
     let bentY_offset = 0;
@@ -95,30 +95,30 @@ const getBallCoords = (params: BuilderParams) => {
       bentX_rot = x_rot_align * cosT_bend + Math.pow(curveT, 3.0) * curvature * 1.9;
     }
 
-    x_rot_R = bentX_rot * sinP - z_rot_align * cosP;
-    z_rot_R = bentX_rot * cosP + z_rot_align * sinP;
+    x_rot_R = bentX_rot * cosP - z_rot_align * sinP;
+    z_rot_R = bentX_rot * sinP + z_rot_align * cosP;
     y_R += bentY_offset;
   }
 
-  // Find maximum Z surface boundary of both lobes
-  const zMax_L = z_rot_L + R * scaleZ;
-  const zMax_R = z_rot_R + R * scaleZ;
-  const zMax = Math.max(zMax_L, zMax_R);
+  // Find minimum Z surface boundary of both lobes (balls are at +Z, prevent crossing into shaft)
+  const zMin_L = z_rot_L - R * scaleZ;
+  const zMin_R = z_rot_R - R * scaleZ;
+  const zMin = Math.min(zMin_L, zMin_R);
   
-  // If either lobe crosses z = 0, shift the entire assembly back
-  const zShift = zMax > 0.0 ? zMax : 0.0;
+  // If either lobe crosses z = 0, shift the entire assembly forward
+  const zShift = zMin < 0.0 ? -zMin : 0.0;
   
   return {
     left: {
       x: x_rot_L,
       y: y_L,
-      z: z_rot_L - zShift,
+      z: z_rot_L + zShift,
       r: R
     },
     right: {
       x: x_rot_R,
       y: y_R,
-      z: z_rot_R - zShift,
+      z: z_rot_R + zShift,
       r: R
     },
     theta,
@@ -139,7 +139,7 @@ const rotateAndShiftFacets = (
     const rotatePoint = (p: Vec3): Vec3 => {
       const x = p.x * cosT - p.z * sinT;
       const y = p.y;
-      const z = p.x * sinT + p.z * cosT - zShift;
+      const z = p.x * sinT + p.z * cosT + zShift;
       return { x, y, z };
     };
     return {
