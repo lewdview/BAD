@@ -5,14 +5,7 @@ import * as THREE from 'three';
 import { generateTextHeightmap } from '../../utils/textHeightmap';
 import type { BuilderParams } from '../../types';
 
-const getBallCoords = (params: {
-  shaftGirth: number;
-  length: number;
-  ballSize?: number;
-  ballAsymmetry?: number;
-  curvature?: number;
-  curvatureAngle?: number;
-}) => {
+const getBallCoords = (params: BuilderParams) => {
   const girth = params.shaftGirth;
   const length = params.length;
   const ballSize = params.ballSize !== undefined ? params.ballSize : 1.0;
@@ -22,13 +15,6 @@ const getBallCoords = (params: {
   
   const theta = (ballAsymmetry * Math.PI) / 180;
   
-  // Snug scrotum positioning against the shaft, sitting on the base flange
-  const z0 = 0.52 * girth + 0.08;
-  
-  // Left and Right lobe offsets in X
-  const x0_L = -0.28 * girth;
-  const x0_R = 0.28 * girth;
-  
   // Radii/scales (slightly taller in Y, flatter in Z for natural sag)
   const R = 0.48 * girth * ballSize; // Balanced base size
   const scaleZ = 0.9;
@@ -37,6 +23,21 @@ const getBallCoords = (params: {
   // Hang balls down to the base flange
   const targetBottomY = -0.47 * length;
   const y0 = targetBottomY + R * scaleY;
+
+  // Compute local shaft radius at the balls' attachment height (y0)
+  const normY_balls = (y0 / length) + 0.5;
+  const t_base = Math.min(Math.max(normY_balls / 0.25, 0.0), 1.0);
+  const baseGirthVal = params.baseGirth !== undefined ? params.baseGirth : girth;
+  const localRadius = params.baseType === 'flat'
+    ? baseGirthVal
+    : baseGirthVal * (1.0 - t_base) + girth * t_base;
+
+  // Position balls snug against this local radius
+  const z0 = localRadius + R * 0.25;
+  
+  // Left and Right lobe offsets in X scaled by local radius
+  const x0_L = -0.25 * localRadius;
+  const x0_R = 0.25 * localRadius;
   
   // Rotate around Y axis (origin (0,0) in XZ plane) for asymmetry
   const cosT = Math.cos(theta);
