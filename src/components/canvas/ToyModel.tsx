@@ -313,7 +313,9 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params, demoMode }) => {
       mu.uBlacklightMode.value = params.blacklightMode ? 1.0 : 0.0;
       mu.uBallOffset.value = ballOffset;
       mu.uBallYOffset.value = ballYOffset;
-      mu.uAlpha.value = ((meshType === 0 || meshType === 2) && params.firmness === 'dual-density') ? 0.55 : 1.0;
+      mu.uAlpha.value = (meshType === 0 || meshType === 2) 
+        ? (params.firmness === 'dual-density' ? 0.55 : 0.72) 
+        : 1.0;
       mu.uTextTexture.value = textTexture;
       mu.uTextStyle.value = (!params.engraveStyle || params.engraveStyle === 'none') ? 0.0 : params.engraveStyle === 'embossed' ? 1.0 : 2.0;
       mu.uTextDepth.value = params.engraveDepth !== undefined ? params.engraveDepth : 0.5;
@@ -1047,8 +1049,8 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params, demoMode }) => {
           vertexShader={vertexShader}
           fragmentShader={fragmentShader}
           uniforms={outerUniforms}
-          transparent={params.firmness === 'dual-density'}
-          depthWrite={params.firmness !== 'dual-density'}
+          transparent={true}
+          depthWrite={false}
           side={THREE.DoubleSide}
         />
       </mesh>
@@ -1100,8 +1102,8 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params, demoMode }) => {
               vertexShader={vertexShader}
               fragmentShader={fragmentShader}
               uniforms={leftBallUniforms}
-              transparent={params.firmness === 'dual-density'}
-              depthWrite={params.firmness !== 'dual-density'}
+              transparent={true}
+              depthWrite={false}
               side={THREE.DoubleSide}
             />
           </mesh>
@@ -1120,8 +1122,8 @@ export const ToyModel: React.FC<ToyModelProps> = ({ params, demoMode }) => {
               vertexShader={vertexShader}
               fragmentShader={fragmentShader}
               uniforms={rightBallUniforms}
-              transparent={params.firmness === 'dual-density'}
-              depthWrite={params.firmness !== 'dual-density'}
+              transparent={true}
+              depthWrite={false}
               side={THREE.DoubleSide}
             />
           </mesh>

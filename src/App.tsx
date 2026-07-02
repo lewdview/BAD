@@ -61,8 +61,8 @@ function App() {
     suctionCup: true,
     vibrationCore: false,
     colorMode: 0, // Solid
-    color1: '#14b8a6', // Deep translucent teal/cyan
-    color2: '#2dd4bf', // Lighter translucent teal/cyan core
+    color1: '#06b6d4', // Vibrant translucent cyan/blue
+    color2: '#38bdf8', // Lighter translucent sky blue core (when dual-density is selected)
     isVibrating: false,
     showScaleRef: false,
     shapeType: 'realistic',
@@ -73,7 +73,7 @@ function App() {
     fantasyType: 'dragon',
     baseType: 'flared',
     taper: 0.08,
-    firmness: 'dual-density',
+    firmness: 'medium', // Single-density by default
     inclusions: 'none',
     thermochromic: false,
     internalTube: false,
